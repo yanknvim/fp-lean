@@ -170,7 +170,7 @@ partial def insertionSortLoop [Ord α] (arr : Array α) (i : Nat) : Array α :=
 #["igneous", "metamorphic", "sedimentary"]
 ```
 
-## Termination
+## 停止性
 %%%
 tag := "insertionSortLoop-termination"
 %%%
