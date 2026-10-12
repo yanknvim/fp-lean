@@ -15,112 +15,112 @@ set_option verso.exampleModule "Examples.ProgramsProofs.InsertionSort"
 tag := "programs-proofs-summary"
 %%%
 
-# Tail Recursion
+# 末尾再帰
 %%%
 tag := none
 %%%
 
-Tail recursion is recursion in which the results of recursive calls are returned immediately, rather than being used in some other way.
-These recursive calls are called _tail calls_.
-Tail calls are interesting because they can be compiled to a jump instruction rather than a call instruction, and the current stack frame can be re-used instead of pushing a new frame.
-In other words, tail-recursive functions are actually loops.
+末尾再帰とは、再帰呼び出しの結果が他の使われ方をされることなく、すぐに返される再帰である。
+これらの再帰呼び出しを*末尾呼び出し*と呼ぶ。
+末尾呼び出しが興味深いのは、呼び出し命令ではなくジャンプ命令にコンパイルでき、新しいフレームを積む代わりに現在のスタックフレームを使い回せるためである。
+言い換えれば、末尾再帰関数は実際にはループである。
 
-A common way to make a recursive function faster is to rewrite it in accumulator-passing style.
-Instead of using the call stack to remember what is to be done with the result of a recursive call, an additional argument called an _accumulator_ is used to collect this information.
-For example, an accumulator for a tail-recursive function that reverses a list contains the already-seen list entries, in reverse order.
+再帰関数を速くするよくある方法は、アキュムレータを渡す流儀で書き直すことである。
+再帰呼び出しの結果をどうするかを覚えておくのに呼び出しスタックを使う代わりに、*アキュムレータ*と呼ばれる追加の引数でこの情報を集める。
+たとえば、リストを反転する末尾再帰関数のアキュムレータには、すでに見たリストの要素が逆順で入っている。
 
-In Lean, only self-tail-calls are optimized into loops.
-In other words, two functions that each end with a tail call to the other will not be optimized.
+Leanでは、自分自身への末尾呼び出しだけがループに最適化される。
+言い換えれば、互いに他方への末尾呼び出しで終わる二つの関数は最適化されない。
 
-# Reference Counting and In-Place Updates
+# 参照カウントとその場での更新
 %%%
 tag := none
 %%%
 
-Rather than using a tracing garbage collector, as is done in Java, C#, and most JavaScript implementations, Lean uses reference counting for memory management.
-This means that each value in memory contains a field that tracks how many other values refer to it, and the run-time system maintains these counts as references appear or disappear.
-Reference counting is also used in Python, PHP, and Swift.
+Java、C#、ほとんどのJavaScriptの実装がそうしているような追跡型のガベージコレクタを使う代わりに、Leanはメモリ管理に参照カウントを使う。
+つまり、メモリ内の各値が、それへの参照がいくつあるかを追跡するフィールドを持ち、実行時システムは参照が現れたり消えたりするにつれてこれらのカウントを保つ。
+参照カウントはPython、PHP、Swiftでも使われている。
 
-When asked to allocate a fresh object, Lean's run-time system is able to recycle existing objects whose reference counts are falling to zero.
-Additionally, array operations such as {anchorName names}`Array.set` and {anchorName names}`Array.swap` will mutate an array if its reference count is one, rather than allocating a modified copy.
-If {anchorName names}`Array.swap` holds the only reference to an array, then no other part of the program can tell that it was mutated rather than copied.
+新しいオブジェクトを確保するよう求められたとき、Leanの実行時システムは、参照カウントが0になりつつある既存のオブジェクトを再利用できる。
+さらに、{anchorName names}`Array.set`や{anchorName names}`Array.swap`のような配列の操作は、参照カウントが1なら、変更した複製を確保するのではなくその配列を変更する。
+{anchorName names}`Array.swap`がその配列への唯一の参照を保持しているなら、プログラムの他のどの部分も、それが複製されたのではなく変更されたことに気づけない。
 
-Writing efficient code in Lean requires the use of tail recursion and being careful to ensure that large arrays are used uniquely.
-While tail calls can be identified by inspecting the function's definition, understanding whether a value is referred to uniquely may require reading the whole program.
-The debugging helper {anchorName dbgTraceIfSharedSig}`dbgTraceIfShared` can be used at key locations in the program to check that a value is not shared.
+Leanで効率のよいコードを書くには、末尾再帰を使い、大きな配列が一意に使われるように注意する必要がある。
+末尾呼び出しは関数の定義を調べれば見分けられるが、ある値が一意に参照されているかを理解するには、プログラム全体を読む必要があるかもしれない。
+デバッグ用の補助関数{anchorName dbgTraceIfSharedSig}`dbgTraceIfShared`をプログラムの要所で使い、ある値が共有されていないことを確かめられる。
 
-# Proving Programs Correct
+# プログラムが正しいことの証明
 %%%
 tag := none
 %%%
 
-Rewriting a program in accumulator-passing style, or making other transformations that make it run faster, can also make it more difficult to understand.
-It can be useful to keep the original version of the program that is more clearly correct, and then use it as an executable specification for the optimized version.
-While techniques such as unit testing work just as well in Lean as in any other language, Lean also enables the use of mathematical proofs that completely ensure that both versions of the function return the same result for _all possible_ inputs.
+プログラムをアキュムレータを渡す流儀で書き直したり、速く動くようにする他の変換を加えたりすると、理解しにくくなることもある。
+より明らかに正しい元の版のプログラムを残しておき、それを最適化した版の実行できる仕様として使うと役に立つ。
+単体試験のような技法は他のどの言語でもそうであるようにLeanでも問題なく働くが、Leanではさらに、両方の版の関数が*ありとあらゆる*入力に対して同じ結果を返すことを完全に保証する数学的な証明を使える。
 
-Typically, proving that two functions are equal is done using function extensionality (the {kw}`funext` tactic), which is the principle that two functions are equal if they return the same values for every input.
-If the functions are recursive, then induction is usually a good way to prove that their outputs are the same.
-Usually, the recursive definition of the function will make recursive calls on one particular argument; this argument is a good choice for induction.
-In some cases, the induction hypothesis is not strong enough.
-Fixing this problem usually requires thought about how to construct a more general version of the theorem statement that provides induction hypotheses that are strong enough.
-In particular, to prove that a function is equivalent to an accumulator-passing version, a theorem statement that relates arbitrary initial accumulator values to the final result of the original function is needed.
+通常、二つの関数が等しいことの証明は関数の外延性（{kw}`funext`タクティク）を使って行う。これは、二つの関数がすべての入力に対して同じ値を返すなら等しい、という原理である。
+その関数が再帰的なら、通常は帰納法がそれらの出力が同じであることを証明するよい方法である。
+通常、その関数の再帰的な定義は特定の一つの引数について再帰呼び出しを行う。その引数が帰納法のよい選択である。
+場合によっては、帰納法の仮定が十分に強くない。
+この問題を直すには通常、十分に強い帰納法の仮定を与える、より一般的な版の定理の言明をどう組み立てるかを考える必要がある。
+特に、ある関数がアキュムレータを渡す版と等価であることを証明するには、任意の初期のアキュムレータの値と、元の関数の最終的な結果を関係付ける定理の言明が要る。
 
-# Safe Array Indices
+# 安全な配列の添字
 %%%
 tag := none
 %%%
 
-The type {anchorTerm names}`Fin n` represents natural numbers that are strictly less than {anchorName names}`n`.
-{anchorName names}`Fin` is short for “finite”.
-As with subtypes, a {anchorTerm names}`Fin n` is a structure that contains a {anchorName names}`Nat` and a proof that this {anchorName names}`Nat` is less than {anchorName names}`n`.
-There are no values of type {anchorTerm names}`Fin 0`.
+型{anchorTerm names}`Fin n`は{anchorName names}`n`より真に小さい自然数を表す。
+{anchorName names}`Fin`は「finite（有限）」の略である。
+部分型と同じく、{anchorTerm names}`Fin n`は{anchorName names}`Nat`と、その{anchorName names}`Nat`が{anchorName names}`n`より小さいという証明を含む構造体である。
+型{anchorTerm names}`Fin 0`の値は存在しない。
 
-If {anchorName names}`arr` is an {anchorTerm names}`Array α`, then {anchorTerm names}`Fin arr.size` always contains a number that is a suitable index into {anchorName names}`arr`.
+{anchorName names}`arr`が{anchorTerm names}`Array α`なら、{anchorTerm names}`Fin arr.size`は常に{anchorName names}`arr`への適切な添字になる数を含む。
 
-Lean provides instances of most of the useful numeric type classes for {anchorName names}`Fin`.
-The {anchorName names}`OfNat` instances for {anchorName names}`Fin` perform modular arithmetic rather than failing at compile time if the number provided is larger than the {anchorName names}`Fin` can accept.
+Leanは{anchorName names}`Fin`に、役に立つ数の型クラスのほとんどについてインスタンスを用意している。
+{anchorName names}`Fin`の{anchorName names}`OfNat`インスタンスは、与えられた数が{anchorName names}`Fin`の受け付けられるより大きいとき、コンパイル時に失敗するのではなく合同算術を行う。
 
-# Provisional Proofs
+# 仮の証明
 %%%
 tag := none
 %%%
 
-Sometimes, it can be useful to pretend that a statement is proved without actually doing the work of proving it.
-This can be useful when making sure that a proof of a statement would be suitable for some task, such as a rewrite in another proof, determining that an array access is safe, or showing that a recursive call is made on a smaller value than the original argument.
-It's very frustrating to spend time proving something, only to discover that some other proof would have been more useful.
+ときに、実際に証明する作業をせずに、ある言明が証明されたふりをできると役に立つ。
+これは、ある言明の証明が何らかの作業に使えるかを確かめるときに役に立つ。たとえば、別の証明での書き換え、配列の参照が安全であることの判断、再帰呼び出しが元の引数より小さい値に対して行われていることの提示などである。
+時間をかけて何かを証明した末に、別の証明のほうが役に立ったと分かるのはとても悔しい。
 
-The {anchorTerm names}`sorry` tactic causes Lean to provisionally accept a statement as if it were a real proof.
-It can be seen as analogous to a stub method that throws a {CSharp}`NotImplementedException` in C#.
-Any proof that relies on {anchorTerm names}`sorry` includes a warning in Lean.
+{anchorTerm names}`sorry`タクティクを使うと、Leanはある言明を本物の証明であるかのように仮に受け付ける。
+C#で{CSharp}`NotImplementedException`を投げるスタブのメソッドに似ていると見なせる。
+{anchorTerm names}`sorry`に依拠する証明には、Leanで警告が付けられる。
 
-Be careful!
-The {anchorTerm names}`sorry` tactic can prove _any_ statement, even false statements.
-Proving that {anchorTerm names}`3 < 2` can cause an out-of-bounds array access to persist to runtime, unexpectedly crashing a program.
-Using {anchorTerm names}`sorry` is convenient during development, but keeping it in the code is dangerous.
+注意せよ。
+{anchorTerm names}`sorry`タクティクは*どの*言明でも、偽の言明でも証明できる。
+{anchorTerm names}`3 < 2`を証明すると、範囲外の配列の参照が実行時まで残り、プログラムが予期せず落ちることがある。
+{anchorTerm names}`sorry`を使うのは開発中は便利だが、コードに残しておくのは危険である。
 
-# Proving Termination
+# 停止性の証明
 %%%
 tag := none
 %%%
 
-When a recursive function does not use structural recursion, Lean cannot automatically determine that it terminates.
-In these situations, the function could just be marked {kw}`partial`.
-However, it is also possible to provide a proof that the function terminates.
+再帰関数が構造的再帰を使っていないと、Leanはそれが停止することを自動で判断できない。
+このような場合、その関数を単に{kw}`partial`と印を付けることもできる。
+しかし、その関数が停止する証明を与えることもできる。
 
-Partial functions have a key downside: they can't be unfolded during type checking or in proofs.
-This means that Lean's value as an interactive theorem prover can't be applied to them.
-Additionally, showing that a function that is expected to terminate actually always does terminate removes one more potential source of bugs.
+partial な関数には重大な欠点がある。型検査の間や証明の中で展開できないのである。
+つまり、対話的な定理証明器としてのLeanの価値をそれらに活かせない。
+さらに、停止するはずの関数が実際に常に停止することを示せば、不具合の原因になりうるものを一つ減らせる。
 
-The {kw}`termination_by` clause that's allowed at the end of a function can be used to specify the reason why a recursive function terminates.
-The clause maps the function's arguments to an expression that is expected to be smaller for each recursive call.
-Some examples of expressions that might decrease are the difference between a growing index into an array and the array's size, the length of a list that's cut in half at each recursive call, or a pair of lists, exactly one of which shrinks on each recursive call.
+関数の末尾に書ける{kw}`termination_by`の句を使って、その再帰関数が停止する理由を指定できる。
+この句は、関数の引数を、再帰呼び出しごとに小さくなると期待される式に対応させる。
+小さくなりうる式の例としては、増えていく配列の添字と配列の大きさの差、再帰呼び出しごとに半分に切られるリストの長さ、再帰呼び出しごとにちょうど一方が縮む二つのリストの組などがある。
 
-Lean contains proof automation that can automatically determine that some expressions shrink with each call, but many interesting programs will require manual proofs.
-These proofs can be provided with {kw}`have`, a version of {kw}`let` that's intended for locally providing proofs rather than values.
+Leanには、一部の式が呼び出しごとに小さくなることを自動で判断できる証明の自動化があるが、興味深いプログラムの多くは手動の証明を要する。
+これらの証明は{kw}`have`で与えられる。これは値ではなく証明を局所的に与えるための{kw}`let`の一種である。
 
-A good way to write recursive functions is to begin by declaring them {kw}`partial` and debugging them with testing until they return the right answers.
-Then, {kw}`partial` can be removed and replaced with a {kw}`termination_by` clause.
-Lean will place error highlights on each recursive call for which a proof is needed that contains the statement that needs to be proved.
-Each of these statements can be placed in a {kw}`have`, with the proof being {anchorTerm names}`sorry`.
-If Lean accepts the program and it still passes its tests, the final step is to actually prove the theorems that enable Lean to accept it.
-This approach can prevent wasting time on proving that a buggy program terminates.
+再帰関数を書くよい方法は、まず{kw}`partial`として宣言し、正しい答えを返すまで試験でデバッグすることである。
+次に{kw}`partial`を取り除き、{kw}`termination_by`の句に置き換えられる。
+Leanは、証明が必要な各再帰呼び出しに、証明すべき言明を含むエラーの印を付ける。
+これらの言明はそれぞれ{kw}`have`の中に置け、その証明を{anchorTerm names}`sorry`にできる。
+Leanがそのプログラムを受け付け、それがまだ試験を通るなら、最後の段階は、Leanがそれを受け付けられるようにする定理を実際に証明することである。
+このやり方なら、不具合のあるプログラムが停止することを証明するのに時間を浪費せずに済む。
