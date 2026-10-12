@@ -26,7 +26,7 @@ The build runs in [`ci.yml`](.github/workflows/ci.yml) and hands the HTML to [`d
 
 ## 日本語訳について
 
-このリポジトリは [leanprover/fp-lean](https://github.com/leanprover/fp-lean) の fork であり、*Functional Programming in Lean* の日本語訳を収録している。翻訳は既定ブランチ `dsv4-ja-translation` にあり、セクションごとにコミットしているため、訳文の変遷は `git log` で追える。
+このリポジトリは [leanprover/fp-lean](https://github.com/leanprover/fp-lean) の fork であり、*Functional Programming in Lean* の日本語訳を収録している。翻訳は yanknvim と LLM が行っている。翻訳は既定ブランチ `dsv4-ja-translation` にあり、セクションごとにコミットしているため、訳文の変遷は `git log` で追える。
 
 翻訳の範囲は次のとおり。
 
@@ -53,5 +53,5 @@ serve-book     # 生成物を HTTP で配信
 
 原著 *Functional Programming in Lean* は 2023 年に Microsoft Corporation が [Creative Commons Attribution 4.0 International License](https://creativecommons.org/licenses/by/4.0/)（CC BY 4.0）の下で公開した。現在の英語版は著者によって、Lean の新しいバージョンに対応し Verso を使うよう変更されており、これらの変更の著作権は 2023-2025 Lean FRO, LLC にある。
 
-本リポジトリはこれを日本語に翻訳したものであり、CC BY 4.0 でいう Adapted Material にあたる。原著者と上流リポジトリを明示し、変更点は git 履歴で確認できる。翻訳部分の著作権は翻訳者に帰属し、上流と同じ CC BY 4.0 の下で提供する。
+本リポジトリはこれを日本語に翻訳したものであり、CC BY 4.0 でいう Adapted Material にあたる。原著者と上流リポジトリを明示し、変更点は git 履歴で確認できる。翻訳は yanknvim と LLM が行い、翻訳部分の著作権は翻訳者に帰属する。ライセンスは上流と同じ CC BY 4.0 を継承する。
 
