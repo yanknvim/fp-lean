@@ -15,43 +15,43 @@ set_option verso.exampleModule "Examples.DependentTypes.Pitfalls"
 tag := "dependent-type-pitfalls"
 %%%
 
-The flexibility of dependent types allows more useful programs to be accepted by a type checker, because the language of types is expressive enough to describe variations that less-expressive type systems cannot.
-At the same time, the ability of dependent types to express very fine-grained specifications allows more buggy programs to be rejected by a type checker.
-This power comes at a cost.
+依存型の柔軟さにより、より役に立つプログラムが型検査器に受け入れられる。型の言語が、表現力の低い型システムでは記述できない変種を記述できるだけの表現力を持つためである。
+同時に、依存型が非常に細かい仕様を表現できることにより、より多くの不具合のあるプログラムが型検査器に拒否される。
+この力には代償がある。
 
-The close coupling between the internals of type-returning functions such as {anchorName Row (module:=Examples.DependentTypes.DB)}`Row` and the types that they produce is an instance of a bigger difficulty: the distinction between the interface and the implementation of functions begins to break down when functions are used in types.
-Normally, all refactorings are valid as long as they don't change the type signature or input-output behavior of a function.
-Functions can be rewritten to use more efficient algorithms and data structures, bugs can be fixed, and code clarity can be improved without breaking client code.
-When the function is used in a type, however, the internals of the function's implementation become part of the type, and thus part of the _interface_ to another program.
+{anchorName Row (module:=Examples.DependentTypes.DB)}`Row`のような型を返す関数の中身と、それが生み出す型との密接な結び付きは、より大きな難点の一例である。関数を型に使うと、関数のインターフェースと実装の区別が崩れ始めるのである。
+通常は、関数の型シグネチャや入力と出力の振る舞いを変えない限り、どのような書き換えも有効である。
+より効率のよい算法やデータ構造を使うように関数を書き換えたり、不具合を直したり、コードの明快さを改善したりしても、利用側のコードを壊さない。
+しかし、その関数を型に使うと、関数の実装の中身が型の一部になり、したがって別のプログラムに対する*インターフェース*の一部になる。
 
-As an example, take the following two implementations of addition on {anchorName plusL}`Nat`.
-{anchorName plusL}`Nat.plusL` is recursive on its first argument:
+例として、{anchorName plusL}`Nat`の加法の次の二つの実装を考えよう。
+{anchorName plusL}`Nat.plusL`は一つ目の引数について再帰的である。
 
 ```anchor plusL
 def Nat.plusL : Nat → Nat → Nat
   | 0, k => k
   | n + 1, k => plusL n k + 1
 ```
-{anchorName plusR}`Nat.plusR`, on the other hand, is recursive on its second argument:
+一方、{anchorName plusR}`Nat.plusR`は二つ目の引数について再帰的である。
 
 ```anchor plusR
 def Nat.plusR : Nat → Nat → Nat
   | n, 0 => n
   | n, k + 1 => plusR n k + 1
 ```
-Both implementations of addition are faithful to the underlying mathematical concept, and they thus return the same result when given the same arguments.
+どちらの加法の実装も、その下にある数学的な概念に忠実であり、したがって同じ引数を与えれば同じ結果を返す。
 
-However, these two implementations present quite different interfaces when they are used in types.
-As an example, take a function that appends two {anchorName appendL}`Vect`s.
-This function should return a {anchorName appendL}`Vect` whose length is the sum of the length of the arguments.
-Because {anchorName appendL}`Vect` is essentially a {anchorName moreNames}`List` with a more informative type, it makes sense to write the function just as one would for {anchorName moreNames}`List.append`, with pattern matching and recursion on the first argument.
-Starting with a type signature and initial pattern match pointing at placeholders yields two messages:
+しかし、この二つの実装は、型に使うとかなり違うインターフェースを呈する。
+例として、二つの{anchorName appendL}`Vect`を連結する関数を考えよう。
+この関数は、長さが引数の長さの和である{anchorName appendL}`Vect`を返すべきである。
+{anchorName appendL}`Vect`は本質的にはより情報量の多い型を持つ{anchorName moreNames}`List`なので、{anchorName moreNames}`List.append`と同じように、一つ目の引数についてのパターンマッチングと再帰で関数を書くのは理にかなっている。
+型シグネチャと、穴埋めを指す最初のパターンマッチから始めると、二つのメッセージが出る。
 ```anchor appendL1
 def appendL : Vect α n → Vect α k → Vect α (n.plusL k)
   | .nil, ys => _
   | .cons x xs, ys => _
 ```
-The first message, in the {anchorName moreNames}`nil` case, states that the placeholder should be replaced by a {anchorName appendL}`Vect` with length {lit}`plusL 0 k`:
+一つ目のメッセージは{anchorName moreNames}`nil`の場合についてで、穴埋めを長さ{lit}`plusL 0 k`の{anchorName appendL}`Vect`に置き換えるべきことを述べている。
 ```anchorError appendL1
 don't know how to synthesize placeholder
 context:
@@ -60,7 +60,7 @@ n k : Nat
 ys : Vect α k
 ⊢ Vect α (Nat.plusL 0 k)
 ```
-The second message, in the {anchorName moreNames}`cons` case, states that the placeholder should be replaced by a {anchorName appendL}`Vect` with length {lit}`plusL (n✝ + 1) k`:
+二つ目のメッセージは{anchorName moreNames}`cons`の場合についてで、穴埋めを長さ{lit}`plusL (n✝ + 1) k`の{anchorName appendL}`Vect`に置き換えるべきことを述べている。
 ```anchorError appendL2
 don't know how to synthesize placeholder
 context:
@@ -71,21 +71,21 @@ xs : Vect α n✝
 ys : Vect α k
 ⊢ Vect α ((n✝ + 1).plusL k)
 ```
-The symbol after {lit}`n`, called a _dagger_, is used to indicate names that Lean has internally invented.
-Behind the scenes, pattern matching on the first {anchorName appendL1}`Vect` implicitly caused the value of the first {anchorName plusL}`Nat` to be refined as well, because the index on the constructor {anchorName moreNames}`cons` is {anchorTerm Vect (module:=Examples.DependentTypes)}`n + 1`, with the tail of the {anchorName appendL}`Vect` having length {anchorTerm Vect (module:=Examples.DependentTypes)}`n`.
-Here, {lit}`n✝` represents the {anchorName moreNames}`Nat` that is one less than the argument {anchorName appendL1}`n`.
+{lit}`n`の後の記号は*ダガー*と呼ばれ、Leanが内部で作り出した名前を示すのに使う。
+裏では、一つ目の{anchorName appendL1}`Vect`でのパターンマッチングにより、一つ目の{anchorName plusL}`Nat`の値も暗黙に洗練された。{anchorName moreNames}`cons`コンストラクタの添字が{anchorTerm Vect (module:=Examples.DependentTypes)}`n + 1`であり、その{anchorName appendL}`Vect`の残りの長さが{anchorTerm Vect (module:=Examples.DependentTypes)}`n`だからである。
+ここで{lit}`n✝`は、引数{anchorName appendL1}`n`より一つ小さい{anchorName moreNames}`Nat`を表す。
 
-# Definitional Equality
+# 定義上の等しさ
 %%%
 tag := "definitional-equality"
 %%%
 
-In the definition of {anchorName appendL3}`plusL`, there is a pattern case {anchorTerm plusL}`0, k => k`.
-This applies in the length used in the first placeholder, so another way to write the underscore's type {anchorTerm moreNames}`Vect α (Nat.plusL 0 k)` is {anchorTerm moreNames}`Vect α k`.
-Similarly, {anchorName plusL}`plusL` contains a pattern case {anchorTerm plusL}`n + 1, k => plusL n k + 1`.
-This means that the type of the second underscore can be equivalently written {lit}`Vect α (plusL n✝ k + 1)`.
+{anchorName appendL3}`plusL`の定義には、パターンの場合{anchorTerm plusL}`0, k => k`がある。
+これは一つ目の穴埋めで使う長さに当てはまるので、そのアンダースコアの型{anchorTerm moreNames}`Vect α (Nat.plusL 0 k)`は{anchorTerm moreNames}`Vect α k`とも書ける。
+同様に、{anchorName plusL}`plusL`にはパターンの場合{anchorTerm plusL}`n + 1, k => plusL n k + 1`がある。
+つまり、二つ目のアンダースコアの型は{lit}`Vect α (plusL n✝ k + 1)`とも等価に書ける。
 
-To expose what is going on behind the scenes, the first step is to write the {anchorName plusL}`Nat` arguments explicitly, which also results in daggerless error messages because the names are now written explicitly in the program:
+裏で何が起きているかを明らかにするには、まず{anchorName plusL}`Nat`の引数を明示的に書く。そうすると名前がプログラムに明示的に書かれているので、ダガーのないエラーメッセージにもなる。
 ```anchor appendL3
 def appendL : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusL k)
   | 0, k, .nil, ys => _
@@ -109,7 +109,7 @@ xs : Vect α n
 ys : Vect α k
 ⊢ Vect α ((n + 1).plusL k)
 ```
-Annotating the underscores with the simplified versions of the types does not introduce a type error, which means that the types as written in the program are equivalent to the ones that Lean found on its own:
+アンダースコアに単純化した版の型を注記しても型エラーは起きない。つまり、プログラムに書いた型はLeanが自力で見つけた型と等価である。
 ```anchor appendL5
 def appendL : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusL k)
   | 0, k, .nil, ys => (_ : Vect α k)
@@ -134,9 +134,9 @@ ys : Vect α k
 ⊢ Vect α (n.plusL k + 1)
 ```
 
-The first case demands a {anchorTerm appendL5}`Vect α k`, and {anchorName appendL5}`ys` has that type.
-This is parallel to the way that appending the empty list to any other list returns that other list.
-Refining the definition with {anchorName appendL7}`ys` instead of the first underscore yields a program with only one remaining underscore to be filled out:
+一つ目の場合は{anchorTerm appendL5}`Vect α k`を要求し、{anchorName appendL5}`ys`がその型を持つ。
+これは、空のリストを他のどのリストに連結してもそのリストが返るのと対応している。
+一つ目のアンダースコアの代わりに{anchorName appendL7}`ys`で定義を洗練すると、埋めるべきアンダースコアが一つだけ残ったプログラムになる。
 ```anchor appendL7
 def appendL : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusL k)
   | 0, k, .nil, ys => ys
@@ -153,55 +153,55 @@ ys : Vect α k
 ⊢ Vect α (n.plusL k + 1)
 ```
 
-Something very important has happened here.
-In a context where Lean expected a {anchorTerm moreNames}`Vect α (Nat.plusL 0 k)`, it received a {anchorTerm moreNames}`Vect α k`.
-However, {anchorName plusL}`Nat.plusL` is not an {kw}`abbrev`, so it may seem like it shouldn't be running during type checking.
-Something else is happening.
+ここで非常に重要なことが起きている。
+Leanが{anchorTerm moreNames}`Vect α (Nat.plusL 0 k)`を期待した文脈で、{anchorTerm moreNames}`Vect α k`を受け取ったのである。
+しかし{anchorName plusL}`Nat.plusL`は{kw}`abbrev`ではないので、型検査の間に動くはずがないように思える。
+何か別のことが起きている。
 
-The key to understanding what's going on is that Lean doesn't just expand {kw}`abbrev`s while type checking.
-It can also perform computation while checking whether two types are equivalent to one another, such that any expression of one type can be used in a context that expects the other type.
-This property is called _definitional equality_, and it is subtle.
+何が起きているかを理解する鍵は、Leanが型検査の間に{kw}`abbrev`を展開するだけではないということである。
+Leanは、二つの型が互いに等価かどうかを調べる間にも計算を行える。ある型の式を、他方の型を期待する文脈で使えるようにするためである。
+この性質を*定義上の等しさ*と呼び、これは微妙である。
 
-Certainly, two types that are written identically are considered to be definitionally equal—{anchorName moreNames}`Nat` and {anchorName moreNames}`Nat` or {anchorTerm moreNames}`List String` and {anchorTerm moreNames}`List String` should be considered equal.
-Any two concrete types built from different datatypes are not equal, so {anchorTerm moreNames}`List Nat` is not equal to {anchorName moreNames}`Int`.
-Additionally, types that differ only by renaming internal names are equal, so {anchorTerm moreNames}`(n : Nat) → Vect String n` is the same as {anchorTerm moreNames}`(k : Nat) → Vect String k`.
-Because types can contain ordinary data, definitional equality must also describe when data are equal.
-Uses of the same constructors are equal, so {anchorTerm moreNames}`0` equals {anchorTerm moreNames}`0` and {anchorTerm moreNames}`[5, 3, 1]` equals {anchorTerm moreNames}`[5, 3, 1]`.
+もちろん、同じように書かれた二つの型は定義上等しいと見なされる。{anchorName moreNames}`Nat`と{anchorName moreNames}`Nat`、あるいは{anchorTerm moreNames}`List String`と{anchorTerm moreNames}`List String`は等しいと見なすべきである。
+異なるデータ型から作られた二つの具体的な型は等しくないので、{anchorTerm moreNames}`List Nat`は{anchorName moreNames}`Int`と等しくない。
+さらに、内部の名前を付け替えただけの型は等しいので、{anchorTerm moreNames}`(n : Nat) → Vect String n`は{anchorTerm moreNames}`(k : Nat) → Vect String k`と同じである。
+型は普通のデータを含みうるので、定義上の等しさはデータがいつ等しいかも記述せねばならない。
+同じコンストラクタを使ったものは等しいので、{anchorTerm moreNames}`0`は{anchorTerm moreNames}`0`と、{anchorTerm moreNames}`[5, 3, 1]`は{anchorTerm moreNames}`[5, 3, 1]`と等しい。
 
-Types contain more than just function arrows, datatypes, and constructors, however.
-They also contain _variables_ and _functions_.
-Definitional equality of variables is relatively simple: each variable is equal only to itself, so {anchorTerm moreNames}`(n k : Nat) → Vect Int n` is not definitionally equal to {anchorTerm moreNames}`(n k : Nat) → Vect Int k`.
-Functions, on the other hand, are more complicated.
-While mathematics considers two functions to be equal if they have identical input-output behavior, there is no efficient algorithm to check that, and the whole point of definitional equality is for Lean to check whether two types are interchangeable.
-Instead, Lean considers functions to be definitionally equal either when they are both {kw}`fun`-expressions with definitionally equal bodies.
-In other words, two functions must use _the same algorithm_ that calls _the same helpers_ to be considered definitionally equal.
-This is not typically very helpful, so definitional equality of functions is mostly used when the exact same defined function occurs in two types.
+しかし、型は関数の矢印やデータ型、コンストラクタだけを含むのではない。
+型は*変数*と*関数*も含む。
+変数の定義上の等しさは比較的単純である。各変数はそれ自身にしか等しくないので、{anchorTerm moreNames}`(n k : Nat) → Vect Int n`は{anchorTerm moreNames}`(n k : Nat) → Vect Int k`と定義上等しくない。
+一方、関数はもっと複雑である。
+数学では二つの関数が同じ入力と出力の振る舞いを持てば等しいと見なすが、それを調べる効率のよい算法はなく、定義上の等しさの狙いは、二つの型が差し替え可能かをLeanが調べることにある。
+代わりにLeanは、どちらも本体が定義上等しい{kw}`fun`式であるときに、その二つの関数を定義上等しいと見なす。
+言い換えれば、二つの関数が定義上等しいと見なされるには、*同じ補助関数*を呼ぶ*同じ算法*を使わねばならない。
+これは通常あまり役に立たないので、関数の定義上の等しさは、まったく同じ定義済みの関数が二つの型に現れるときに主に使われる。
 
-When functions are _called_ in a type, checking definitional equality may involve reducing the function call.
-The type {anchorTerm moreNames}`Vect String (1 + 4)` is definitionally equal to the type {anchorTerm moreNames}`Vect String (3 + 2)` because {anchorTerm moreNames}`1 + 4` is definitionally equal to {anchorTerm moreNames}`3 + 2`.
-To check their equality, both are reduced to {anchorTerm moreNames}`5`, and then the constructor rule can be used five times.
-Definitional equality of functions applied to data can be checked first by seeing if they're already the same—there's no need to reduce {anchorTerm moreNames}`["a", "b"] ++ ["c"]` to check that it's equal to {anchorTerm moreNames}`["a", "b"] ++ ["c"]`, after all.
-If not, the function is called and replaced with its value, and the value can then be checked.
+型の中で関数が*呼び出されると*、定義上の等しさの検査に関数の呼び出しを簡約することが含まれうる。
+型{anchorTerm moreNames}`Vect String (1 + 4)`は型{anchorTerm moreNames}`Vect String (3 + 2)`と定義上等しい。{anchorTerm moreNames}`1 + 4`が{anchorTerm moreNames}`3 + 2`と定義上等しいためである。
+その等しさを調べるには、どちらも{anchorTerm moreNames}`5`に簡約し、次にコンストラクタの規則を五度使えばよい。
+データに適用された関数の定義上の等しさは、まずそれらがすでに同じかどうかを見て調べられる。何しろ{anchorTerm moreNames}`["a", "b"] ++ ["c"]`が{anchorTerm moreNames}`["a", "b"] ++ ["c"]`と等しいかを調べるのに簡約する必要はない。
+そうでなければ、その関数が呼び出されてその値に置き換えられ、次にその値を調べられる。
 
-Not all function arguments are concrete data.
-For example, types may contain {anchorName moreNames}`Nat`s that are not built from the {anchorName moreNames}`zero` and {anchorName moreNames}`succ` constructors.
-In the type {anchorTerm moreFun}`(n : Nat) → Vect String n`, the variable {anchorName moreFun}`n` is a {anchorName moreFun}`Nat`, but it is impossible to know _which_ {anchorName moreFun}`Nat` it is before the function is called.
-Indeed, the function may be called first with {anchorTerm moreNames}`0`, and then later with {anchorTerm moreNames}`17`, and then again with {anchorTerm moreNames}`33`.
-As seen in the definition of {anchorName appendL}`appendL`, variables with type {anchorName moreFun}`Nat` may also be passed to functions such as {anchorName appendL}`plusL`.
-Indeed, the type {anchorTerm moreFun}`(n : Nat) → Vect String n` is definitionally equal to the type {anchorTerm moreNames}`(n : Nat) → Vect String (Nat.plusL 0 n)`.
+関数の引数がすべて具体的なデータであるわけではない。
+たとえば、型には{anchorName moreNames}`zero`と{anchorName moreNames}`succ`のコンストラクタから作られていない{anchorName moreNames}`Nat`が含まれうる。
+型{anchorTerm moreFun}`(n : Nat) → Vect String n`で、変数{anchorName moreFun}`n`は{anchorName moreFun}`Nat`だが、その関数が呼ばれる前に*どの*{anchorName moreFun}`Nat`かを知ることはできない。
+実際、その関数はまず{anchorTerm moreNames}`0`で、次に{anchorTerm moreNames}`17`で、さらに{anchorTerm moreNames}`33`で呼ばれるかもしれない。
+{anchorName appendL}`appendL`の定義に見られるように、{anchorName moreFun}`Nat`型の変数は{anchorName appendL}`plusL`のような関数に渡されることもある。
+実際、型{anchorTerm moreFun}`(n : Nat) → Vect String n`は型{anchorTerm moreNames}`(n : Nat) → Vect String (Nat.plusL 0 n)`と定義上等しい。
 
-The reason that {anchorName againFun}`n` and {anchorTerm againFun}`Nat.plusL 0 n` are definitionally equal is that {anchorName plusL}`plusL`'s pattern match examines its _first_ argument.
-This is problematic: {anchorTerm moreFun}`(n : Nat) → Vect String n` is _not_ definitionally equal to {anchorTerm stuckFun}`(n : Nat) → Vect String (Nat.plusL n 0)`, even though zero should be both a left and a right identity of addition.
-This happens because pattern matching gets stuck when it encounters variables.
-Until the actual value of {anchorName stuckFun}`n` becomes known, there is no way to know which case of {anchorTerm stuckFun}`Nat.plusL n 0` should be selected.
+{anchorName againFun}`n`と{anchorTerm againFun}`Nat.plusL 0 n`が定義上等しいのは、{anchorName plusL}`plusL`のパターンマッチングが*一つ目*の引数を調べるためである。
+これは問題である。{anchorTerm moreFun}`(n : Nat) → Vect String n`は{anchorTerm stuckFun}`(n : Nat) → Vect String (Nat.plusL n 0)`と定義上等しく*ない*。0は加法の左単位元でも右単位元でもあるはずなのに、である。
+これは、パターンマッチングが変数に出会うと行き詰まるために起きる。
+{anchorName stuckFun}`n`の実際の値が分かるまでは、{anchorTerm stuckFun}`Nat.plusL n 0`のどの場合を選ぶべきかを知る手立てがない。
 
-The same issue appears with the {anchorName Row (module:=Examples.DependentTypes.DB)}`Row` function in the query example.
-The type {anchorTerm RowStuck (module:=Examples.DependentTypes.DB)}`Row (c :: cs)` does not reduce to any datatype because the definition of {anchorName RowStuck (module:=Examples.DependentTypes.DB)}`Row` has separate cases for singleton lists and lists with at least two entries.
-In other words, it gets stuck when trying to match the variable {anchorName RowStuck (module:=Examples.DependentTypes.DB)}`cs` against concrete {anchorName moreNames}`List` constructors.
-This is why almost every function that takes apart or constructs a {anchorName RowStuck (module:=Examples.DependentTypes.DB)}`Row` needs to match the same three cases as {anchorName RowStuck (module:=Examples.DependentTypes.DB)}`Row` itself: getting it unstuck reveals concrete types that can be used for either pattern matching or constructors.
+同じ問題は、問い合わせの例の{anchorName Row (module:=Examples.DependentTypes.DB)}`Row`関数にも現れる。
+型{anchorTerm RowStuck (module:=Examples.DependentTypes.DB)}`Row (c :: cs)`はどのデータ型にも簡約されない。{anchorName RowStuck (module:=Examples.DependentTypes.DB)}`Row`の定義が、単一要素のリストと、少なくとも二つの要素を持つリストの場合を分けているためである。
+言い換えれば、変数{anchorName RowStuck (module:=Examples.DependentTypes.DB)}`cs`を具体的な{anchorName moreNames}`List`のコンストラクタにマッチさせようとして行き詰まる。
+{anchorName RowStuck (module:=Examples.DependentTypes.DB)}`Row`を分解したり組み立てたりするほぼすべての関数が、{anchorName RowStuck (module:=Examples.DependentTypes.DB)}`Row`自体と同じ三つの場合にマッチさせる必要があるのはこのためである。行き詰まりを解くと、パターンマッチングにもコンストラクタにも使える具体的な型が現れる。
 
-The missing case in {anchorName appendL8}`appendL` requires a {lit}`Vect α (Nat.plusL n k + 1)`.
-The {lit}`+ 1` in the index suggests that the next step is to use {anchorName consNotLengthN (module:=Examples.DependentTypes)}`Vect.cons`:
+{anchorName appendL8}`appendL`の欠けている場合が要求するのは{lit}`Vect α (Nat.plusL n k + 1)`である。
+添字にある{lit}`+ 1`は、次の段階が{anchorName consNotLengthN (module:=Examples.DependentTypes)}`Vect.cons`を使うことだと示唆している。
 ```anchor appendL8
 def appendL : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusL k)
   | 0, k, .nil, ys => ys
@@ -217,14 +217,14 @@ xs : Vect α n
 ys : Vect α k
 ⊢ Vect α (n.plusL k)
 ```
-A recursive call to {anchorName appendL9}`appendL` can construct a {anchorName appendL9}`Vect` with the desired length:
+{anchorName appendL9}`appendL`への再帰呼び出しで、望む長さの{anchorName appendL9}`Vect`を組み立てられる。
 
 ```anchor appendL9
 def appendL : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusL k)
   | 0, k, .nil, ys => ys
   | n + 1, k, .cons x xs, ys => .cons x (appendL n k xs ys)
 ```
-Now that the program is finished, removing the explicit matching on {anchorName appendL9}`n` and {anchorName appendL9}`k` makes it easier to read and easier to call the function:
+プログラムが完成したので、{anchorName appendL9}`n`と{anchorName appendL9}`k`についての明示的なマッチングを取り除くと、読みやすく、関数を呼びやすくなる。
 
 ```anchor appendL
 def appendL : Vect α n → Vect α k → Vect α (n.plusL k)
@@ -232,17 +232,17 @@ def appendL : Vect α n → Vect α k → Vect α (n.plusL k)
   | .cons x xs, ys => .cons x (appendL xs ys)
 ```
 
-Comparing types using definitional equality means that everything involved in definitional equality, including the internals of function definitions, becomes part of the _interface_ of programs that use dependent types and indexed families.
-Exposing the internals of a function in a type means that refactoring the exposed program may cause programs that use it to no longer type check.
-In particular, the fact that {anchorName appendL}`plusL` is used in the type of {anchorName appendL}`appendL` means that the definition of {anchorName appendL}`plusL` cannot be replaced by the otherwise-equivalent {anchorName plusR}`plusR`.
+定義上の等しさで型を比べるということは、関数の定義の中身を含め、定義上の等しさに関わるすべてが、依存型と添字付き族を使うプログラムの*インターフェース*の一部になるということである。
+型に関数の中身をさらすということは、さらされたプログラムを書き換えると、それを使うプログラムが型検査を通らなくなることがあるということである。
+特に、{anchorName appendL}`plusL`が{anchorName appendL}`appendL`の型に使われているということは、{anchorName appendL}`plusL`の定義を、それ以外は等価な{anchorName plusR}`plusR`に置き換えられないということである。
 
-# Getting Stuck on Addition
+# 加法で行き詰まる
 %%%
 tag := "stuck-addition"
 %%%
 
-What happens if append is defined with {anchorName appendR}`plusR` instead?
-Beginning in the same way, with explicit lengths and placeholder underscores in each case, reveals the following useful error messages:
+代わりに{anchorName appendR}`plusR`でappendを定義するとどうなるか。
+同じように、長さを明示し、各場合に穴埋めのアンダースコアを置いて始めると、次の役に立つエラーメッセージが現れる。
 ```anchor appendR1
 def appendR : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusR k)
   | 0, k, .nil, ys => _
@@ -266,7 +266,7 @@ xs : Vect α n
 ys : Vect α k
 ⊢ Vect α ((n + 1).plusR k)
 ```
-However, attempting to place a {anchorTerm appendR3}`Vect α k` type annotation around the first placeholder results in an type mismatch error:
+しかし、一つ目の穴埋めに{anchorTerm appendR3}`Vect α k`の型注釈を付けようとすると、型の食い違いのエラーになる。
 ```anchor appendR3
 def appendR : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusR k)
   | 0, k, .nil, ys => (_ : Vect α k)
@@ -280,18 +280,18 @@ has type
 but is expected to have type
   Vect α (Nat.plusR 0 k)
 ```
-This error is pointing out that {anchorTerm plusRinfo}`Nat.plusR 0 k` and {anchorName plusRinfo}`k` are _not_ definitionally equal.
+このエラーは、{anchorTerm plusRinfo}`Nat.plusR 0 k`と{anchorName plusRinfo}`k`が定義上等しく*ない*ことを指摘している。
 
 :::paragraph
-This is because {anchorName plusR}`plusR` has the following definition:
+これは{anchorName plusR}`plusR`が次の定義を持つためである。
 
 ```anchor plusR
 def Nat.plusR : Nat → Nat → Nat
   | n, 0 => n
   | n, k + 1 => plusR n k + 1
 ```
-Its pattern matching occurs on the _second_ argument, not the first argument, which means that the presence of the variable {anchorName plusRinfo}`k` in that position prevents it from reducing.
-{anchorName plusRinfo}`Nat.add` in Lean's standard library is equivalent to {anchorName plusRinfo}`plusR`, not {anchorName plusRinfo}`plusL`, so attempting to use it in this definition results in precisely the same difficulties:
+そのパターンマッチングは一つ目ではなく*二つ目*の引数について起きるので、その位置に変数{anchorName plusRinfo}`k`があると簡約できない。
+Leanの標準ライブラリの{anchorName plusRinfo}`Nat.add`は{anchorName plusRinfo}`plusL`ではなく{anchorName plusRinfo}`plusR`と等価なので、これをこの定義で使おうとするとまったく同じ難点が生じる。
 ```anchor appendR4
 def appendR : (n k : Nat) → Vect α n → Vect α k → Vect α (n + k)
   | 0, k, .nil, ys => (_ : Vect α k)
@@ -306,40 +306,40 @@ but is expected to have type
   Vect α (0 + k)
 ```
 
-Addition is getting _stuck_ on the variables.
-Getting it unstuck requires {ref "equality-and-ordering"}[propositional equality].
+加法が変数で*行き詰まって*いる。
+行き詰まりを解くには{ref "equality-and-ordering"}[命題としての等しさ]が要る。
 :::
 
-# Propositional Equality
+# 命題としての等しさ
 %%%
 tag := "propositional-equality"
 %%%
 
-Propositional equality is the mathematical statement that two expressions are equal.
-While definitional equality is a kind of ambient fact that Lean automatically checks when required, statements of propositional equality require explicit proofs.
-Once an equality proposition has been proved, it can be used in a program to modify a type, replacing one side of the equality with the other, which can unstick the type checker.
+命題としての等しさとは、二つの式が等しいという数学的な言明である。
+定義上の等しさは、必要なときにLeanが自動で調べる、一種の周囲の事実であるが、命題としての等しさの言明には明示的な証明が要る。
+等しさの命題が証明されれば、それをプログラムで使って型を変更し、等しさの一方の辺を他方で置き換えられ、型検査器の行き詰まりを解ける。
 
-The reason why definitional equality is so limited is to enable it to be checked by an algorithm.
-Propositional equality is much richer, but the computer cannot in general check whether two expressions are propositionally equal, though it can verify that a purported proof is in fact a proof.
-The split between definitional and propositional equality represents a division of labor between humans and machines: the most boring equalities are checked automatically as part of definitional equality, freeing the human mind to work on the interesting problems available in propositional equality.
-Similarly, definitional equality is invoked automatically by the type checker, while propositional equality must be specifically appealed to.
+定義上の等しさがこれほど限られているのは、算法で調べられるようにするためである。
+命題としての等しさはずっと豊かだが、計算機は一般に二つの式が命題として等しいかを調べられない。ただし、証明と言われているものが実際に証明であることは検証できる。
+定義上の等しさと命題としての等しさの分かれ目は、人と機械の分業を表している。最も退屈な等しさは定義上の等しさの一部として自動で調べられ、人の頭は命題としての等しさにある興味深い問題に取り組める。
+同様に、定義上の等しさは型検査器が自動で呼び出すが、命題としての等しさはわざわざ訴えねばならない。
 
 
-In {ref "props-proofs-indexing"}[Propositions, Proofs, and Indexing], some equality statements are proved using {tactic}`decide`.
-All of these equality statements are ones in which the propositional equality is in fact already a definitional equality.
-Typically, statements of propositional equality are proved by first getting them into a form where they are either definitional or close enough to existing proved equalities, and then using tools like {tactic}`decide` or {tactic}`simp` to take care of the simplified cases.
-The {tactic}`simp` tactic is quite powerful: behind the scenes, it uses a number of fast, automated tools to construct a proof.
-A simpler tactic called {kw}`rfl` specifically uses definitional equality to prove propositional equality.
-The name {kw}`rfl` is short for _reflexivity_, which is the property of equality that states that everything equals itself.
+{ref "props-proofs-indexing"}[命題・証明・添字付け]では、いくつかの等しさの言明を{tactic}`decide`で証明した。
+これらの等しさの言明はすべて、命題としての等しさが実際にはすでに定義上の等しさであるものである。
+通常、命題としての等しさの言明は、まず定義上等しいか、すでに証明された等しさに十分近い形にしてから、{tactic}`decide`や{tactic}`simp`のような道具で単純化した場合を片付けることで証明する。
+{tactic}`simp`タクティクはかなり強力である。裏では多くの高速で自動の道具を使って証明を組み立てる。
+{kw}`rfl`というより単純なタクティクは、定義上の等しさを使って命題としての等しさを証明する。
+{kw}`rfl`という名前は*反射性*の略で、すべてのものがそれ自身に等しいという等しさの性質である。
 
-Unsticking {anchorName appendR}`appendR` requires a proof that {anchorTerm plusR_zero_left1}`k = Nat.plusR 0 k`, which is not a definitional equality because {anchorName plusR}`plusR` is stuck on the variable in its second argument.
-To get it to compute, the {anchorName plusR_zero_left1}`k` must become a concrete constructor.
-This is a job for pattern matching.
+{anchorName appendR}`appendR`の行き詰まりを解くには、{anchorTerm plusR_zero_left1}`k = Nat.plusR 0 k`の証明が要る。{anchorName plusR}`plusR`が二つ目の引数の変数で行き詰まっているので、これは定義上の等しさではない。
+計算させるには、{anchorName plusR_zero_left1}`k`が具体的なコンストラクタにならねばならない。
+これはパターンマッチングの仕事である。
 
 :::paragraph
-In particular, because {anchorName plusR_zero_left1}`k` could be _any_ {anchorName plusR_zero_left1}`Nat`, this task requires a function that can return evidence that {anchorTerm plusR_zero_left1}`k = Nat.plusR 0 k` for _any_ {anchorName plusR_zero_left1}`k` whatsoever.
-This should be a function that returns a proof of equality, with type {anchorTerm plusR_zero_left1}`(k : Nat) → k = Nat.plusR 0 k`.
-Getting it started with initial patterns and placeholders yields the following messages:
+特に、{anchorName plusR_zero_left1}`k`が*どの*{anchorName plusR_zero_left1}`Nat`でもありうるので、この作業には、*どんな*{anchorName plusR_zero_left1}`k`についても{anchorTerm plusR_zero_left1}`k = Nat.plusR 0 k`の証拠を返せる関数が要る。
+これは等しさの証明を返す関数で、型は{anchorTerm plusR_zero_left1}`(k : Nat) → k = Nat.plusR 0 k`であるべきである。
+最初のパターンと穴埋めで始めると、次のメッセージが出る。
 ```anchor plusR_zero_left1
 def plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
   | 0 => _
@@ -356,8 +356,8 @@ context:
 k : Nat
 ⊢ k + 1 = Nat.plusR 0 (k + 1)
 ```
-Having refined {anchorName plusR_zero_left1}`k` to {anchorTerm plusR_zero_left1}`0` via pattern matching, the first placeholder stands for evidence of a statement that does hold definitionally.
-The {kw}`rfl` tactic takes care of it, leaving only the second placeholder:
+パターンマッチングで{anchorName plusR_zero_left1}`k`を{anchorTerm plusR_zero_left1}`0`に洗練したので、一つ目の穴埋めは、定義上確かに成り立つ言明の証拠を表す。
+{kw}`rfl`タクティクがそれを片付け、二つ目の穴埋めだけが残る。
 ```anchor plusR_zero_left3
 def plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
   | 0 => by rfl
@@ -365,9 +365,9 @@ def plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
 ```
 :::
 
-The second placeholder is a bit trickier.
-The expression {anchorTerm plusRStep}`Nat.plusR 0 k + 1` is definitionally equal to {anchorTerm plusRStep}`Nat.plusR 0 (k + 1)`.
-This means that the goal could also be written {anchorTerm plusR_zero_left4}`k + 1 = Nat.plusR 0 k + 1`:
+二つ目の穴埋めはもう少しやっかいである。
+式{anchorTerm plusRStep}`Nat.plusR 0 k + 1`は{anchorTerm plusRStep}`Nat.plusR 0 (k + 1)`と定義上等しい。
+つまりゴールは{anchorTerm plusR_zero_left4}`k + 1 = Nat.plusR 0 k + 1`とも書ける。
 ```anchor plusR_zero_left4
 def plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
   | 0 => by rfl
@@ -381,12 +381,12 @@ k : Nat
 ```
 
 :::paragraph
-Underneath the {anchorTerm plusR_zero_left4}`+ 1` on each side of the equality statement is another instance of what the function itself returns.
-In other words, a recursive call on {anchorName plusR_zero_left4}`k` would return evidence that {anchorTerm plusR_zero_left4}`k = Nat.plusR 0 k`.
-Equality wouldn't be equality if it didn't apply to function arguments.
-In other words, if {anchorTerm congr}`x = y`, then {anchorTerm congr}`f x = f y`.
-The standard library contains a function {anchorName congr}`congrArg` that takes a function and an equality proof and returns a new proof where the function has been applied to both sides of the equality.
-In this case, the function is {anchorTerm plusR_zero_left_done}`(· + 1)`:
+等しさの言明の両辺の{anchorTerm plusR_zero_left4}`+ 1`の下には、その関数自体が返すものの別の例がある。
+言い換えれば、{anchorName plusR_zero_left4}`k`についての再帰呼び出しが{anchorTerm plusR_zero_left4}`k = Nat.plusR 0 k`の証拠を返す。
+等しさが関数の引数に当てはまらないなら、等しさとは言えない。
+言い換えれば、{anchorTerm congr}`x = y`なら{anchorTerm congr}`f x = f y`である。
+標準ライブラリには、関数と等しさの証明を取り、等しさの両辺に関数を適用した新しい証明を返す{anchorName congr}`congrArg`関数がある。
+この場合、その関数は{anchorTerm plusR_zero_left_done}`(· + 1)`である。
 
 ```anchor plusR_zero_left_done
 def plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
@@ -397,7 +397,7 @@ def plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
 :::
 
 :::paragraph
-Because this is really a proof of a proposition, it should be declared as a {kw}`theorem`:
+これは実際には命題の証明なので、{kw}`theorem`として宣言すべきである。
 
 ```anchor plusR_zero_left_thm
 theorem plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
@@ -407,15 +407,15 @@ theorem plusR_zero_left : (k : Nat) → k = Nat.plusR 0 k
 ```
 :::
 
-Propositional equalities can be deployed in a program using the rightward triangle operator {anchorTerm appendRsubst}`▸`.
-Given an equality proof as its first argument and some other expression as its second, this operator replaces instances of one side of the equality with the other side of the equality in the second argument's type.
-In other words, the following definition contains no type errors:
+命題としての等しさは、右向きの三角の演算子{anchorTerm appendRsubst}`▸`を使ってプログラムで使える。
+等しさの証明を一つ目の引数に、他の式を二つ目の引数に与えると、この演算子は二つ目の引数の型の中で、等しさの一方の辺の例を他方の辺で置き換える。
+言い換えれば、次の定義には型エラーがない。
 ```anchor appendRsubst
 def appendR : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusR k)
   | 0, k, .nil, ys => plusR_zero_left k ▸ (_ : Vect α k)
   | n + 1, k, .cons x xs, ys => _
 ```
-The first placeholder has the expected type:
+一つ目の穴埋めは期待される型を持つ。
 ```anchorError appendRsubst
 don't know how to synthesize placeholder
 context:
@@ -424,14 +424,14 @@ k : Nat
 ys : Vect α k
 ⊢ Vect α k
 ```
-It can now be filled in with {anchorName appendR5}`ys`:
+これを{anchorName appendR5}`ys`で埋められる。
 ```anchor appendR5
 def appendR : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusR k)
   | 0, k, .nil, ys => plusR_zero_left k ▸ ys
   | n + 1, k, .cons x xs, ys => _
 ```
 
-Filling in the remaining placeholder requires unsticking another instance of addition:
+残りの穴埋めを埋めるには、加法の別の行き詰まりを解く必要がある。
 ```anchorError appendR5
 don't know how to synthesize placeholder
 context:
@@ -442,11 +442,11 @@ xs : Vect α n
 ys : Vect α k
 ⊢ Vect α ((n + 1).plusR k)
 ```
-Here, the statement to be proved is that {anchorTerm plusR_succ_left}`Nat.plusR (n + 1) k = Nat.plusR n k + 1`, which can be used with {anchorTerm appendRsubst}`▸` to draw the {anchorTerm appendRsubst}`+ 1` out to the top of the expression so that it matches the index of {anchorName Vect}`cons`.
+ここで証明すべき言明は{anchorTerm plusR_succ_left}`Nat.plusR (n + 1) k = Nat.plusR n k + 1`であり、これを{anchorTerm appendRsubst}`▸`とともに使うと、{anchorTerm appendRsubst}`+ 1`を式の一番上に引き出し、{anchorName Vect}`cons`の添字に一致させられる。
 
-The proof is a recursive function that pattern matches on the second argument to {anchorName appendR}`plusR`, namely {anchorName appendR5}`k`.
-This is because {anchorName appendR5}`plusR` itself pattern matches on its second argument, so the proof can “unstick” it through pattern matching, exposing the computational behavior.
-The skeleton of the proof is very similar to that of {anchorName appendR}`plusR_zero_left`:
+その証明は、{anchorName appendR}`plusR`の二つ目の引数、つまり{anchorName appendR5}`k`でパターンマッチングする再帰関数である。
+{anchorName appendR5}`plusR`自体が二つ目の引数でパターンマッチングするので、その証明はパターンマッチングによって行き詰まりを「解き」、計算の振る舞いを明らかにできる。
+その証明の骨組みは{anchorName appendR}`plusR_zero_left`のものとよく似ている。
 ```anchor plusR_succ_left_0
 theorem plusR_succ_left (n : Nat) :
     (k : Nat) → Nat.plusR (n + 1) k = Nat.plusR n k + 1
@@ -454,14 +454,14 @@ theorem plusR_succ_left (n : Nat) :
   | k + 1 => _
 ```
 
-The remaining case's type is definitionally equal to {anchorTerm congr}`Nat.plusR (n + 1) k + 1 = Nat.plusR n (k + 1) + 1`, so it can be solved with {anchorName congr}`congrArg`, just as in {anchorName plusR_zero_left_thm}`plusR_zero_left`:
+残りの場合の型は{anchorTerm congr}`Nat.plusR (n + 1) k + 1 = Nat.plusR n (k + 1) + 1`と定義上等しいので、{anchorName plusR_zero_left_thm}`plusR_zero_left`と同じく{anchorName congr}`congrArg`で解ける。
 ```anchorError plusR_succ_left_2
 don't know how to synthesize placeholder
 context:
 n k : Nat
 ⊢ (n + 1).plusR (k + 1) = n.plusR (k + 1) + 1
 ```
-This results in a finished proof:
+これで証明が完成する。
 
 ```anchor plusR_succ_left
 theorem plusR_succ_left (n : Nat) :
@@ -470,7 +470,7 @@ theorem plusR_succ_left (n : Nat) :
   | k + 1 => congrArg (· + 1) (plusR_succ_left n k)
 ```
 
-The finished proof can be used to unstick the second case in {anchorName appendR}`appendR`:
+完成した証明は、{anchorName appendR}`appendR`の二つ目の場合の行き詰まりを解くのに使える。
 
 ```anchor appendR
 def appendR : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusR k)
@@ -479,8 +479,8 @@ def appendR : (n k : Nat) → Vect α n → Vect α k → Vect α (n.plusR k)
   | n + 1, k, .cons x xs, ys =>
     plusR_succ_left n k ▸ .cons x (appendR n k xs ys)
 ```
-When making the length arguments to {anchorName appendR}`appendR` implicit again, they are no longer explicitly named to be appealed to in the proofs.
-However, Lean's type checker has enough information to fill them in automatically behind the scenes, because no other values would allow the types to match:
+{anchorName appendR}`appendR`の長さの引数を再び暗黙にすると、証明で訴えるための名前が明示的にはなくなる。
+しかし、型が一致するようにできる他の値がないので、Leanの型検査器は裏でそれらを自動で埋めるだけの情報を持っている。
 
 ```anchor appendRImpl
 def appendR : Vect α n → Vect α k → Vect α (n.plusR k)
@@ -488,46 +488,46 @@ def appendR : Vect α n → Vect α k → Vect α (n.plusR k)
   | .cons x xs, ys => plusR_succ_left _ _ ▸ .cons x (appendR xs ys)
 ```
 
-# Pros and Cons
+# 利点と欠点
 %%%
 tag := "dependent-types-pros-and-cons"
 %%%
 
-Indexed families have an important property: pattern matching on them affects definitional equality.
-For example, in the {anchorName Vect}`nil` case in a {kw}`match` expression on a {anchorTerm Vect}`Vect`, the length simply _becomes_ {anchorTerm moreNames}`0`.
-Definitional equality can be very convenient, because it is always active and does not need to be invoked explicitly.
+添字付き族には重要な性質がある。それについてのパターンマッチングが定義上の等しさに影響するのである。
+たとえば、{anchorTerm Vect}`Vect`についての{kw}`match`式で{anchorName Vect}`nil`の場合、長さは単に{anchorTerm moreNames}`0`に*なる*。
+定義上の等しさは常に働いており、明示的に呼び出す必要がないので、とても便利なことがある。
 
-However, the use of definitional equality with dependent types and pattern matching has serious software engineering drawbacks.
-First off, functions must be written especially to be used in types, and functions that are convenient to use in types may not use the most efficient algorithms.
-Once a function has been exposed through using it in a type, its implementation has become part of the interface, leading to difficulties in future refactoring.
-Secondly, definitional equality can be slow.
-When asked to check whether two expressions are definitionally equal, Lean may need to run large amounts of code if the functions in question are complicated and have many layers of abstraction.
-Third, error messages that result from failures of definitional equality are not always very easy to understand, because they may be phrased in terms of the internals of functions.
-It is not always easy to understand the provenance of the expressions in the error messages.
-Finally, encoding non-trivial invariants in a collection of indexed families and dependently-typed functions can often be brittle.
-It is often necessary to change early definitions in a system when the exposed reduction behavior of functions proves to not provide convenient definitional equalities.
-The alternative is to litter the program with appeals to equality proofs, but these can become quite unwieldy.
+しかし、依存型とパターンマッチングとともに定義上の等しさを使うことには、ソフトウェア工学上の深刻な欠点がある。
+第一に、関数は型で使えるように特別に書かねばならず、型で使いやすい関数が最も効率のよい算法を使っているとは限らない。
+一度関数を型で使ってさらすと、その実装がインターフェースの一部になり、将来の書き換えが難しくなる。
+第二に、定義上の等しさは遅くなりうる。
+二つの式が定義上等しいかを調べるよう求められたとき、問題の関数が複雑で抽象の層が多いと、Leanは大量のコードを走らせねばならないことがある。
+第三に、定義上の等しさが成り立たないために生じるエラーメッセージは、必ずしも理解しやすいとは限らない。関数の中身の言葉で述べられることがあるためである。
+エラーメッセージにある式がどこから来たのかを理解するのは、必ずしも容易ではない。
+最後に、自明でない不変条件を添字付き族と依存型の関数の集まりで符号化するのは、しばしば壊れやすい。
+関数のさらされた簡約の振る舞いが便利な定義上の等しさを与えないと分かったときには、システムの初期の定義を変える必要がしばしば生じる。
+代わりに、プログラムを等しさの証明への訴えで埋め尽くすこともできるが、それはかなり手に負えなくなりうる。
 
-In idiomatic Lean code, indexed datatypes are not used very often.
-Instead, subtypes and explicit propositions are typically used to enforce important invariants.
-This approach involves many explicit proofs, and very few appeals to definitional equality.
-As befits an interactive theorem prover, Lean has been designed to make explicit proofs convenient.
-Generally speaking, this approach should be preferred in most cases.
+慣用的なLeanのコードでは、添字付きのデータ型はあまり使わない。
+代わりに、重要な不変条件を強制するには部分型と明示的な命題を通常使う。
+このやり方では多くの明示的な証明が関わり、定義上の等しさに訴えることはほとんどない。
+対話的な定理証明器にふさわしく、Leanは明示的な証明を便利にするよう設計されている。
+一般に、ほとんどの場合このやり方が好ましい。
 
-However, understanding indexed families of datatypes is important.
-Recursive functions such as {anchorName plusR_zero_left_thm}`plusR_zero_left` and {anchorName plusR_succ_left}`plusR_succ_left` are in fact _proofs by mathematical induction_.
-The base case of the recursion corresponds to the base case in induction, and the recursive call represents an appeal to the induction hypothesis.
-More generally, new propositions in Lean are often defined as inductive types of evidence, and these inductive types usually have indices.
-The process of proving theorems is in fact constructing expressions with these types behind the scenes, in a process not unlike the proofs in this section.
-Also, indexed datatypes are sometimes exactly the right tool for the job.
-Fluency in their use is an important part of knowing when to use them.
+しかし、データ型の添字付き族を理解することは重要である。
+{anchorName plusR_zero_left_thm}`plusR_zero_left`や{anchorName plusR_succ_left}`plusR_succ_left`のような再帰関数は、実際には*数学的帰納法による証明*である。
+再帰の基底の場合は帰納法の基底の場合に対応し、再帰呼び出しは帰納法の仮定への訴えを表す。
+より一般に、Leanの新しい命題はしばしば証拠の帰納型として定義され、これらの帰納型は通常添字を持つ。
+定理を証明する過程は、実際には裏でこれらの型を持つ式を組み立てることであり、その過程はこの節の証明によく似ている。
+また、添字付きのデータ型がまさにその作業にぴったりの道具であることもある。
+それらを使いこなせることは、いつ使うべきかを知るうえで重要な部分である。
 
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "dependent-type-pitfalls-exercises"
 %%%
 
- * Using a recursive function in the style of {anchorName plusR_succ_left}`plusR_succ_left`, prove that for all {anchorName moreNames}`Nat`s {anchorName exercises}`n` and {anchorName exercises}`k`, {anchorTerm exercises}`n.plusR k = n + k`.
- * Write a function on {anchorName moreNames}`Vect` for which {anchorName plusR}`plusR` is more natural than {anchorName plusL}`plusL`, where {anchorName plusL}`plusL` would require proofs to be used in the definition.
+ * {anchorName plusR_succ_left}`plusR_succ_left`の流儀の再帰関数を使って、すべての{anchorName moreNames}`Nat` {anchorName exercises}`n`と{anchorName exercises}`k`について{anchorTerm exercises}`n.plusR k = n + k`を証明せよ。
+ * {anchorName moreNames}`Vect`上の関数で、{anchorName plusL}`plusL`を使うと定義に証明が必要になるが、{anchorName plusR}`plusR`のほうが自然なものを書け。
