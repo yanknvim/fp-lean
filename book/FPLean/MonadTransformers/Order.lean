@@ -15,10 +15,10 @@ set_option verso.exampleModule "Examples.MonadTransformers.Defs"
 tag := "monad-transformer-order"
 %%%
 
-When composing a monad from a stack of monad transformers, it's important to be aware that the order in which the monad transformers are layered matters.
-Different orderings of the same set of transformers result in different monads.
+モナド変換子の積み重ねからモナドを組み立てるときは、モナド変換子を重ねる順序が重要であることに注意すべきである。
+同じ変換子の組でも順序が違えば異なるモナドになる。
 
-This version of {anchorName countLettersClassy}`countLetters` is just like the previous version, except it uses type classes to describe the set of available effects instead of providing a concrete monad:
+この{anchorName countLettersClassy}`countLetters`の版は、具体的なモナドを与える代わりに、使える副作用の組を型クラスで記述する点を除けば、前の版と同じである。
 
 ```anchor countLettersClassy
 def countLetters [Monad m] [MonadState LetterCounts m] [MonadExcept Err m]
@@ -38,14 +38,14 @@ def countLetters [Monad m] [MonadState LetterCounts m] [MonadExcept Err m]
       loop cs
   loop str.toList
 ```
-The state and exception monad transformers can be combined in two different orders, each resulting in a monad that has instances of both type classes:
+状態と例外のモナド変換子は二通りの順序で組み合わせられ、どちらも両方の型クラスのインスタンスを持つモナドになる。
 
 ```anchor SomeMonads
 abbrev M1 := StateT LetterCounts (ExceptT Err Id)
 abbrev M2 := ExceptT Err (StateT LetterCounts Id)
 ```
 
-When run on input for which the program does not throw an exception, both monads yield similar results:
+プログラムが例外を投げない入力で実行すると、どちらのモナドも似た結果になる。
 ```anchor countLettersM1Ok
 #eval countLetters (m := M1) "hello" ⟨0, 0⟩
 ```
@@ -58,21 +58,21 @@ Except.ok ((), { vowels := 2, consonants := 3 })
 ```anchorInfo countLettersM2Ok
 (Except.ok (), { vowels := 2, consonants := 3 })
 ```
-However, there is a subtle difference between these return values.
-In the case of {anchorName M1eval}`M1`, the outermost constructor is {anchorName MonadExceptT}`Except.ok`, and it contains a pair of the unit constructor with the final state.
-In the case of {anchorName M2eval}`M2`, the outermost constructor is the pair, which contains {anchorName MonadExceptT}`Except.ok` applied only to the unit constructor.
-The final state is outside of {anchorName MonadExceptT}`Except.ok`.
-In both cases, the program returns the counts of vowels and consonants.
+しかし、これらの戻り値には細かな違いがある。
+{anchorName M1eval}`M1`の場合は、最も外側のコンストラクタが{anchorName MonadExceptT}`Except.ok`であり、その中にunitのコンストラクタと最終状態の組が入っている。
+{anchorName M2eval}`M2`の場合は、最も外側のコンストラクタが組であり、その中にunitのコンストラクタだけに適用された{anchorName MonadExceptT}`Except.ok`が入っている。
+最終状態は{anchorName MonadExceptT}`Except.ok`の外側にある。
+どちらの場合も、プログラムは母音と子音の数を返す。
 
-On the other hand, only one monad yields a count of vowels and consonants when the string causes an exception to be thrown.
-Using {anchorName M1eval}`M1`, only an exception value is returned:
+一方、文字列が例外を引き起こすときは、母音と子音の数を返すのは一方のモナドだけである。
+{anchorName M1eval}`M1`を使うと、例外の値だけが返る。
 ```anchor countLettersM1Error
 #eval countLetters (m := M1) "hello!" ⟨0, 0⟩
 ```
 ```anchorInfo countLettersM1Error
 Except.error (StEx.Err.notALetter '!')
 ```
-Using {anchorName SomeMonads}`M2`, the exception value is paired with the state as it was at the time that the exception was thrown:
+{anchorName SomeMonads}`M2`を使うと、例外の値が、例外が投げられた時点の状態と組になる。
 ```anchor countLettersM2Error
 #eval countLetters (m := M2) "hello!" ⟨0, 0⟩
 ```
@@ -80,9 +80,9 @@ Using {anchorName SomeMonads}`M2`, the exception value is paired with the state 
 (Except.error (StEx.Err.notALetter '!'), { vowels := 2, consonants := 3 })
 ```
 
-It might be tempting to think that {anchorName SomeMonads}`M2` is superior to {anchorName SomeMonads}`M1` because it provides more information that might be useful when debugging.
-The same program might compute _different_ answers in {anchorName SomeMonads}`M1` than it does in {anchorName SomeMonads}`M2`, and there's no principled reason to say that one of these answers is necessarily better than the other.
-This can be seen by adding a step to the program that handles exceptions:
+{anchorName SomeMonads}`M2`のほうが、デバッグに役立ちうる情報を多く与えるので{anchorName SomeMonads}`M1`より優れている、と考えたくなるかもしれない。
+同じプログラムが{anchorName SomeMonads}`M1`と{anchorName SomeMonads}`M2`で*違う*答えを計算することがあり、どちらかの答えが必ず優れていると言える原理的な理由はない。
+これは、例外を扱う段階をプログラムに加えると分かる。
 
 ```anchor countWithFallback
 def countWithFallback
@@ -93,8 +93,8 @@ def countWithFallback
   catch _ =>
     countLetters "Fallback"
 ```
-This program always succeeds, but it might succeed with different results.
-If no exception is thrown, then the results are the same as {anchorName countWithFallback}`countLetters`:
+このプログラムは常に成功するが、その成功の結果は異なりうる。
+例外が投げられなければ、結果は{anchorName countWithFallback}`countLetters`と同じである。
 ```anchor countWithFallbackM1Ok
 #eval countWithFallback (m := M1) "hello" ⟨0, 0⟩
 ```
@@ -107,15 +107,15 @@ Except.ok ((), { vowels := 2, consonants := 3 })
 ```anchorInfo countWithFallbackM2Ok
 (Except.ok (), { vowels := 2, consonants := 3 })
 ```
-However, if the exception is thrown and caught, then the final states are very different.
-With {anchorName countWithFallbackM1Error}`M1`, the final state contains only the letter counts from {anchorTerm countWithFallback}`"Fallback"`:
+しかし、例外が投げられて捕まえられると、最終状態は大きく異なる。
+{anchorName countWithFallbackM1Error}`M1`では、最終状態に{anchorTerm countWithFallback}`"Fallback"`の文字の数だけが入る。
 ```anchor countWithFallbackM1Error
 #eval countWithFallback (m := M1) "hello!" ⟨0, 0⟩
 ```
 ```anchorInfo countWithFallbackM1Error
 Except.ok ((), { vowels := 2, consonants := 6 })
 ```
-With {anchorName countWithFallbackM2Error}`M2`, the final state contains letter counts from both {anchorTerm countWithFallbackM2Error}`"hello!"` and from {anchorTerm countWithFallback}`"Fallback"`, as one would expect in an imperative language:
+{anchorName countWithFallbackM2Error}`M2`では、命令型言語で期待されるように、最終状態に{anchorTerm countWithFallbackM2Error}`"hello!"`と{anchorTerm countWithFallback}`"Fallback"`の両方の文字の数が入る。
 ```anchor countWithFallbackM2Error
 #eval countWithFallback (m := M2) "hello!" ⟨0, 0⟩
 ```
@@ -123,43 +123,43 @@ With {anchorName countWithFallbackM2Error}`M2`, the final state contains letter 
 (Except.ok (), { vowels := 4, consonants := 9 })
 ```
 
-In {anchorName countWithFallbackM1Error}`M1`, throwing an exception “rolls back” the state to where the exception was caught.
-In {anchorName countLettersM2Error}`M2`, modifications to the state persist across the throwing and catching of exceptions.
-This difference can be seen by unfolding the definitions of {anchorName SomeMonads}`M1` and {anchorName SomeMonads}`M2`.
-{anchorTerm M1eval}`M1 α` unfolds to {anchorTerm M1eval}`LetterCounts → Except Err (α × LetterCounts)`, and {anchorTerm M2eval}`M2 α` unfolds to {anchorTerm M2eval}`LetterCounts → Except Err α × LetterCounts`.
-That is to say, {anchorTerm M1eval}`M1 α` describes functions that take an initial letter count, returning either an error or an {anchorName M1eval}`α` paired with updated counts.
-When an exception is thrown in {anchorName M1eval}`M1`, there is no final state.
-{anchorTerm M2eval}`M2 α` describes functions that take an initial letter count and return a new letter count paired with either an error or an {anchorName M2eval}`α`.
-When an exception is thrown in {anchorName M2eval}`M2`, it is accompanied by a state.
+{anchorName countWithFallbackM1Error}`M1`では、例外を投げると状態が例外を捕まえた時点まで「巻き戻る」。
+{anchorName countLettersM2Error}`M2`では、状態への変更が例外の送出と捕捉をまたいで残る。
+この違いは、{anchorName SomeMonads}`M1`と{anchorName SomeMonads}`M2`の定義を展開すると分かる。
+{anchorTerm M1eval}`M1 α`は{anchorTerm M1eval}`LetterCounts → Except Err (α × LetterCounts)`に展開され、{anchorTerm M2eval}`M2 α`は{anchorTerm M2eval}`LetterCounts → Except Err α × LetterCounts`に展開される。
+つまり、{anchorTerm M1eval}`M1 α`は初期の文字の数を取り、エラーか、更新された数と組になった{anchorName M1eval}`α`を返す関数を記述する。
+{anchorName M1eval}`M1`で例外が投げられると、最終状態はない。
+{anchorTerm M2eval}`M2 α`は、初期の文字の数を取り、エラーか{anchorName M2eval}`α`と組になった新しい文字の数を返す関数を記述する。
+{anchorName M2eval}`M2`で例外が投げられると、それには状態が付き添う。
 
-# Commuting Monads
+# モナドの可換性
 %%%
 tag := "commuting-monads"
 %%%
 
-In the jargon of functional programming, two monad transformers are said to _commute_ if they can be re-ordered without the meaning of the program changing.
-The fact that the result of the program can differ when {anchorName SomeMonads}`StateT` and {anchorName SomeMonads}`ExceptT` are reordered means that state and exceptions do not commute.
-In general, monad transformers should not be expected to commute.
+関数型プログラミングの言葉では、二つのモナド変換子は、プログラムの意味を変えずに順序を入れ替えられるときに*可換*であるという。
+{anchorName SomeMonads}`StateT`と{anchorName SomeMonads}`ExceptT`の順序を入れ替えるとプログラムの結果が変わりうるということは、状態と例外が可換でないことを意味する。
+一般に、モナド変換子が可換であることは期待すべきでない。
 
-Even though not all monad transformers commute, some do.
-For example, two uses of {anchorName SomeMonads}`StateT` can be re-ordered.
-Expanding the definitions in {anchorTerm StateTDoubleA}`StateT σ (StateT σ' Id) α` yields the type {anchorTerm StateTDoubleA}`σ → σ' → ((α × σ) × σ')`, and {anchorTerm StateTDoubleB}`StateT σ' (StateT σ Id) α` yields {anchorTerm StateTDoubleB}`σ' → σ → ((α × σ') × σ)`.
-In other words, the differences between them are that they nest the {anchorName StateTDoubleA}`σ` and {anchorName StateTDoubleA}`σ'` types in different places in the return type, and they accept their arguments in a different order.
-Any client code will still need to provide the same inputs, and it will still receive the same outputs.
+すべてのモナド変換子が可換なわけではないが、可換なものもある。
+たとえば、{anchorName SomeMonads}`StateT`を二つ使う場合は順序を入れ替えられる。
+{anchorTerm StateTDoubleA}`StateT σ (StateT σ' Id) α`の定義を展開すると型{anchorTerm StateTDoubleA}`σ → σ' → ((α × σ) × σ')`になり、{anchorTerm StateTDoubleB}`StateT σ' (StateT σ Id) α`は{anchorTerm StateTDoubleB}`σ' → σ → ((α × σ') × σ)`になる。
+言い換えれば、両者の違いは、戻り値の型の中で{anchorName StateTDoubleA}`σ`と{anchorName StateTDoubleA}`σ'`の型を入れ子にする場所が違うことと、引数を受け取る順序が違うことである。
+利用側のコードは同じ入力を与える必要があり、同じ出力を受け取ることになる。
 
-Most programming languages that have both mutable state and exceptions work like {anchorName SomeMonads}`M2`.
-In those languages, state that _should_ be rolled back when an exception is thrown is difficult to express, and it usually needs to be simulated in a manner that looks much like the passing of explicit state values in {anchorName SomeMonads}`M1`.
-Monad transformers grant the freedom to choose an interpretation of effect ordering that works for the problem at hand, with both choices being equally easy to program with.
-However, they also require care to be taken in the choice of ordering of transformers.
-With great expressive power comes the responsibility to check that what's being expressed is what is intended, and the type signature of {anchorName countWithFallback}`countWithFallback` is probably more polymorphic than it should be.
+可変状態と例外の両方を持つほとんどのプログラミング言語は{anchorName SomeMonads}`M2`のように働く。
+それらの言語では、例外が投げられたときに巻き戻す*べき*状態を表すのは難しく、通常は{anchorName SomeMonads}`M1`で明示的に状態の値を受け渡すのによく似たやり方でまねる必要がある。
+モナド変換子は、目の前の問題に合う副作用の順序の解釈を選ぶ自由を与え、どちらの選択も同じくらい容易にプログラミングできる。
+しかし、変換子の順序の選択には注意も要る。
+大きな表現力には、表現しているものが意図したものであるかを確かめる責任が伴う。{anchorName countWithFallback}`countWithFallback`の型シグネチャは、おそらくあるべき以上に多相的である。
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "monad-transformer-order-exercises"
 %%%
 
- * Check that {anchorName m}`ReaderT` and {anchorName SomeMonads}`StateT` commute by expanding their definitions and reasoning about the resulting types.
- * Do {anchorName m}`ReaderT` and {anchorName SomeMonads}`ExceptT` commute? Check your answer by expanding their definitions and reasoning about the resulting types.
- * Construct a monad transformer {lit}`ManyT` based on the definition of {anchorName Many (module:=Examples.Monads.Many)}`Many`, with a suitable {anchorName AlternativeOptionT}`Alternative` instance. Check that it satisfies the {anchorName AlternativeOptionT}`Monad` contract.
- * Does {lit}`ManyT` commute with {anchorName SomeMonads}`StateT`? If so, check your answer by expanding definitions and reasoning about the resulting types. If not, write a program in {lit}`ManyT (StateT σ Id)` and a program in {lit}`StateT σ (ManyT Id)`. Each program should be one that makes more sense for the given ordering of monad transformers.
+ * {anchorName m}`ReaderT`と{anchorName SomeMonads}`StateT`が可換であることを、定義を展開して得られる型について推論して確かめよ。
+ * {anchorName m}`ReaderT`と{anchorName SomeMonads}`ExceptT`は可換か。定義を展開して得られる型について推論し、答えを確かめよ。
+ * {anchorName Many (module:=Examples.Monads.Many)}`Many`の定義に基づいてモナド変換子{lit}`ManyT`を、適切な{anchorName AlternativeOptionT}`Alternative`インスタンスとともに構成せよ。それが{anchorName AlternativeOptionT}`Monad`の契約を満たすことを確かめよ。
+ * {lit}`ManyT`は{anchorName SomeMonads}`StateT`と可換か。可換なら、定義を展開して得られる型について推論し、答えを確かめよ。可換でないなら、{lit}`ManyT (StateT σ Id)`のプログラムと{lit}`StateT σ (ManyT Id)`のプログラムを書け。それぞれ、そのモナド変換子の順序のほうがよく合うプログラムとする。
