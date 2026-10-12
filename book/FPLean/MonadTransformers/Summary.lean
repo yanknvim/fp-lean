@@ -15,49 +15,49 @@ set_option verso.exampleModule "Examples.MonadTransformers"
 tag := "monad-transformer-summary"
 %%%
 
-# Combining Monads
+# モナドの組み合わせ
 %%%
 tag := none
 %%%
 
-When writing a monad from scratch, there are design patterns that tend to describe the ways that each effect is added to the monad.
-Reader effects are added by having the monad's type be a function from the reader's environment, state effects are added by including a function from the initial state to the value paired with the final state, failure or exceptions are added by including a sum type in the return type, and logging or other output is added by including a product type in the return type.
-Existing monads can be made part of the return type as well, allowing their effects to be included in the new monad.
+モナドを一から書くとき、それぞれの副作用をそのモナドに加える方法を記述する傾向のある設計パターンがある。
+リーダーの副作用はモナドの型をリーダーの環境からの関数にすることで加え、状態の副作用は初期状態から、値と最終状態の組への関数を含めることで加え、失敗や例外は戻り値の型に直和型を含めることで加え、ログやその他の出力は戻り値の型に直積型を含めることで加える。
+既存のモナドも戻り値の型の一部にでき、その副作用を新しいモナドに含められる。
 
-These design patterns are made into a library of reusable software components by defining _monad transformers_, which add an effect to some base monad.
-Monad transformers take the simpler monad types as arguments, returning the enhanced monad types.
-At a minimum, a monad transformer should provide the following instances:
- 1. A {anchorName Summary}`Monad` instance that assumes the inner type is already a monad
- 2. A {anchorName Summary}`MonadLift` instance to translate an action from the inner monad to the transformed monad
+これらの設計パターンは、ある基盤のモナドに副作用を加える*モナド変換子*を定義することで、再利用できるソフトウェア部品のライブラリになる。
+モナド変換子はより単純なモナドの型を引数に取り、強化されたモナドの型を返す。
+モナド変換子は少なくとも次のインスタンスを提供すべきである。
+ 1. 内側の型がすでにモナドであることを前提とする{anchorName Summary}`Monad`インスタンス
+ 2. 内側のモナドの動作を変換後のモナドへ変換する{anchorName Summary}`MonadLift`インスタンス
 
-Monad transformers may be implemented as polymorphic structures or inductive datatypes, but they are most often implemented as functions from the underlying monad type to the enhanced monad type.
+モナド変換子は多相的な構造体や帰納的データ型として実装してもよいが、ほとんどの場合はその下のモナドの型から強化されたモナドの型への関数として実装する。
 
-# Type Classes for Effects
+# 副作用のための型クラス
 %%%
 tag := none
 %%%
 
-A common design pattern is to implement a particular effect by defining a monad that has the effect, a monad transformer that adds it to another monad, and a type class that provides a generic interface to the effect.
-This allows programs to be written that merely specify which effects they need, so the caller can provide any monad that has the right effects.
+よくある設計パターンは、ある副作用を、その副作用を持つモナドと、それを別のモナドに加えるモナド変換子と、その副作用への一般的なインターフェースを与える型クラスを定義することで実装することである。
+これにより、必要な副作用を述べるだけのプログラムを書けるようになり、呼び出し側は適切な副作用を持つどのモナドでも与えられる。
 
-Sometimes, auxiliary type information (e.g. the state's type in a monad that provides state, or the exception's type in a monad that provides exceptions) is an output parameter, and sometimes it is not.
-The output parameter is most useful for simple programs that use each kind of effect only once, but it risks having the type checker commit to a the wrong type too early when multiple instances of the same effect are used in a given program.
-Thus, both versions are typically provided, with the ordinary-parameter version of the type class having a name that ends in {lit}`-Of`.
+補助的な型の情報（たとえば状態を提供するモナドの状態の型や、例外を提供するモナドの例外の型）が出力パラメータであることも、そうでないこともある。
+出力パラメータは、それぞれの種類の副作用を一度だけ使う簡単なプログラムには最も役に立つが、同じ副作用を複数使うプログラムでは、型検査器が早すぎる段階で間違った型に決めてしまう危険がある。
+したがって通常は両方の版が用意され、普通のパラメータを使う版の型クラスの名前は{lit}`-Of`で終わる。
 
-# Monad Transformers Don't Commute
+# モナド変換子は可換でない
 %%%
 tag := none
 %%%
 
-It is important to note that changing the order of transformers in a monad can change the meaning of programs that use the monad.
-For instance, re-ordering {anchorName Summary}`StateT` and {anchorTerm Summary}`ExceptT` can result either in programs that lose state modifications when exceptions are thrown or programs that keep changes.
-While most imperative languages provide only the latter, the increased flexibility provided by monad transformers demands thought and attention to choose the correct variety for the task at hand.
+モナドの変換子の順序を変えると、そのモナドを使うプログラムの意味が変わりうることに注意することが重要である。
+たとえば{anchorName Summary}`StateT`と{anchorTerm Summary}`ExceptT`の順序を入れ替えると、例外が投げられたときに状態の変更が失われるプログラムにも、変更が残るプログラムにもなる。
+ほとんどの命令型言語が与えるのは後者だけだが、モナド変換子が与える柔軟さが増したことで、目の前の作業に正しいほうを選ぶための思考と注意が要る。
 
-# {kw}`do`-Notation for Monad Transformers
+# モナド変換子の{kw}`do`記法
 %%%
 tag := none
 %%%
 
-Lean's {kw}`do`-blocks support early return, in which the block is terminated with some value, locally mutable variables, {kw}`for`-loops with {kw}`break` and {kw}`continue`, and single-branched {kw}`if`-statements.
-While this may seem to be introducing imperative features that would get in the way of using Lean to write proofs, it is in fact nothing more than a more convenient syntax for certain common uses of monad transformers.
-Behind the scenes, whatever monad the {kw}`do`-block is written in is transformed by appropriate uses of {anchorName Summary}`ExceptT` and {anchorName Summary}`StateT` to support these additional effects.
+Leanの{kw}`do`ブロックは、ある値でブロックを終わらせる早期リターン、局所的な可変変数、{kw}`break`と{kw}`continue`を伴う{kw}`for`ループ、枝が一つの{kw}`if`文を支える。
+これは証明を書くのにLeanを使う妨げになる命令型の機能を持ち込んでいるように見えるかもしれないが、実際には、ある種のよくあるモナド変換子の使い方のための、より便利な構文にすぎない。
+裏では、その{kw}`do`ブロックを書いているモナドが、{anchorName Summary}`ExceptT`と{anchorName Summary}`StateT`を適切に使って変換され、これらの追加の副作用を支える。
