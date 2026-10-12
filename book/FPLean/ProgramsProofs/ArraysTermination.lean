@@ -15,24 +15,24 @@ set_option verso.exampleModule "Examples.ProgramsProofs.Arrays"
 tag := "array-termination"
 %%%
 
-To write efficient code, it is important to select appropriate data structures.
-Linked lists have their place: in some applications, the ability to share the tails of lists is very important.
-However, most use cases for a variable-length sequential collection of data are better served by arrays, which have both less memory overhead and better locality.
+効率のよいコードを書くには、適切なデータ構造を選ぶことが重要である。
+連結リストにも役割がある。応用によっては、リストの残りを共有できることがとても重要である。
+しかし、長さの変わる逐次的なデータの集まりの用途のほとんどには、メモリの負担が少なく局所性もよい配列のほうがよく合う。
 
-Arrays, however, have two drawbacks relative to lists:
- 1. Arrays are accessed through indexing, rather than by pattern matching, which imposes {ref "props-proofs-indexing"}[proof obligations] in order to maintain safety.
- 2. A loop that processes an entire array from left to right is a tail-recursive function, but it does not have an argument that decreases on each call.
+しかし配列には、リストに対する二つの欠点がある。
+ 1. 配列はパターンマッチングではなく参照によって扱うので、安全性を保つために{ref "props-proofs-indexing"}[証明の義務]が課される。
+ 2. 配列全体を左から右へ処理するループは末尾再帰関数だが、呼び出しごとに小さくなる引数を持たない。
 
-Making effective use of arrays requires knowing how to prove to Lean that an array index is in bounds, and how to prove that an array index that approaches the size of the array also causes the program to terminate.
-Both of these are expressed using an inequality proposition, rather than propositional equality.
+配列を有効に使うには、配列の添字が範囲内にあることをLeanに証明する方法と、配列の大きさに近づく添字がプログラムの停止ももたらすことを証明する方法を知る必要がある。
+どちらも、命題としての等しさではなく、不等号の命題を使って表す。
 
-# Inequality
+# 不等号
 %%%
 tag := "inequality"
 %%%
 
-Because different types have different notions of ordering, inequality is governed by two type classes, called {anchorName ordSugarClasses (module := Examples.Classes)}`LE` and {anchorName ordSugarClasses (module := Examples.Classes)}`LT`.
-The table in the section on {ref "equality-and-ordering"}[standard type classes] describes how these classes relate to the syntax:
+型によって順序の考え方が異なるので、不等号は{anchorName ordSugarClasses (module := Examples.Classes)}`LE`と{anchorName ordSugarClasses (module := Examples.Classes)}`LT`という二つの型クラスで扱う。
+{ref "equality-and-ordering"}[標準の型クラス]の節の表が、これらのクラスと構文の関係を述べている。
 
 :::table +header
 *
@@ -62,8 +62,8 @@ The table in the section on {ref "equality-and-ordering"}[standard type classes]
 
 :::
 
-In other words, a type may customize the meaning of the {anchorTerm ltDesugar (module:=Examples.Classes)}`<` and {anchorTerm leDesugar (module:=Examples.Classes)}`≤` operators, while {anchorTerm gtDesugar (module:=Examples.Classes)}`>` and {anchorTerm geDesugar (module:=Examples.Classes)}`≥` derive their meanings from {anchorTerm ltDesugar (module:=Examples.Classes)}`<` and {anchorTerm leDesugar (module:=Examples.Classes)}`≤`.
-The classes {anchorName ordSugarClasses (module := Examples.Classes)}`LT` and {anchorName ordSugarClasses (module := Examples.Classes)}`LE` have methods that return propositions rather than {anchorName CoeBoolProp (module:=Examples.Classes)}`Bool`s:
+言い換えれば、型は{anchorTerm ltDesugar (module:=Examples.Classes)}`<`と{anchorTerm leDesugar (module:=Examples.Classes)}`≤`の意味を独自に定められ、{anchorTerm gtDesugar (module:=Examples.Classes)}`>`と{anchorTerm geDesugar (module:=Examples.Classes)}`≥`は{anchorTerm ltDesugar (module:=Examples.Classes)}`<`と{anchorTerm leDesugar (module:=Examples.Classes)}`≤`から意味を導く。
+{anchorName ordSugarClasses (module := Examples.Classes)}`LT`と{anchorName ordSugarClasses (module := Examples.Classes)}`LE`クラスのメソッドは、{anchorName CoeBoolProp (module:=Examples.Classes)}`Bool`ではなく命題を返す。
 
 ```anchor less
 class LE (α : Type u) where
@@ -73,86 +73,86 @@ class LT (α : Type u) where
   lt : α → α → Prop
 ```
 
-The instance of {anchorName LENat}`LE` for {anchorName LENat}`Nat` delegates to {anchorName LENat}`Nat.le`:
+{anchorName LENat}`Nat`の{anchorName LENat}`LE`インスタンスは{anchorName LENat}`Nat.le`に委ねる。
 
 ```anchor LENat
 instance : LE Nat where
   le := Nat.le
 ```
-Defining {anchorName LENat}`Nat.le` requires a feature of Lean that has not yet been presented: it is an inductively-defined relation.
+{anchorName LENat}`Nat.le`を定義するには、まだ紹介していないLeanの機能が要る。帰納的に定義された関係である。
 
-## Inductively-Defined Propositions, Predicates, and Relations
+## 帰納的に定義された命題・述語・関係
 %%%
 tag := "inductive-props"
 %%%
 
-{anchorName LENat}`Nat.le` is an _inductively-defined relation_.
-Just as {kw}`inductive` can be used to create new datatypes, it can be used to create new propositions.
-When a proposition takes an argument, it is referred to as a _predicate_ that may be true for some, but not all, potential arguments.
-Propositions that take multiple arguments are called _relations_.
+{anchorName LENat}`Nat.le`は*帰納的に定義された関係*である。
+{kw}`inductive`は新しいデータ型を作るのに使えるのと同じく、新しい命題を作るのにも使える。
+命題が引数を取るとき、それを*述語*と呼び、起こりうる引数の一部については真になりうるが、すべてではない。
+複数の引数を取る命題を*関係*と呼ぶ。
 
-Each constructor of an inductively defined proposition is a way to prove it.
-In other words, the declaration of the proposition describes the different forms of evidence that it is true.
-A proposition with no arguments that has a single constructor can be quite easy to prove:
+帰納的に定義された命題の各コンストラクタは、それを証明する一つの方法である。
+言い換えれば、その命題の宣言は、それが真である証拠のさまざまな形を記述している。
+引数がなくコンストラクタが一つの命題は、証明するのがとても簡単なことがある。
 
 ```anchor EasyToProve
 inductive EasyToProve : Prop where
   | heresTheProof : EasyToProve
 ```
-The proof consists of using its constructor:
+その証明は、そのコンストラクタを使うことから成る。
 
 ```anchor fairlyEasy
 theorem fairlyEasy : EasyToProve := by
   constructor
 ```
-In fact, the proposition {anchorName True}`True`, which should always be easy to prove, is defined just like {anchorName EasyToProve}`EasyToProve`:
+実際、常に証明が簡単であるはずの命題{anchorName True}`True`も、{anchorName EasyToProve}`EasyToProve`とまったく同じように定義されている。
 
 ```anchor True
 inductive True : Prop where
   | intro : True
 ```
 
-Inductively-defined propositions that don't take arguments are not nearly as interesting as inductively-defined datatypes.
-This is because data is interesting in its own right—the natural number {anchorTerm IsThree}`3` is different from the number {lit}`35`, and someone who has ordered 3 pizzas will be upset if 35 arrive at their door 30 minutes later.
-The constructors of a proposition describe ways in which the proposition can be true, but once a proposition has been proved, there is no need to know _which_ underlying constructors were used.
-This is why most interesting inductively-defined types in the {anchorTerm IsThree}`Prop` universe take arguments.
+引数を取らない帰納的に定義された命題は、帰納的に定義されたデータ型ほど面白くはない。
+データはそれ自体が面白いからである。自然数{anchorTerm IsThree}`3`は数{lit}`35`とは異なり、ピザを3枚注文した人が30分後に35枚届いたら怒るだろう。
+命題のコンストラクタは、その命題が真になりうる方法を記述するが、一度命題が証明されれば、*どの*コンストラクタが使われたかを知る必要はない。
+{anchorTerm IsThree}`Prop`宇宙にある興味深い帰納的に定義された型のほとんどが引数を取るのはこのためである。
 
 :::paragraph
-The inductively-defined predicate {anchorName IsThree}`IsThree` states that its argument is three:
+帰納的に定義された述語{anchorName IsThree}`IsThree`は、その引数が3であることを述べている。
 
 ```anchor IsThree
 inductive IsThree : Nat → Prop where
   | isThree : IsThree 3
 ```
-The mechanism used here is just like {ref "column-pointers"}[indexed families such as {moduleName (module := Examples.DependentTypes.DB)}`HasCol`], except the resulting type is a proposition that can be proved rather than data that can be used.
+ここで使う仕組みは{ref "column-pointers"}[{moduleName (module := Examples.DependentTypes.DB)}`HasCol`のような添字付き族]とまったく同じだが、得られる型が使えるデータではなく、証明できる命題である点が異なる。
 :::
 
-Using this predicate, it is possible to prove that three is indeed three:
+この述語を使うと、3が確かに3であることを証明できる。
 
 ```anchor threeIsThree
 theorem three_is_three : IsThree 3 := by
   constructor
 ```
-Similarly, {anchorName IsFive}`IsFive` is a predicate that states that its argument is {anchorTerm IsFive}`5`:
+同様に、{anchorName IsFive}`IsFive`は、その引数が{anchorTerm IsFive}`5`であることを述べる述語である。
 
 ```anchor IsFive
 inductive IsFive : Nat → Prop where
   | isFive : IsFive 5
 ```
 
-If a number is three, then the result of adding two to it should be five.
-This can be expressed as a theorem statement:
+ある数が3なら、それに2を足した結果は5になるはずである。
+これは定理の言明として表せる。
 ```anchor threePlusTwoFive0
 theorem three_plus_two_five : IsThree n → IsFive (n + 2) := by
   skip
 ```
-The resulting goal has a function type:
+得られるゴールは関数型を持つ。
 ```anchorError threePlusTwoFive0
 unsolved goals
 n : Nat
 ⊢ IsThree n → IsFive (n + 2)
 ```
-Thus, the {anchorTerm threePlusTwoFive1}`intro` tactic can be used to convert the argument into an assumption:
+したがって、{anchorTerm threePlusTwoFive1}`intro`タクティクを使ってその引数を前提に変換できる。
 ```anchor threePlusTwoFive1
 theorem three_plus_two_five : IsThree n → IsFive (n + 2) := by
   intro three
@@ -163,13 +163,13 @@ n : Nat
 three : IsThree n
 ⊢ IsFive (n + 2)
 ```
-Given the assumption that {anchorName threePlusTwoFive1a}`n` is three, it should be possible to use the constructor of {anchorName threePlusTwoFive1a}`IsFive` to complete the proof:
+{anchorName threePlusTwoFive1a}`n`が3であるという前提があれば、{anchorName threePlusTwoFive1a}`IsFive`のコンストラクタを使って証明を完成できるはずである。
 ```anchor threePlusTwoFive1a
 theorem three_plus_two_five : IsThree n → IsFive (n + 2) := by
   intro three
   constructor
 ```
-However, this results in an error:
+しかし、これはエラーになる。
 ```anchorError threePlusTwoFive1a
 Tactic `constructor` failed: no applicable constructor found
 
@@ -177,22 +177,22 @@ n : Nat
 three : IsThree n
 ⊢ IsFive (n + 2)
 ```
-This error occurs because {anchorTerm threePlusTwoFive2}`n + 2` is not definitionally equal to {anchorTerm IsFive}`5`.
-In an ordinary function definition, dependent pattern matching on the assumption {anchorName threePlusTwoFive2}`three` could be used to refine {anchorName threePlusTwoFive2}`n` to {anchorTerm threeIsThree}`3`.
-The tactic equivalent of dependent pattern matching is {anchorTerm threePlusTwoFive2}`cases`, which has a syntax similar to that of {kw}`induction`:
+このエラーは、{anchorTerm threePlusTwoFive2}`n + 2`が{anchorTerm IsFive}`5`と定義上等しくないために起きる。
+普通の関数定義では、前提{anchorName threePlusTwoFive2}`three`についての依存パターンマッチングを使い、{anchorName threePlusTwoFive2}`n`を{anchorTerm threeIsThree}`3`に洗練できる。
+依存パターンマッチングに相当するタクティクは{anchorTerm threePlusTwoFive2}`cases`で、{kw}`induction`に似た構文を持つ。
 ```anchor threePlusTwoFive2
 theorem three_plus_two_five : IsThree n → IsFive (n + 2) := by
   intro three
   cases three with
   | isThree => skip
 ```
-In the remaining case, {anchorName threePlusTwoFive2}`n` has been refined to {anchorTerm IsThree}`3`:
+残った場合では、{anchorName threePlusTwoFive2}`n`が{anchorTerm IsThree}`3`に洗練されている。
 ```anchorError threePlusTwoFive2
 unsolved goals
 case isThree
 ⊢ IsFive (3 + 2)
 ```
-Because {anchorTerm various}`3 + 2` is definitionally equal to {anchorTerm IsFive}`5`, the constructor is now applicable:
+{anchorTerm various}`3 + 2`は{anchorTerm IsFive}`5`と定義上等しいので、コンストラクタが適用できるようになる。
 
 ```anchor threePlusTwoFive3
 theorem three_plus_two_five : IsThree n → IsFive (n + 2) := by
@@ -201,22 +201,22 @@ theorem three_plus_two_five : IsThree n → IsFive (n + 2) := by
   | isThree => constructor
 ```
 
-The standard false proposition {anchorName various}`False` has no constructors, making it impossible to provide direct evidence for.
-The only way to provide evidence for {anchorName various}`False` is if an assumption is itself impossible, similarly to how {kw}`nomatch` can be used to mark code that the type system can see is unreachable.
-As described in {ref "connectives"}[the initial Interlude on proofs], the negation {anchorTerm various}`Not A` is short for {anchorTerm various}`A → False`.
-{anchorTerm various}`Not A` can also be written {anchorTerm various}`¬A`.
+標準の偽の命題{anchorName various}`False`にはコンストラクタがなく、直接の証拠を与えることができない。
+{anchorName various}`False`の証拠を与えられるのは、前提自体が不可能な場合だけであり、型システムが到達不可能と見抜けるコードに{kw}`nomatch`を使えるのと似ている。
+{ref "connectives"}[証明についての最初の幕間]で述べたように、否定{anchorTerm various}`Not A`は{anchorTerm various}`A → False`の略である。
+{anchorTerm various}`Not A`は{anchorTerm various}`¬A`とも書ける。
 
-It is not the case that four is three:
+4が3であることはない。
 ```anchor fourNotThree0
 theorem four_is_not_three : ¬ IsThree 4 := by
   skip
 ```
-The initial proof goal contains {anchorName fourNotThree1}`Not`:
+最初の証明のゴールには{anchorName fourNotThree1}`Not`が含まれる。
 ```anchorError fourNotThree0
 unsolved goals
 ⊢ ¬IsThree 4
 ```
-The fact that it's actually a function type can be exposed using {anchorTerm fourNotThree1}`unfold`:
+それが実際には関数型であることは{anchorTerm fourNotThree1}`unfold`で現せる。
 ```anchor fourNotThree1
 theorem four_is_not_three : ¬ IsThree 4 := by
   unfold Not
@@ -225,8 +225,8 @@ theorem four_is_not_three : ¬ IsThree 4 := by
 unsolved goals
 ⊢ IsThree 4 → False
 ```
-Because the goal is a function type, {anchorTerm fourNotThree2}`intro` can be used to convert the argument into an assumption.
-There is no need to keep {anchorTerm fourNotThree1}`unfold`, as {anchorTerm fourNotThree2}`intro` can unfold the definition of {anchorName fourNotThree1}`Not` itself:
+ゴールが関数型なので、{anchorTerm fourNotThree2}`intro`を使ってその引数を前提に変換できる。
+{anchorTerm fourNotThree2}`intro`が{anchorName fourNotThree1}`Not`の定義自体を展開できるので、{anchorTerm fourNotThree1}`unfold`は残す必要がない。
 ```anchor fourNotThree2
 theorem four_is_not_three : ¬ IsThree 4 := by
   intro h
@@ -236,34 +236,34 @@ unsolved goals
 h : IsThree 4
 ⊢ False
 ```
-In this proof, the {anchorTerm fourNotThreeDone}`cases` tactic solves the goal immediately:
+この証明では、{anchorTerm fourNotThreeDone}`cases`タクティクがゴールをすぐに解決する。
 
 ```anchor fourNotThreeDone
 theorem four_is_not_three : ¬ IsThree 4 := by
   intro h
   cases h
 ```
-Just as a pattern match on a {anchorTerm otherEx (module:=Examples.DependentTypes)}`Vect String 2` doesn't need to include a case for {anchorName otherEx (module:=Examples.DependentTypes)}`Vect.nil`, a proof by cases over {anchorTerm fourNotThreeDone}`IsThree 4` doesn't need to include a case for {anchorName IsThree}`isThree`.
+{anchorTerm otherEx (module:=Examples.DependentTypes)}`Vect String 2`についてのパターンマッチングに{anchorName otherEx (module:=Examples.DependentTypes)}`Vect.nil`の場合を含める必要がないのと同じく、{anchorTerm fourNotThreeDone}`IsThree 4`についての場合分けの証明には{anchorName IsThree}`isThree`の場合を含める必要がない。
 
-## Inequality of Natural Numbers
+## 自然数の不等号
 %%%
 tag := "inequality-of-natural-numbers"
 %%%
 
-The definition of {anchorName NatLe}`Nat.le` has a parameter and an index:
+{anchorName NatLe}`Nat.le`の定義にはパラメータと添字がある。
 
 ```anchor NatLe
 inductive Nat.le (n : Nat) : Nat → Prop
   | refl : Nat.le n n
   | step : Nat.le n m → Nat.le n (m + 1)
 ```
-The parameter {anchorName NatLe}`n` is the number that should be smaller, while the index is the number that should be greater than or equal to {anchorName NatLe}`n`.
-The {anchorName NatLe}`refl` constructor is used when both numbers are equal, while the {anchorName NatLe}`step` constructor is used when the index is greater than {anchorName NatLe}`n`.
+パラメータ{anchorName NatLe}`n`は小さいほうの数であり、添字は{anchorName NatLe}`n`以上であるべき数である。
+{anchorName NatLe}`refl`コンストラクタは両方の数が等しいときに使い、{anchorName NatLe}`step`コンストラクタは添字が{anchorName NatLe}`n`より大きいときに使う。
 
-From the perspective of evidence, a proof that $`n \leq k` consists of finding some number $`d` such that $`n + d = m`.
-In Lean, the proof then consists of a {anchorName leNames}`Nat.le.refl` constructor wrapped by $`d` instances of {anchorName leNames}`Nat.le.step`.
-Each {anchorName NatLe}`step` constructor adds one to its index argument, so $`d` {anchorName NatLe}`step` constructors adds $`d` to the larger number.
-For example, evidence that four is less than or equal to seven consists of three {anchorName NatLe}`step`s around a {anchorName NatLe}`refl`:
+証拠の観点では、$`n \leq k`の証明は、$`n + d = m`となるようなある数$`d`を見つけることから成る。
+Leanでは、その証明は{anchorName leNames}`Nat.le.refl`コンストラクタを$`d`個の{anchorName leNames}`Nat.le.step`で包んだものになる。
+各{anchorName NatLe}`step`コンストラクタはその添字の引数に1を加えるので、$`d`個の{anchorName NatLe}`step`コンストラクタは大きいほうの数に$`d`を加える。
+たとえば、4が7以下である証拠は、{anchorName NatLe}`refl`を3個の{anchorName NatLe}`step`で包んだものである。
 
 ```anchor four_le_seven
 theorem four_le_seven : 4 ≤ 7 :=
@@ -271,7 +271,7 @@ theorem four_le_seven : 4 ≤ 7 :=
   step (step (step refl))
 ```
 
-The strict less-than relation is defined by adding one to the number on the left:
+狭義の小なり関係は、左側の数に1を加えることで定義する。
 
 ```anchor NatLt
 def Nat.lt (n m : Nat) : Prop :=
@@ -280,34 +280,34 @@ def Nat.lt (n m : Nat) : Prop :=
 instance : LT Nat where
   lt := Nat.lt
 ```
-Evidence that four is strictly less than seven consists of two {anchorName four_lt_seven}`step`'s around a {anchorName four_lt_seven}`refl`:
+4が7より真に小さい証拠は、{anchorName four_lt_seven}`refl`を2個の{anchorName four_lt_seven}`step`で包んだものである。
 
 ```anchor four_lt_seven
 theorem four_lt_seven : 4 < 7 :=
   open Nat.le in
   step (step refl)
 ```
-This is because {anchorTerm four_lt_seven}`4 < 7` is equivalent to {anchorTerm four_lt_seven_alt}`5 ≤ 7`.
+{anchorTerm four_lt_seven}`4 < 7`が{anchorTerm four_lt_seven_alt}`5 ≤ 7`と等価だからである。
 
-# Proving Termination
+# 停止性の証明
 %%%
 tag := "proving-termination"
 %%%
 
-The function {anchorName ArrayMap}`Array.map` transforms an array with a function, returning a new array that contains the result of applying the function to each element of the input array.
-Writing it as a tail-recursive function follows the usual pattern of delegating to a function that passes the output array in an accumulator.
-The accumulator is initialized with an empty array.
-The accumulator-passing helper function also takes an argument that tracks the current index into the array, which starts at {anchorTerm ArrayMap}`0`:
+{anchorName ArrayMap}`Array.map`関数は、配列を関数で変換し、入力の配列の各要素に関数を適用した結果を含む新しい配列を返す。
+これを末尾再帰関数として書くには、出力の配列をアキュムレータとして渡す関数に委ねるという、いつもの形に従う。
+アキュムレータは空の配列で初期化する。
+アキュムレータを渡す補助関数は、配列の現在の添字を追跡する引数も取り、それは{anchorTerm ArrayMap}`0`から始まる。
 
 ```anchor ArrayMap
 def Array.map (f : α → β) (arr : Array α) : Array β :=
   arrayMapHelper f arr Array.empty 0
 ```
 
-The helper should, at each iteration, check whether the index is still in bounds.
-If so, it should loop again with the transformed element added to the end of the accumulator and the index incremented by {anchorTerm mapHelperIndexIssue}`1`.
-If not, then it should terminate and return the accumulator.
-An initial implementation of this code fails because Lean is unable to prove that the array index is valid:
+補助関数は、繰り返しごとに、添字がまだ範囲内かを調べるべきである。
+範囲内なら、変換した要素をアキュムレータの末尾に加え、添字を{anchorTerm mapHelperIndexIssue}`1`増やして再びループすべきである。
+そうでなければ、終了してアキュムレータを返すべきである。
+このコードの最初の実装は、Leanが配列の添字が妥当であることを証明できないため失敗する。
 ```anchor mapHelperIndexIssue
 def arrayMapHelper (f : α → β) (arr : Array α)
     (soFar : Array β) (i : Nat) : Array β :=
@@ -329,8 +329,8 @@ soFar : Array β
 i : Nat
 ⊢ i < arr.size
 ```
-However, the conditional expression already checks the precise condition that the array index's validity demands (namely, {anchorTerm arrayMapHelperTermIssue}`i < arr.size`).
-Adding a name to the {kw}`if` resolves the issue, because it adds an assumption that the array indexing tactic can use:
+しかし、この条件式は、配列の添字の妥当性が要求するまさにその条件（つまり{anchorTerm arrayMapHelperTermIssue}`i < arr.size`）をすでに調べている。
+{kw}`if`に名前を付けると問題が解決する。配列の参照のタクティクが使える前提が加わるためである。
 
 ```anchor arrayMapHelperTermIssue
 def arrayMapHelper (f : α → β) (arr : Array α)
@@ -339,22 +339,22 @@ def arrayMapHelper (f : α → β) (arr : Array α)
     arrayMapHelper f arr (soFar.push (f arr[i])) (i + 1)
   else soFar
 ```
-Lean accepts the modified program, even though the recursive call is not made on an argument to one of the input constructors.
-In fact, both the accumulator and the index grow, rather than shrinking.
+再帰呼び出しが入力のコンストラクタの引数に対して行われていないにもかかわらず、Leanは修正したプログラムを受け付ける。
+実際、アキュムレータも添字も、小さくなるどころか大きくなる。
 
-Behind the scenes, Lean's proof automation constructs a termination proof.
-Reconstructing this proof can make it easier to understand the cases that Lean cannot automatically recognize.
+裏では、Leanの証明の自動化が停止性の証明を組み立てる。
+この証明を再構成すると、Leanが自動で見抜けない場合を理解しやすくなる。
 
-Why does {anchorName arrayMapHelperTermIssue}`arrayMapHelper` terminate?
-Each iteration checks whether the index {anchorName arrayMapHelperTermIssue}`i` is still in bounds for the array {anchorName arrayMapHelperTermIssue}`arr`.
-If so, {anchorName arrayMapHelperTermIssue}`i` is incremented and the loop repeats.
-If not, the program terminates.
-Because {anchorTerm arrayMapHelperTermIssue}`arr.size` is a finite number, {anchorName arrayMapHelperTermIssue}`i` can be incremented only a finite number of times.
-Even though no argument to the function decreases on each call, {anchorTerm ArrayMapHelperOk}`arr.size - i` decreases toward zero.
+{anchorName arrayMapHelperTermIssue}`arrayMapHelper`はなぜ停止するのか。
+各繰り返しで、添字{anchorName arrayMapHelperTermIssue}`i`が配列{anchorName arrayMapHelperTermIssue}`arr`でまだ範囲内かを調べる。
+範囲内なら、{anchorName arrayMapHelperTermIssue}`i`が増やされてループが繰り返される。
+そうでなければ、プログラムは終了する。
+{anchorTerm arrayMapHelperTermIssue}`arr.size`は有限の数なので、{anchorName arrayMapHelperTermIssue}`i`を増やせる回数は有限である。
+関数のどの引数も呼び出しごとに小さくならないが、{anchorTerm ArrayMapHelperOk}`arr.size - i`は0に向かって小さくなる。
 
-The value that decreases at each recursive call is called a _measure_.
-Lean can be instructed to use a specific expression as the measure of termination by providing a {kw}`termination_by` clause at the end of a definition.
-For {anchorName ArrayMapHelperOk}`arrayMapHelper`, the explicit measure looks like this:
+再帰呼び出しごとに小さくなる値を*尺度*と呼ぶ。
+定義の末尾に{kw}`termination_by`の句を書くと、停止性の尺度として特定の式を使うようLeanに指示できる。
+{anchorName ArrayMapHelperOk}`arrayMapHelper`では、明示的な尺度は次のようになる。
 
 ```anchor ArrayMapHelperOk
 def arrayMapHelper (f : α → β) (arr : Array α)
@@ -365,14 +365,14 @@ def arrayMapHelper (f : α → β) (arr : Array α)
 termination_by arr.size - i
 ```
 
-A similar termination proof can be used to write {anchorName ArrayFind}`Array.find`, a function that finds the first element in an array that satisfies a Boolean function and returns both the element and its index:
+同様の停止性の証明を使って{anchorName ArrayFind}`Array.find`を書ける。これは配列の中で真偽値の関数を満たす最初の要素を見つけ、その要素と添字の両方を返す関数である。
 
 ```anchor ArrayFind
 def Array.find (arr : Array α) (p : α → Bool) :
     Option (Nat × α) :=
   findHelper arr p 0
 ```
-Once again, the helper function terminates because {lit}`arr.size - i` decreases as {lit}`i` increases:
+ここでもまた、{lit}`i`が増えるにつれ{lit}`arr.size - i`が小さくなるので、補助関数は停止する。
 
 ```anchor ArrayFindHelper
 def findHelper (arr : Array α) (p : α → Bool)
@@ -385,8 +385,8 @@ def findHelper (arr : Array α) (p : α → Bool)
   else none
 ```
 
-Adding a question mark to {kw}`termination_by` (that is, using {kw}`termination_by?`) causes Lean to explicitly suggest the measure that it chose.
-Clicking {lit}`[apply]` replaces {kw}`termination_by?` with the suggested measure:
+{kw}`termination_by`に疑問符を付ける（つまり{kw}`termination_by?`を使う）と、Leanが自分で選んだ尺度を明示的に提案する。
+{lit}`[apply]`をクリックすると、{kw}`termination_by?`が提案された尺度で置き換わる。
 ```anchor ArrayFindHelperSugg
 def findHelper (arr : Array α) (p : α → Bool)
     (i : Nat) : Option (Nat × α) :=
@@ -403,17 +403,17 @@ Try this:
   [apply] termination_by arr.size - i
 ```
 
-Not all termination arguments are as quite as simple as this one.
-However, the basic structure of identifying some expression based on the function's arguments that will decrease in each call occurs in all termination proofs.
-Sometimes, creativity can be required in order to figure out just why a function terminates, and sometimes Lean requires additional proofs in order to accept that the measure in fact decreases.
+停止性の議論がすべてこれほど単純なわけではない。
+しかし、関数の引数に基づいて呼び出しごとに小さくなる何らかの式を見つけるという基本的な構造は、すべての停止性の証明に現れる。
+関数がなぜ停止するのかを突き止めるのに工夫が要ることもあり、その尺度が実際に小さくなることをLeanに受け入れさせるのに追加の証明が要ることもある。
 
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "array-termination-exercises"
 %%%
 
- * Implement a {anchorTerm ForMArr}`ForM m (Array α)` instance on arrays using a tail-recursive accumulator-passing function and a {kw}`termination_by` clause.
- * Reimplement {anchorName ArrayMap}`Array.map`, {anchorName ArrayFind}`Array.find`, and the {anchorName ForMArr}`ForM` instance using {kw}`for`{lit}` ... `{kw}`in`{lit}` ...` loops in the identity monad and compare the resulting code.
- * Reimplement array reversal using a {kw}`for`{lit}` ... `{kw}`in`{lit}` ...` loop in the identity monad. Compare it to the tail-recursive function.
+ * 末尾再帰でアキュムレータを渡す関数と{kw}`termination_by`の句を使って、配列に対する{anchorTerm ForMArr}`ForM m (Array α)`インスタンスを実装せよ。
+ * {anchorName ArrayMap}`Array.map`、{anchorName ArrayFind}`Array.find`、{anchorName ForMArr}`ForM`インスタンスを、恒等モナドでの{kw}`for`{lit}` ... `{kw}`in`{lit}` ...`ループを使って実装し直し、得られるコードを比べよ。
+ * 配列の反転を、恒等モナドでの{kw}`for`{lit}` ... `{kw}`in`{lit}` ...`ループを使って実装し直せ。末尾再帰関数と比べよ。
