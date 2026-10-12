@@ -17,19 +17,19 @@ set_option pp.rawOnError true
 tag := "positive-numbers"
 %%%
 
-In some applications, only positive numbers make sense.
-For example, compilers and interpreters typically use one-indexed line and column numbers for source positions, and a datatype that represents only non-empty lists will never report a length of zero.
-Rather than relying on natural numbers, and littering the code with assertions that the number is not zero, it can be useful to design a datatype that represents only positive numbers.
+アプリケーションによっては、正の数しか意味をなさないことがある。
+たとえば、コンパイラやインタプリタは通常、ソース上の位置に行番号と列番号を1始まりで使うし、空でないリストだけを表すデータ型が長さ0を返すことはない。
+自然数に頼り、0でないことを確かめる検査をコードのあちこちに散らすより、正の数だけを表すデータ型を設計した方が役に立つことがある。
 
-One way to represent positive numbers is very similar to {anchorTerm chapterIntro}`Nat`, except with {anchorTerm Pos}`one` as the base case instead of {anchorTerm Nat.zero}`zero`:
+正の数を表す一つの方法は、基底ケースを{anchorTerm Nat.zero}`zero`ではなく{anchorTerm Pos}`one`にするだけで、{anchorTerm chapterIntro}`Nat`とよく似ている。
 
 ```anchor Pos
 inductive Pos : Type where
   | one : Pos
   | succ : Pos → Pos
 ```
-This datatype represents exactly the intended set of values, but it is not very convenient to use.
-For example, numeric literals are rejected:
+このデータ型は意図した値の集合をちょうど表すが、使い勝手はよくない。
+たとえば、数値リテラルは受け付けられない。
 ```anchor sevenOops
 def seven : Pos := 7
 ```
@@ -42,13 +42,13 @@ due to the absence of the instance above
 
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
-Instead, the constructors must be used directly:
+代わりに、コンストラクタを直接使わなければならない。
 ```anchor seven
 def seven : Pos :=
   Pos.succ (Pos.succ (Pos.succ (Pos.succ (Pos.succ (Pos.succ Pos.one)))))
 ```
 
-Similarly, addition and multiplication are not easy to use:
+同様に、加法と乗法も使いにくい。
 ```anchor fourteenOops
 def fourteen : Pos := seven + seven
 ```
@@ -68,58 +68,58 @@ failed to synthesize instance of type class
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
-Each of these error messages begins with {lit}`failed to synthesize`.
-This indicates that the error is due to an overloaded operation that has not been implemented, and it describes the type class that must be implemented.
+どのエラーメッセージも{lit}`failed to synthesize`で始まっている。
+これは、実装されていないオーバーロードされた操作が原因のエラーであることを示し、実装すべき型クラスを述べている。
 
-# Classes and Instances
+# クラスとインスタンス
 %%%
 tag := "classes-and-instances"
 %%%
 
-A type class consists of a name, some parameters, and a collection of {deftech}_methods_.
-The parameters describe the types for which overloadable operations are being defined, and the methods are the names and type signatures of the overloadable operations.
-Once again, there is a terminology clash with object-oriented languages.
-In object-oriented programming, a method is essentially a function that is connected to a particular object in memory, with special access to the object's private state.
-Objects are interacted with via their methods.
-In Lean, the term “method” refers to an operation that has been declared to be overloadable, with no special connection to objects or values or private fields.
+型クラスは、名前、いくつかの引数、{deftech}*メソッド*の集まりから成る。
+引数は、オーバーロードできる操作を定義する対象の型を記述し、メソッドはその操作の名前と型シグネチャである。
+ここでも、オブジェクト指向言語との用語の衝突がある。
+オブジェクト指向プログラミングでは、メソッドは本質的に、メモリ上の特定のオブジェクトに結び付いた関数であり、そのオブジェクトの非公開の状態に特別にアクセスできる。
+オブジェクトとはメソッドを通じてやり取りする。
+Leanでは、「メソッド」という語は、オーバーロード可能として宣言された操作を指し、オブジェクトや値、非公開のフィールドとは特別な関係がない。
 
-One way to overload addition is to define a type class named {anchorName Plus}`Plus`, with an addition method named {anchorName Plus}`plus`.
-Once an instance of {anchorTerm Plus}`Plus` for {anchorTerm chapterIntro}`Nat` has been defined, it becomes possible to add two {anchorTerm chapterIntro}`Nat`s using {anchorName plusNatFiveThree}`Plus.plus`:
+加法をオーバーロードする一つの方法は、{anchorName Plus}`Plus`という型クラスを定義し、{anchorName Plus}`plus`という加法のメソッドを持たせることである。
+{anchorTerm chapterIntro}`Nat`に対する{anchorTerm Plus}`Plus`のインスタンスを定義すると、{anchorName plusNatFiveThree}`Plus.plus`を使って二つの{anchorTerm chapterIntro}`Nat`を足せるようになる。
 ```anchor plusNatFiveThree
 #eval Plus.plus 5 3
 ```
 ```anchorInfo plusNatFiveThree
 8
 ```
-Adding more instances allows {anchorName plusNatFiveThree}`Plus.plus` to take more types of arguments.
+インスタンスを増やせば、{anchorName plusNatFiveThree}`Plus.plus`がより多くの型の引数を取れるようになる。
 
-In the following type class declaration, {anchorName Plus}`Plus` is the name of the class, {anchorTerm Plus}`α : Type` is the only argument, and {anchorTerm Plus}`plus : α → α → α` is the only method:
+次の型クラスの宣言では、{anchorName Plus}`Plus`がクラスの名前、{anchorTerm Plus}`α : Type`が唯一の引数、{anchorTerm Plus}`plus : α → α → α`が唯一のメソッドである。
 
 ```anchor Plus
 class Plus (α : Type) where
   plus : α → α → α
 ```
-This declaration says that there is a type class {anchorName Plus}`Plus` that overloads operations with respect to a type {anchorName Plus}`α`.
-In particular, there is one overloaded operation called {anchorName Plus}`plus` that takes two {anchorName Plus}`α`s and returns an {anchorName Plus}`α`.
+この宣言は、型{anchorName Plus}`α`について操作をオーバーロードする{anchorName Plus}`Plus`という型クラスがある、と述べている。
+とくに、{anchorName Plus}`α`を二つ取り{anchorName Plus}`α`を返す{anchorName Plus}`plus`というオーバーロードされた操作が一つある。
 
-Type classes are first class, just as types are first class.
-In particular, a type class is another kind of type.
-The type of {anchorTerm PlusType}`Plus` is {anchorTerm PlusType}`Type → Type`, because it takes a type as an argument ({anchorName Plus}`α`) and results in a new type that describes the overloading of {anchorName Plus}`Plus`'s operation for {anchorName Plus}`α`.
+型が第一級であるのと同じく、型クラスも第一級である。
+とくに、型クラスもまた一種の型である。
+{anchorTerm PlusType}`Plus`の型は{anchorTerm PlusType}`Type → Type`である。{anchorName Plus}`α`という型を引数に取り、{anchorName Plus}`Plus`の操作を{anchorName Plus}`α`についてオーバーロードすることを記述する新しい型を結果として生むためである。
 
 
-To overload {anchorName PlusNat}`plus` for a particular type, write an instance:
+特定の型に対して{anchorName PlusNat}`plus`をオーバーロードするには、インスタンスを書く。
 
 ```anchor PlusNat
 instance : Plus Nat where
   plus := Nat.add
 ```
-The colon after {anchorTerm PlusNat}`instance` indicates that {anchorTerm PlusNat}`Plus Nat` is indeed a type.
-Each method of class {anchorName Plus}`Plus` should be assigned a value using {anchorTerm PlusNat}`:=`.
-In this case, there is only one method: {anchorName PlusNat}`plus`.
+{anchorTerm PlusNat}`instance`の後ろのコロンは、{anchorTerm PlusNat}`Plus Nat`が確かに型であることを示す。
+クラス{anchorName Plus}`Plus`の各メソッドには、{anchorTerm PlusNat}`:=`を使って値を割り当てる。
+ここではメソッドは{anchorName PlusNat}`plus`の一つだけである。
 
-By default, type class methods are defined in a namespace with the same name as the type class.
-It can be convenient to {anchorTerm openPlus}`open` the namespace so that users don't need to type the name of the class first.
-Parentheses in an {kw}`open` command indicate that only the indicated names from the namespace are to be made accessible:
+既定では、型クラスのメソッドは型クラスと同じ名前の名前空間に定義される。
+その名前空間を{anchorTerm openPlus}`open`しておくと、利用者がクラス名を先に打たなくて済むので便利なことがある。
+{kw}`open`コマンドの括弧は、その名前空間から指定した名前だけを使えるようにする、という意味である。
 
 ```anchor openPlus
 open Plus (plus)
@@ -131,7 +131,7 @@ open Plus (plus)
 8
 ```
 
-Defining an addition function for {anchorName PlusPos}`Pos` and an instance of {anchorTerm PlusPos}`Plus Pos` allows {anchorName PlusPos}`plus` to be used to add both {anchorName PlusPos}`Pos` and {anchorTerm chapterIntro}`Nat` values:
+{anchorName PlusPos}`Pos`に対する加法の関数と{anchorTerm PlusPos}`Plus Pos`のインスタンスを定義すれば、{anchorName PlusPos}`plus`で{anchorName PlusPos}`Pos`の値も{anchorTerm chapterIntro}`Nat`の値も足せるようになる。
 
 ```anchor PlusPos
 def Pos.plus : Pos → Pos → Pos
@@ -144,7 +144,7 @@ instance : Plus Pos where
 def fourteen : Pos := plus seven seven
 ```
 
-Because there is not yet an instance of {anchorTerm PlusFloat}`Plus Float`, attempting to add two floating-point numbers with {anchorName plusFloatFail}`plus` fails with a familiar message:
+まだ{anchorTerm PlusFloat}`Plus Float`のインスタンスがないので、{anchorName plusFloatFail}`plus`で二つの浮動小数点数を足そうとすると、見覚えのあるメッセージを伴って失敗する。
 ```anchor plusFloatFail
 #eval plus 5.2 917.25861
 ```
@@ -154,22 +154,22 @@ failed to synthesize instance of type class
 
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
-These errors mean that Lean was unable to find an instance for a given type class.
+これらのエラーは、Leanがその型クラスのインスタンスを見つけられなかったという意味である。
 
-# Overloaded Addition
+# 加法のオーバーロード
 %%%
 tag := "overloaded-addition"
 %%%
 
-Lean's built-in addition operator is syntactic sugar for a type class called {anchorName chapterIntro}`HAdd`, which flexibly allows the arguments to addition to have different types.
-{anchorName chapterIntro}`HAdd` is short for _heterogeneous addition_.
-For example, an {anchorName chapterIntro}`HAdd` instance can be written to allow a {anchorName chapterIntro}`Nat` to be added to a {anchorName fiveZeros}`Float`, resulting in a new {anchorName fiveZeros}`Float`.
-When a programmer writes {anchorTerm plusDesugar}`x + y`, it is interpreted as meaning {anchorTerm plusDesugar}`HAdd.hAdd x y`.
+Leanの組み込みの加法演算子は、{anchorName chapterIntro}`HAdd`という型クラスの構文糖である。{anchorName chapterIntro}`HAdd`は、加法の引数が異なる型でもよいように柔軟にできている。
+{anchorName chapterIntro}`HAdd`は*異種の加法*（heterogeneous addition）の略である。
+たとえば、{anchorName chapterIntro}`Nat`と{anchorName fiveZeros}`Float`を足して新しい{anchorName fiveZeros}`Float`にする{anchorName chapterIntro}`HAdd`のインスタンスを書ける。
+プログラマが{anchorTerm plusDesugar}`x + y`と書くと、{anchorTerm plusDesugar}`HAdd.hAdd x y`という意味として解釈される。
 
-While an understanding of the full generality of {anchorName chapterIntro}`HAdd` relies on features that are discussed in {ref "out-params"}[another section in this chapter], there is a simpler type class called {anchorName AddPos}`Add` that does not allow the types of the arguments to be mixed.
-The Lean libraries are set up so that an instance of {anchorName AddPos}`Add` will be found when searching for an instance of {anchorName chapterIntro}`HAdd` in which both arguments have the same type.
+{anchorName chapterIntro}`HAdd`の完全な一般性を理解するには{ref "out-params"}[この章の別の節]で扱う機能が必要だが、引数の型を混ぜられない、より単純な{anchorName AddPos}`Add`という型クラスもある。
+Leanのライブラリは、両方の引数が同じ型である{anchorName chapterIntro}`HAdd`のインスタンスを探すときに、{anchorName AddPos}`Add`のインスタンスが見つかるようにできている。
 
-Defining an instance of {anchorTerm AddPos}`Add Pos` allows {anchorTerm AddPos}`Pos` values to use ordinary addition syntax:
+{anchorTerm AddPos}`Add Pos`のインスタンスを定義すると、{anchorTerm AddPos}`Pos`の値で普通の加法の記法を使える。
 
 ```anchor AddPos
 instance : Add Pos where
@@ -179,17 +179,17 @@ instance : Add Pos where
 def fourteen : Pos := seven + seven
 ```
 
-# Conversion to Strings
+# 文字列への変換
 %%%
 tag := "conversion-to-strings"
 %%%
 
-Another useful built-in class is called {anchorName UglyToStringPos}`ToString`.
-Instances of {anchorName UglyToStringPos}`ToString` provide a standard way of converting values from a given type into strings.
-For example, a {anchorName UglyToStringPos}`ToString` instance is used when a value occurs in an interpolated string, and it determines how the {anchorName printlnType}`IO.println` function used at the {ref "running-a-program"}[beginning of the description of {anchorName readFile}`IO`] will display a value.
+もう一つの便利な組み込みのクラスが{anchorName UglyToStringPos}`ToString`である。
+{anchorName UglyToStringPos}`ToString`のインスタンスは、与えられた型の値を文字列に変換する標準的な方法を与える。
+たとえば、値が補間された文字列の中にあるときに{anchorName UglyToStringPos}`ToString`のインスタンスが使われ、{ref "running-a-program"}[{anchorName readFile}`IO`の説明の冒頭]で使った{anchorName printlnType}`IO.println`が値をどう表示するかもこれで決まる。
 
-For example, one way to convert a {anchorName Pos}`Pos` into a {anchorName readFile}`String` is to reveal its inner structure.
-The function {anchorName posToStringStructure}`posToString` takes a {anchorName posToStringStructure}`Bool` that determines whether to parenthesize uses of {anchorName posToStringStructure}`Pos.succ`, which should be {anchorName CoeBoolProp}`true` in the initial call to the function and {anchorName posToStringStructure}`false` in all recursive calls.
+たとえば、{anchorName Pos}`Pos`を{anchorName readFile}`String`に変換する一つの方法は、その内部構造をそのまま見せることである。
+関数{anchorName posToStringStructure}`posToString`は、{anchorName posToStringStructure}`Pos.succ`の使用に括弧を付けるかどうかを決める{anchorName posToStringStructure}`Bool`を取り、最初の呼び出しでは{anchorName CoeBoolProp}`true`、再帰呼び出しではすべて{anchorName posToStringStructure}`false`にする。
 
 ```anchor posToStringStructure
 def posToString (atTop : Bool) (p : Pos) : String :=
@@ -198,13 +198,13 @@ def posToString (atTop : Bool) (p : Pos) : String :=
   | Pos.one => "Pos.one"
   | Pos.succ n => paren s!"Pos.succ {posToString false n}"
 ```
-Using this function for a {anchorName UglyToStringPos}`ToString` instance:
+この関数を{anchorName UglyToStringPos}`ToString`のインスタンスに使うと、
 
 ```anchor UglyToStringPos
 instance : ToString Pos where
   toString := posToString true
 ```
-results in informative, yet overwhelming, output:
+情報量はあるが圧倒される出力になる。
 ```anchor sevenLong
 #eval s!"There are {seven}"
 ```
@@ -212,8 +212,8 @@ results in informative, yet overwhelming, output:
 "There are Pos.succ (Pos.succ (Pos.succ (Pos.succ (Pos.succ (Pos.succ Pos.one)))))"
 ```
 
-On the other hand, every positive number has a corresponding {anchorTerm chapterIntro}`Nat`.
-Converting it to a {anchorTerm chapterIntro}`Nat` and then using the {anchorTerm chapterIntro}`ToString Nat` instance (that is, the overloading of {anchorName UglyToStringPos}`ToString` for {anchorTerm chapterIntro}`Nat`) is a quick way to generate much shorter output:
+一方、すべての正の数には対応する{anchorTerm chapterIntro}`Nat`がある。
+それを{anchorTerm chapterIntro}`Nat`に変換し、{anchorTerm chapterIntro}`ToString Nat`のインスタンス（つまり{anchorTerm chapterIntro}`Nat`に対する{anchorName UglyToStringPos}`ToString`のオーバーロード）を使えば、ずっと短い出力を簡単に得られる。
 
 ```anchor posToNat
 def Pos.toNat : Pos → Nat
@@ -230,19 +230,19 @@ instance : ToString Pos where
 ```anchorInfo sevenShort
 "There are 7"
 ```
-When more than one instance is defined, the most recent takes precedence.
-Additionally, if a type has a {anchorName UglyToStringPos}`ToString` instance, then it can be used to display the result of {kw}`#eval` so {anchorTerm sevenEvalStr}`#eval seven` outputs {anchorInfo sevenEvalStr}`7`.
+二つ以上のインスタンスを定義した場合、最後に定義したものが優先される。
+さらに、ある型に{anchorName UglyToStringPos}`ToString`のインスタンスがあれば、{kw}`#eval`の結果の表示にも使われるので、{anchorTerm sevenEvalStr}`#eval seven`は{anchorInfo sevenEvalStr}`7`を出力する。
 
-# Overloaded Multiplication
+# 乗法のオーバーロード
 %%%
 tag := "overloaded-multiplication"
 %%%
 
-For multiplication, there is a type class called {anchorName MulPPoint}`HMul` that allows mixed argument types, just like {anchorName chapterIntro}`HAdd`.
-Just as {anchorTerm plusDesugar}`x + y` is interpreted as {anchorTerm plusDesugar}[`HAdd.hAdd x y`], {anchorTerm timesDesugar}`x * y` is interpreted as {anchorTerm timesDesugar}`HMul.hMul x y`.
-For the common case of multiplication of two arguments with the same type, a {anchorName PosMul}`Mul` instance suffices.
+乗法にも、{anchorName chapterIntro}`HAdd`と同じく引数の型を混ぜられる{anchorName MulPPoint}`HMul`という型クラスがある。
+{anchorTerm plusDesugar}`x + y`が{anchorTerm plusDesugar}[`HAdd.hAdd x y`]と解釈されるのと同じように、{anchorTerm timesDesugar}`x * y`は{anchorTerm timesDesugar}`HMul.hMul x y`と解釈される。
+同じ型の二つの引数の乗法というよくある場合は、{anchorName PosMul}`Mul`のインスタンスで足りる。
 
-An instance of {anchorTerm PosMul}`Mul` allows ordinary multiplication syntax to be used with {anchorName PosMul}`Pos`:
+{anchorTerm PosMul}`Mul`のインスタンスを定義すると、{anchorName PosMul}`Pos`で普通の乗法の記法を使える。
 
 ```anchor PosMul
 def Pos.mul : Pos → Pos → Pos
@@ -252,7 +252,7 @@ def Pos.mul : Pos → Pos → Pos
 instance : Mul Pos where
   mul := Pos.mul
 ```
-With this instance, multiplication works as expected:
+このインスタンスにより、乗法は期待どおりに働く。
 ```anchor muls
 #eval [seven * Pos.one,
        seven * seven,
@@ -262,41 +262,41 @@ With this instance, multiplication works as expected:
 [7, 49, 14]
 ```
 
-# Literal Numbers
+# 数値リテラル
 %%%
 tag := "literal-numbers"
 %%%
 
-It is quite inconvenient to write out a sequence of constructors for positive numbers.
-One way to work around the problem would be to provide a function to convert a {anchorTerm chapterIntro}`Nat` into a {anchorName Pos}`Pos`.
-However, this approach has downsides.
-First off, because {anchorName PosMul}`Pos` cannot represent {anchorTerm nats}`0`, the resulting function would either convert a {anchorTerm chapterIntro}`Nat` to a bigger number, or it would return {anchorTerm PosStuff}`Option Pos`.
-Neither is particularly convenient for users.
-Secondly, the need to call the function explicitly would make programs that use positive numbers much less convenient to write than programs that use {anchorTerm chapterIntro}`Nat`.
-Having a trade-off between precise types and convenient APIs means that the precise types become less useful.
+正の数のためにコンストラクタの並びを書き下すのは、かなり不便である。
+この問題を避ける方法の一つは、{anchorTerm chapterIntro}`Nat`を{anchorName Pos}`Pos`に変換する関数を用意することである。
+ただし、この方法には難点がある。
+第一に、{anchorName PosMul}`Pos`は{anchorTerm nats}`0`を表せないので、その関数は{anchorTerm chapterIntro}`Nat`をより大きな数に変換するか、{anchorTerm PosStuff}`Option Pos`を返すかのどちらかになる。
+どちらも利用者にとって特に便利とは言えない。
+第二に、関数を明示的に呼ばなければならないと、正の数を使うプログラムは{anchorTerm chapterIntro}`Nat`を使うプログラムよりずっと書きにくくなる。
+正確な型と便利なAPIのどちらかを選ばなければならないとなると、正確な型は役に立ちにくくなる。
 
-There are three type classes that are used to overload numeric literals: {anchorName Zero}`Zero`, {anchorName One}`One`, and {anchorName OfNat}`OfNat`.
-Because many types have values that are naturally written with {anchorTerm nats}`0`, the {anchorName Zero}`Zero` class allow these specific values to be overridden.
-It is defined as follows:
+数値リテラルのオーバーロードに使う型クラスは三つある。{anchorName Zero}`Zero`、{anchorName One}`One`、{anchorName OfNat}`OfNat`である。
+多くの型が{anchorTerm nats}`0`で自然に書ける値を持つので、{anchorName Zero}`Zero`クラスはその特定の値を差し替えられるようにする。
+定義は次のとおりである。
 
 ```anchor Zero
 class Zero (α : Type) where
   zero : α
 ```
-Because {anchorTerm nats}`0` is not a positive number, there should be no instance of {anchorTerm PosStuff}`Zero Pos`.
+{anchorTerm nats}`0`は正の数ではないので、{anchorTerm PosStuff}`Zero Pos`のインスタンスはないはずである。
 
-Similarly, many types have values that are naturally written with {anchorTerm nats}`1`.
-The {anchorName One}`One` class allows these to be overridden:
+同様に、多くの型が{anchorTerm nats}`1`で自然に書ける値を持つ。
+{anchorName One}`One`クラスはそれを差し替えられるようにする。
 ```anchor One
 class One (α : Type) where
   one : α
 ```
-An instance of {anchorTerm OnePos}`One Pos` makes perfect sense:
+{anchorTerm OnePos}`One Pos`のインスタンスは十分に意味がある。
 ```anchor OnePos
 instance : One Pos where
   one := Pos.one
 ```
-With this instance, {anchorTerm onePos}`1` can be used for {anchorTerm OnePos}`Pos.one`:
+このインスタンスにより、{anchorTerm OnePos}`Pos.one`の代わりに{anchorTerm onePos}`1`を使える。
 ```anchor onePos
 #eval (1 : Pos)
 ```
@@ -304,23 +304,23 @@ With this instance, {anchorTerm onePos}`1` can be used for {anchorTerm OnePos}`P
 1
 ```
 
-In Lean, natural number literals are interpreted using a type class called {anchorName OfNat}`OfNat`:
+Leanでは、自然数のリテラルは{anchorName OfNat}`OfNat`という型クラスを使って解釈される。
 
 ```anchor OfNat
 class OfNat (α : Type) (_ : Nat) where
   ofNat : α
 ```
-This type class takes two arguments: {anchorTerm OfNat}`α` is the type for which a natural number is overloaded, and the unnamed {anchorTerm chapterIntro}`Nat` argument is the actual literal number that was encountered in the program.
-The method {anchorName OfNat}`ofNat` is then used as the value of the numeric literal.
-Because the class contains the {anchorTerm chapterIntro}`Nat` argument, it becomes possible to define only instances for those values where the number makes sense.
+この型クラスは二つの引数を取る。{anchorTerm OfNat}`α`は自然数をオーバーロードする対象の型であり、名前のない{anchorTerm chapterIntro}`Nat`の引数は、プログラム中に現れた実際のリテラルの数である。
+メソッド{anchorName OfNat}`ofNat`が、その数値リテラルの値として使われる。
+クラスが{anchorTerm chapterIntro}`Nat`の引数を含むので、その数が意味を持つ値についてだけインスタンスを定義できる。
 
-{anchorTerm OfNat}`OfNat` demonstrates that the arguments to type classes do not need to be types.
-Because types in Lean are first-class participants in the language that can be passed as arguments to functions and given definitions with {kw}`def` and {kw}`abbrev`, there is no barrier that prevents non-type arguments in positions where a less-flexible language could not permit them.
-This flexibility allows overloaded operations to be provided for particular values as well as particular types.
-Additionally, it allows the Lean standard library to arrange for there to be a {anchorTerm ListSumZ}`Zero α` instance whenever there's an {anchorTerm ListSum}`OfNat α 0` instance, and vice versa.
-Similarly, an instance of {anchorTerm OneExamples}`One α` implies an instance of {anchorTerm OneExamples}`OfNat α 1`, just as an instance of {anchorTerm OneExamples}`OfNat α 1` implies an instance of {anchorTerm OneExamples}`One α`.
+{anchorTerm OfNat}`OfNat`は、型クラスの引数が型である必要はないことを示している。
+Leanでは型が言語の第一級の要素であり、関数の引数として渡せ、{kw}`def`や{kw}`abbrev`で定義を与えられるので、融通の利かない言語では許されない位置に型以外の引数を置くことを妨げる障壁がない。
+この柔軟さにより、特定の型だけでなく特定の値についてもオーバーロードされた操作を用意できる。
+さらに、{anchorTerm ListSum}`OfNat α 0`のインスタンスがあれば必ず{anchorTerm ListSumZ}`Zero α`のインスタンスがある、という関係をLeanの標準ライブラリが整えられる。その逆も同様である。
+同様に、{anchorTerm OneExamples}`One α`のインスタンスは{anchorTerm OneExamples}`OfNat α 1`のインスタンスを導き、{anchorTerm OneExamples}`OfNat α 1`のインスタンスは{anchorTerm OneExamples}`One α`のインスタンスを導く。
 
-A sum type that represents natural numbers less than four can be defined as follows:
+4未満の自然数を表す直和型は次のように定義できる。
 
 ```anchor LT4
 inductive LT4 where
@@ -329,7 +329,7 @@ inductive LT4 where
   | two
   | three
 ```
-While it would not make sense to allow _any_ literal number to be used for this type, numbers less than four clearly make sense:
+この型に*どんな*数値リテラルでも使えるのは意味をなさないが、4未満の数なら明らかに意味がある。
 
 ```anchor LT4ofNat
 instance : OfNat LT4 0 where
@@ -344,7 +344,7 @@ instance : OfNat LT4 2 where
 instance : OfNat LT4 3 where
   ofNat := LT4.three
 ```
-With these instances, the following examples work:
+これらのインスタンスにより、次の例は動作する。
 ```anchor LT4three
 #eval (3 : LT4)
 ```
@@ -357,7 +357,7 @@ LT4.three
 ```anchorInfo LT4zero
 LT4.zero
 ```
-On the other hand, out-of-bounds literals are still not allowed:
+一方、範囲外のリテラルは依然として許されない。
 ```anchor LT4four
 #eval (4 : LT4)
 ```
@@ -371,10 +371,10 @@ due to the absence of the instance above
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
-For {anchorName PosMul}`Pos`, the {anchorTerm OfNat}`OfNat` instance should work for _any_ {anchorTerm chapterIntro}`Nat` other than {anchorName PosStuff}`Nat.zero`.
-Another way to phrase this is to say that for all natural numbers {anchorTerm posrec}`n`, the instance should work for {anchorTerm posrec}`n + 1`.
-Just as names like {anchorTerm posrec}`α` automatically become implicit arguments to functions that Lean fills out on its own, instances can take automatic implicit arguments.
-In this instance, the argument {anchorTerm OfNatPos}`n` stands for any {anchorTerm chapterIntro}`Nat`, and the instance is defined for a {anchorTerm chapterIntro}`Nat` that's one greater:
+{anchorName PosMul}`Pos`では、{anchorTerm OfNat}`OfNat`のインスタンスは{anchorName PosStuff}`Nat.zero`以外の*任意の*{anchorTerm chapterIntro}`Nat`に対して働くべきである。
+言い換えれば、すべての自然数{anchorTerm posrec}`n`について、インスタンスが{anchorTerm posrec}`n + 1`に対して働くべきである。
+{anchorTerm posrec}`α`のような名前が自動的に暗瞑の引数になり、Leanが自分で補うのと同じように、インスタンスも自動的な暗瞑の引数を取れる。
+このインスタンスでは、引数{anchorTerm OfNatPos}`n`が任意の{anchorTerm chapterIntro}`Nat`を表し、その1だけ大きい{anchorTerm chapterIntro}`Nat`に対してインスタンスが定義される。
 
 ```anchor OfNatPos
 instance : OfNat Pos (n + 1) where
@@ -384,8 +384,8 @@ instance : OfNat Pos (n + 1) where
       | k + 1 => Pos.succ (natPlusOne k)
     natPlusOne n
 ```
-Because {anchorTerm OfNatPos}`n` stands for a {anchorTerm chapterIntro}`Nat` that's one less than what the user wrote, the helper function {anchorName OfNatPos}`natPlusOne` returns a {anchorName OfNatPos}`Pos` that's one greater than its argument.
-This makes it possible to use natural number literals for positive numbers, but not for zero:
+{anchorTerm OfNatPos}`n`は利用者が書いた数より1小さい{anchorTerm chapterIntro}`Nat`を表すので、補助関数{anchorName OfNatPos}`natPlusOne`は引数より1大きい{anchorName OfNatPos}`Pos`を返す。
+これにより、正の数には自然数のリテラルを使えるが、0には使えない。
 
 ```anchor eight
 def eight : Pos := 8
@@ -403,40 +403,40 @@ due to the absence of the instance above
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
-# Exercises
+# 練習問題
 %%%
 tag := "positive-numbers-exercises"
 %%%
 
-## Another Representation
+## 別の表現
 %%%
 tag := "positive-numbers-another-representation"
 %%%
 
-An alternative way to represent a positive number is as the successor of some {anchorTerm chapterIntro}`Nat`.
-Replace the definition of {anchorName PosStuff}`Pos` with a structure whose constructor is named {anchorName AltPos}`succ` that contains a {anchorTerm chapterIntro}`Nat`:
+正の数を表す別の方法は、ある{anchorTerm chapterIntro}`Nat`の後者として表すものである。
+{anchorName PosStuff}`Pos`の定義を、{anchorTerm chapterIntro}`Nat`を入れる{anchorName AltPos}`succ`という名前のコンストラクタを持つ構造体で置き換えよ。
 
 ```anchor AltPos
 structure Pos where
   succ ::
   pred : Nat
 ```
-Define instances of {moduleName}`Add`, {moduleName}`Mul`, {anchorName UglyToStringPos}`ToString`, and {moduleName}`OfNat` that allow this version of {anchorName AltPos}`Pos` to be used conveniently.
+この版の{anchorName AltPos}`Pos`を便利に使えるようにする{moduleName}`Add`、{moduleName}`Mul`、{anchorName UglyToStringPos}`ToString`、{moduleName}`OfNat`のインスタンスを定義せよ。
 
-## Even Numbers
+## 偶数
 %%%
 tag := "even-numbers-ex"
 %%%
 
-Define a datatype that represents only even numbers. Define instances of {moduleName}`Add`, {moduleName}`Mul`, and {anchorName UglyToStringPos}`ToString` that allow it to be used conveniently.
-{moduleName}`OfNat` requires a feature that is introduced in {ref "tc-polymorphism"}[the next section].
+偶数だけを表すデータ型を定義せよ。それを便利に使えるようにする{moduleName}`Add`、{moduleName}`Mul`、{anchorName UglyToStringPos}`ToString`のインスタンスを定義せよ。
+{moduleName}`OfNat`には{ref "tc-polymorphism"}[次の節]で導入する機能が必要である。
 
-## HTTP Requests
+## HTTPリクエスト
 %%%
 tag := "http-request-ex"
 %%%
 
-An HTTP request begins with an identification of a HTTP method, such as {lit}`GET` or {lit}`POST`, along with a URI and an HTTP version.
-Define an inductive type that represents an interesting subset of the HTTP methods, and a structure that represents HTTP responses.
-Responses should have a {anchorName UglyToStringPos}`ToString` instance that makes it possible to debug them.
-Use a type class to associate different {moduleName}`IO` actions with each HTTP method, and write a test harness as an {moduleName}`IO` action that calls each method and prints the result.
+HTTPリクエストは、{lit}`GET`や{lit}`POST`のようなHTTPメソッドの指定と、URI、HTTPのバージョンから始まる。
+HTTPメソッドのうち興味深い部分集合を表す帰納型と、HTTPレスポンスを表す構造体を定義せよ。
+レスポンスには、デバッグできるようにする{anchorName UglyToStringPos}`ToString`のインスタンスを持たせる。
+型クラスを使って各HTTPメソッドに異なる{moduleName}`IO`アクションを対応付け、各メソッドを呼び出して結果を表示する{moduleName}`IO`アクションとしてテスト用の仕組みを書け。

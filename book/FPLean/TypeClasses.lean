@@ -26,37 +26,37 @@ set_option pp.rawOnError true
 tag := "type-classes"
 %%%
 
-In many languages, the built-in datatypes get special treatment.
-For example, in C and Java, {lit}`+` can be used to add {c}`float`s and {c}`int`s, but not arbitrary-precision numbers from a third-party library.
-Similarly, numeric literals can be used directly for the built-in types, but not for user-defined number types.
-Other languages provide an {deftech}_overloading_ mechanism for operators, where the same operator can be given a meaning for a new type.
-In these languages, such as C++ and C#, a wide variety of built-in operators can be overloaded, and the compiler uses the type checker to select a particular implementation.
+多くの言語では、組み込みのデータ型が特別扱いされる。
+たとえばCやJavaでは、{lit}`+`で{c}`float`や{c}`int`は足せるが、第三者のライブラリが提供する任意精度の数は足せない。
+同様に、数値リテラルは組み込みの型にはそのまま使えるが、利用者が定義した数の型には使えない。
+他の言語には演算子の{deftech}*オーバーロード*の仕組みがあり、同じ演算子に新しい型での意味を与えられる。
+C++やC#のような言語では、さまざまな組み込み演算子をオーバーロードでき、コンパイラは型検査を使ってどの実装を選ぶかを決める。
 
-In addition to numeric literals and operators, many languages allow overloading of functions or methods.
-In C++, Java, C# and Kotlin, multiple implementations of a method are allowed, with differing numbers and types of arguments.
-The compiler uses the number of arguments and their types to determine which overload was intended.
+数値リテラルや演算子だけでなく、多くの言語では関数やメソッドのオーバーロードもできる。
+C++、Java、C#、Kotlinでは、引数の個数や型が異なる複数の実装を同じメソッドに持たせられる。
+コンパイラは引数の個数と型から、どのオーバーロードを意図したかを判断する。
 
-Function and operator overloading has a key limitation: polymorphic functions can't restrict their type arguments to types for which a given overload exists.
-For example, an overloaded method might be defined for strings, byte arrays, and file pointers, but there's no way to write a second method that works for any of these.
-Instead, this second method must itself be overloaded for each type that has an overload of the original method, resulting in many boilerplate definitions instead of a single polymorphic definition.
-Another consequence of this restriction is that some operators (such as equality in Java) end up being defined for _every_ combination of arguments, even when it is not necessarily sensible to do so.
-If programmers are not very careful, this can lead to programs that crash at runtime or silently compute an incorrect result.
+関数と演算子のオーバーロードには重要な制限がある。多相関数は、型引数をそのオーバーロードが存在する型に限定できないのである。
+たとえば、文字列、バイト配列、ファイルポインタに対してオーバーロードされたメソッドがあっても、そのどれに対しても使える第2のメソッドを書く方法がない。
+代わりに、その第2のメソッドを、元のメソッドのオーバーロードがある型ごとにオーバーロードしなければならず、一つの多相的な定義ではなく、多くの定型定義が必要になる。
+この制限のもう一つの帰結は、一部の演算子（Javaの等価演算子など）が、妥当とは限らない*あらゆる*引数の組み合わせに対して定義されることである。
+プログラマが十分注意しないと、実行時にクラッシュしたり、黙って誤った結果を計算したりするプログラムになりうる。
 
-Lean implements overloading using a mechanism called {deftech}_type classes_, pioneered in Haskell, that allows overloading of operators, functions, and literals in a manner that works well with polymorphism.
-A type class describes a collection of overloadable operations.
-To overload these operations for a new type, an _instance_ is created that contains an implementation of each operation for the new type.
-For example, a type class named {anchorName chapterIntro}`Add` describes types that allow addition, and an instance of {anchorTerm chapterIntro}`Add` for {anchorTerm chapterIntro}`Nat` provides an implementation of addition for {anchorTerm chapterIntro}`Nat`.
+Leanは、Haskellで先駆けて導入された{deftech}*型クラス*という仕組みでオーバーロードを実装している。演算子、関数、リテラルのオーバーロードを、多相性と相性よく行える。
+型クラスは、オーバーロードできる操作の集まりを記述する。
+新しい型でこれらの操作をオーバーロードするには、その型に対する各操作の実装を持つ*インスタンス*を作る。
+たとえば{anchorName chapterIntro}`Add`という型クラスは加法が定義できる型を記述し、{anchorTerm chapterIntro}`Nat`に対する{anchorTerm chapterIntro}`Add`のインスタンスが{anchorTerm chapterIntro}`Nat`の加法の実装を与える。
 
-The terms _class_ and _instance_ can be confusing for those who are used to object-oriented languages, because they are not closely related to classes and instances in object-oriented languages.
-However, they do share common roots: in everyday language, the term “class” refers to a group that shares some common attributes.
-While classes in object-oriented programming certainly describe groups of objects with common attributes, the term additionally refers to a specific mechanism in a programming language for describing such a group.
-Type classes are also a means of describing types that share common attributes (namely, implementations of certain operations), but they don't really have anything else in common with classes as found in object-oriented programming.
+*クラス*と*インスタンス*という語は、オブジェクト指向言語に慣れた人には紛らわしいかもしれない。オブジェクト指向言語のクラスとインスタンスとはあまり関係がないためである。
+ただし、語源は共通している。日常の言葉で「クラス」は、共通の性質を持つ集まりを指す。
+オブジェクト指向プログラミングのクラスも、確かに共通の性質を持つオブジェクトの集まりを記述するが、それに加えて、そのような集まりを記述するための言語の特定の仕組みを指す。
+型クラスも、共通の性質（つまり特定の操作の実装）を共有する型を記述する手段だが、オブジェクト指向プログラミングのクラスとは、それ以外に共通点はほとんどない。
 
-A Lean type class is much more analogous to a Java or C# _interface_.
-Both type classes and interfaces describe a conceptually related set of operations that are implemented for a type or collection of types.
-Similarly, an instance of a type class is akin to the code in a Java or C# class that is prescribed by the implemented interfaces, rather than an instance of a Java or C# class.
-Unlike Java or C#'s interfaces, types can be given instances for type classes that the author of the type does not have access to.
-In this way, they are very similar to Rust traits.
+Leanの型クラスは、JavaやC#の*インターフェース*にはるかに近い。
+型クラスもインターフェースも、ある型または型の集まりに対して実装される、概念上関連した操作の集合を記述する。
+同様に、型クラスのインスタンスは、JavaやC#のクラスのインスタンスというより、実装しているインターフェースによって定められるコードに近い。
+JavaやC#のインターフェースと違い、型の作者が手を入れられない型クラスに対しても、その型のインスタンスを与えられる。
+この点では、Rustのトレイトとよく似ている。
 
 {include 1 FPLean.TypeClasses.Pos}
 
