@@ -15,68 +15,68 @@ set_option verso.exampleModule "Examples.FunctorApplicativeMonad.ActualDefs"
 tag := "structure-applicative-monad-summary"
 %%%
 
-# Type Classes and Structures
+# 型クラスと構造体
 %%%
 tag := none
 %%%
 
-Behind the scenes, type classes are represented by structures.
-Defining a class defines a structure, and additionally creates an empty table of instances.
-Defining an instance creates a value that either has the structure as its type or is a function that can return the structure, and additionally adds an entry to the table.
-Instance search consists of constructing an instance by consulting the instance tables.
-Both structures and classes may provide default values for fields (which are default implementations of methods).
+裏では、型クラスは構造体で表される。
+クラスを定義すると構造体が定義され、加えてインスタンスの空の表が作られる。
+インスタンスを定義すると、その構造体を型として持つ値か、その構造体を返せる関数が作られ、加えて表に項目が加えられる。
+インスタンス探索は、インスタンスの表を参照してインスタンスを組み立てることから成る。
+構造体もクラスも、フィールドの既定の値（メソッドの既定の実装）を用意できる。
 
-# Structures and Inheritance
+# 構造体と継承
 %%%
 tag := none
 %%%
 
-Structures may inherit from other structures.
-Behind the scenes, a structure that inherits from another structure contains an instance of the original structure as a field.
-In other words, inheritance is implemented with composition.
-When multiple inheritance is used, only the unique fields from the additional parent structures are used to avoid a diamond problem, and the functions that would normally extract the parent value are instead organized to construct one.
-Record dot notation takes structure inheritance into account.
+構造体は他の構造体を継承できる。
+裏では、別の構造体を継承する構造体は、元の構造体の値をフィールドとして持つ。
+言い換えれば、継承は合成で実装されている。
+多重継承を使うときは、菱形問題を避けるために追加の親構造体の固有のフィールドだけが使われ、通常なら親の値を取り出すはずの関数は、代わりに親を組み立てるように整えられる。
+レコードのドット記法は構造体の継承を考慮する。
 
-Because type classes are just structures with some additional automation applied, all of these features are available in type classes.
-Together with default methods, this can be used to create a fine-grained hierarchy of interfaces that nonetheless does not impose a large burden on clients, because the small classes that the large classes inherit from can be automatically implemented.
+型クラスは、いくつかの自動化を加えただけの構造体なので、これらの機能はすべて型クラスでも使える。
+既定のメソッドと合わせれば、細かいインターフェースの階層を作りつつ、利用者に大きな負担を課さないようにできる。大きなクラスが継承する小さなクラスを自動で実装できるためである。
 
-# Applicative Functors
+# アプリカティブファンクタ
 %%%
 tag := none
 %%%
 
-An applicative functor is a functor with two additional operations:
- * {anchorName Applicative}`pure`, which is the same operator as that for {anchorName Monad}`Monad`
- * {anchorName Seq}`seq`, which allows a function to be applied in the context of the functor.
+アプリカティブファンクタは、操作が二つ増えたファンクタである。
+ * {anchorName Monad}`Monad`と同じ演算子である{anchorName Applicative}`pure`
+ * ファンクタの文脈で関数を適用できるようにする{anchorName Seq}`seq`。
 
-While monads can represent arbitrary programs with control flow, applicative functors can only run function arguments from left to right.
-Because they are less powerful, they provide less control to programs written against the interface, while the implementor of the method has a greater degree of freedom.
-Some useful types can implement {anchorName Applicative}`Applicative` but not {anchorName Monad}`Monad`.
+モナドは制御の流れを持つ任意のプログラムを表せるが、アプリカティブファンクタは関数の引数を左から右へ実行することしかできない。
+より弱いので、そのインターフェースに対して書かれたプログラムに与える制御は少なく、その一方でメソッドの実装者にはより大きな自由度がある。
+役に立つ型の中には、{anchorName Applicative}`Applicative`は実装できるが{anchorName Monad}`Monad`は実装できないものがある。
 
-In fact, the type classes {anchorName HonestFunctor}`Functor`, {anchorName Applicative}`Applicative`, and {anchorName Monad}`Monad` form a hierarchy of power.
-Moving up the hierarchy, from {anchorName HonestFunctor}`Functor` towards {anchorName Monad}`Monad`, allows more powerful programs to be written, but fewer types implement the more powerful classes.
-Polymorphic programs should be written to use as weak of an abstraction as possible, while datatypes should be given instances that are as powerful as possible.
-This maximizes code re-use.
-The more powerful type classes extend the less powerful ones, which means that an implementation of {anchorName Monad}`Monad` provides implementations of {anchorName HonestFunctor}`Functor` and {anchorName Applicative}`Applicative` for free.
+実際、{anchorName HonestFunctor}`Functor`、{anchorName Applicative}`Applicative`、{anchorName Monad}`Monad`という型クラスは力の階層をなしている。
+階層を上へ、{anchorName HonestFunctor}`Functor`から{anchorName Monad}`Monad`へ向かうほど、より強力なプログラムを書けるが、より強力なクラスを実装する型は少なくなる。
+多相的なプログラムはできるだけ弱い抽象を使うように書き、データ型にはできるだけ強力なインスタンスを与えるとよい。
+これでコードの再利用が最大になる。
+より強力な型クラスはより弱いものを継承しているので、{anchorName Monad}`Monad`の実装は{anchorName HonestFunctor}`Functor`と{anchorName Applicative}`Applicative`の実装をただで与える。
 
-Each class has a set of methods to be implemented and a corresponding contract that specifies additional rules for the methods.
-Programs that are written against these interfaces expect that the additional rules are followed, and may be buggy if they are not.
-The default implementations of {anchorName HonestFunctor}`Functor`'s methods in terms of {anchorName Applicative}`Applicative`'s, and of {anchorName Applicative}`Applicative`'s in terms of {anchorName Monad}`Monad`'s, will obey these rules.
+各クラスには、実装すべきメソッドの集まりと、それらのメソッドについて追加の規則を定める対応する契約がある。
+これらのインターフェースに対して書かれたプログラムは、追加の規則が守られることを前提としており、守られなければ不具合を起こしうる。
+{anchorName HonestFunctor}`Functor`のメソッドを{anchorName Applicative}`Applicative`のものを使って与える既定の実装、および{anchorName Applicative}`Applicative`のメソッドを{anchorName Monad}`Monad`のものを使って与える既定の実装は、これらの規則を守る。
 
-# Universes
+# 宇宙
 %%%
 tag := none
 %%%
 
-To allow Lean to be used as both a programming language and a theorem prover, some restrictions on the language are necessary.
-This includes restrictions on recursive functions that ensure that they all either terminate or are marked as {kw}`partial` and written to return types that are not uninhabited.
-Additionally, it must be impossible to represent certain kinds of logical paradoxes as types.
+Leanをプログラミング言語としても定理証明器としても使えるようにするには、言語にいくつかの制限が必要である。
+これには再帰関数に対する制限が含まれ、すべての再帰関数が停止するか、{kw}`partial`と印を付けられて、値を持たない型を返さないように書かれていることを保証する。
+さらに、ある種の論理的な逆理を型として表せてはならない。
 
-One of the restrictions that rules out certain paradoxes is that every type is assigned to a _universe_.
-Universes are types such as {anchorTerm extras}`Prop`, {anchorTerm extras}`Type`, {anchorTerm extras}`Type 1`, {anchorTerm extras}`Type 2`, and so forth.
-These types describe other types—just as {anchorTerm extras}`0` and {anchorTerm extras}`17` are described by {anchorName extras}`Nat`, {anchorName extras}`Nat` is itself described by {anchorTerm extras}`Type`, and {anchorTerm extras}`Type` is described by {anchorTerm extras}`Type 1`.
-The type of functions that take a type as an argument must be a larger universe than the argument's universe.
+ある種の逆理を排除する制限の一つは、すべての型に*宇宙*が割り当てられることである。
+宇宙は{anchorTerm extras}`Prop`、{anchorTerm extras}`Type`、{anchorTerm extras}`Type 1`、{anchorTerm extras}`Type 2`などの型である。
+これらの型は他の型を記述する。{anchorTerm extras}`0`や{anchorTerm extras}`17`が{anchorName extras}`Nat`で記述されるように、{anchorName extras}`Nat`自体は{anchorTerm extras}`Type`で記述され、{anchorTerm extras}`Type`は{anchorTerm extras}`Type 1`で記述される。
+型を引数に取る関数の型は、その引数の宇宙より大きい宇宙でなければならない。
 
-Because each declared datatype has a universe, writing code that uses types like data would quickly become annoying, requiring each polymorphic type to be copy-pasted to take arguments from {anchorTerm extras}`Type 1`.
-A feature called _universe polymorphism_ allows Lean programs and datatypes to take universe levels as arguments, just as ordinary polymorphism allows programs to take types as arguments.
-Generally speaking, Lean libraries should use universe polymorphism when implementing libraries of polymorphic operations.
+宣言されたデータ型にはそれぞれ宇宙があるので、型をデータのように使うコードを書くとすぐに煩わしくなり、{anchorTerm extras}`Type 1`の引数を取るには多相的な型をいちいちコピーして貼り付ける必要が生じる。
+*宇宙多相*と呼ばれる機能により、普通の多相がプログラムに型を引数として取らせるのと同じように、Leanのプログラムとデータ型は宇宙の段階を引数として取れる。
+一般に、Leanのライブラリで多相的な操作のライブラリを実装するときは、宇宙多相を使うべきである。
