@@ -25,8 +25,8 @@ def config : RenderConfig where
   ]
   extraHead := #[plausible]
   logo := some "/static/lean_logo.svg"
-  sourceLink := some "https://github.com/leanprover/fp-lean"
-  issueLink := some "https://github.com/leanprover/fp-lean/issues"
+  sourceLink := some "https://github.com/yanknvim/fp-lean"
+  issueLink := some "https://github.com/yanknvim/fp-lean/issues"
 
 /--
 A script for redirecting a page to its canonical URL.
