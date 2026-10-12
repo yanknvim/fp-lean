@@ -111,7 +111,7 @@ variable [LawfulMonad m]
 equational steps  {{{ OptionTFirstLaw }}}
 -- ANCHOR: OptionTFirstLaw
 bind (pure v) f
-={ /-- Unfolding the definitions of `bind` and `pure` -/
+={ /-- `bind` と `pure` の定義を展開する -/
    by simp [bind, pure, OptionT.mk]
 }=
 OptionT.mk do
@@ -119,7 +119,7 @@ OptionT.mk do
   | none => pure none
   | some x => f x
 ={
-/-- Desugaring nested action syntax -/
+/-- 入れ子にした動作の構文を脱糖する -/
 }=
 OptionT.mk do
   let y ← pure (some v)
@@ -127,7 +127,7 @@ OptionT.mk do
   | none => pure none
   | some x => f x
 ={
-/-- Desugaring `do`-notation -/
+/-- `do` 記法を脱糖する -/
 by simp only [bind_pure, pure_bind]
 }=
 OptionT.mk
@@ -136,7 +136,7 @@ OptionT.mk
     | none => pure none
     | some x => f x)
 ={
-  /-- Using the first monad rule for `m` -/
+  /-- `m` の最初のモナド規則を使う -/
   by simp [LawfulMonad.pure_bind (m := m)]
 }=
 OptionT.mk
@@ -144,11 +144,11 @@ OptionT.mk
    | none => pure none
    | some x => f x)
 ={
-/-- Reduce `match` -/
+/-- `match` を簡約する -/
 }=
 OptionT.mk (f v)
 ={
-/-- Definition of `OptionT.mk` -/
+/-- `OptionT.mk` の定義 -/
 }=
 f v
 -- ANCHOR_END: OptionTFirstLaw
