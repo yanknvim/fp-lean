@@ -20,15 +20,15 @@ number := false
 htmlSplit := .never
 %%%
 
-Like many languages, Lean uses square brackets for indexing into arrays and lists.
-For instance, if {moduleTerm}`woodlandCritters` is defined as follows:
+多くの言語と同じく、Leanでも配列やリストの要素を参照するのに角括弧を使う。
+たとえば{moduleTerm}`woodlandCritters`が次のように定義されているとする。
 
 ```anchor woodlandCritters
 def woodlandCritters : List String :=
   ["hedgehog", "deer", "snail"]
 ```
 
-then the individual components can be extracted:
+すると個々の要素を取り出せる。
 
 ```anchor animals
 def hedgehog := woodlandCritters[0]
@@ -36,7 +36,7 @@ def deer := woodlandCritters[1]
 def snail := woodlandCritters[2]
 ```
 
-However, attempting to extract the fourth element results in a compile-time error, rather than a run-time error:
+しかし、四番目の要素を取り出そうとすると、実行時エラーではなくコンパイル時のエラーになる。
 
 ```anchor outOfBounds
 def oops := woodlandCritters[3]
@@ -51,63 +51,63 @@ failed to prove index is valid, possible solutions:
 ⊢ 3 < woodlandCritters.length
 ```
 
-This error message is saying Lean tried to automatically mathematically prove that {moduleTerm}`3 < woodlandCritters.length` (i.e. {moduleTerm}`3 < List.length woodlandCritters`), which would mean that the lookup was safe, but that it could not do so.
-Out-of-bounds errors are a common class of bugs, and Lean uses its dual nature as a programming language and a theorem prover to rule out as many as possible.
+このエラーメッセージは、{moduleTerm}`3 < woodlandCritters.length`（つまり{moduleTerm}`3 < List.length woodlandCritters`）をLeanが自動で数学的に証明しようとした、つまり参照が安全であることを示そうとしたが、できなかった、と言っている。
+範囲外参照のエラーはよくある種類の不具合であり、Leanはプログラミング言語と定理証明器という二面性を活かして、できるだけ多くを排除する。
 
-Understanding how this works requires an understanding of three key ideas: propositions, proofs, and tactics.
+この仕組みを理解するには、命題、証明、タクティクという三つの重要な考え方を理解する必要がある。
 
-# Propositions and Proofs
+# 命題と証明
 %%%
 tag := "propositions-and-proofs"
 %%%
 
-A _proposition_ is a statement that can be true or false.
-All of the following English sentences are propositions:
+*命題*とは、真にも偽にもなりうる主張である。
+次の文はすべて命題である。
 
  * $`1 + 1 = 2`
- * Addition is commutative.
- * There are infinitely many prime numbers.
+ * 加法は可換である。
+ * 素数は無限に存在する。
  * $`1 + 1 = 15`
- * Paris is the capital of France.
- * Buenos Aires is the capital of South Korea.
- * All birds can fly.
+ * パリはフランスの首都である。
+ * ブエノスアイレスは韓国の首都である。
+ * すべての鳥は飛べる。
 
-On the other hand, nonsense statements are not propositions.
-Despite being grammatical, none of the following are propositions:
+一方、意味をなさない文は命題ではない。
+次は文法的ではあるが、どれも命題ではない。
 
  * 1 + green = ice cream
- * All capital cities are prime numbers.
- * At least one gorg is a fleep.
+ * すべての首都は素数である。
+ * 少なくとも一つのグォーグはフリープである。
 
-Propositions come in two varieties: those that are purely mathematical, relying only on our definitions of concepts, and those that are facts about the world.
-Theorem provers like Lean are concerned with the former category, and have nothing to say about the flight capabilities of penguins or the legal status of cities.
+命題には二種類ある。概念の定義だけに基づく純粋に数学的な命題と、世界についての事実である命題である。
+Leanのような定理証明器が扱うのは前者であり、ペンギンが飛べるかや都市の法的地位については何も言わない。
 
-A _proof_ is a convincing argument that a proposition is true.
-For mathematical propositions, these arguments make use of the definitions of the concepts that are involved as well as the rules of logical argumentation.
-Most proofs are written for people to understand, and leave out many tedious details.
-Computer-aided theorem provers like Lean are designed to allow mathematicians to write proofs while omitting many details, and it is the software's responsibility to fill in the missing explicit steps.
-These steps can be mechanically checked.
-This decreases the likelihood of oversights or mistakes.
+*証明*とは、ある命題が真であることを納得させる論証である。
+数学的な命題では、そうした論証は、関わる概念の定義と論理的な論証の規則を使う。
+ほとんどの証明は人が理解するために書かれ、煩雑な細部の多くは省略される。
+Leanのような計算機支援の定理証明器は、数学者が細部を省略して証明を書けるように設計されており、省略された明示的な手順を補うのはソフトウェアの役割である。
+その手順は機械的に検査できる。
+これにより、見落としや誤りの可能性が下がる。
 
-In Lean, a program's type describes the ways it can be interacted with.
-For instance, a program of type {moduleTerm}`Nat → List String` is a function that takes a {moduleTerm}`Nat` argument and produces a list of strings.
-In other words, each type specifies what counts as a program with that type.
+Leanでは、プログラムの型が、そのプログラムとどうやり取りできるかを記述する。
+たとえば{moduleTerm}`Nat → List String`型のプログラムは、{moduleTerm}`Nat`の引数を取り、文字列のリストを作る関数である。
+言い換えれば、各型は、その型のプログラムとして何が認められるかを定める。
 
-In Lean, propositions are in fact types.
-They specify what counts as evidence that the statement is true.
-The proposition is proved by providing this evidence, which is checked by Lean.
-On the other hand, if the proposition is false, then it will be impossible to construct this evidence.
+Leanでは、命題は実際に型である。
+命題は、その主張が真である証拠として何が認められるかを定める。
+この証拠を与えることで命題が証明され、その証拠はLeanが検査する。
+一方、命題が偽なら、その証拠を構成することはできない。
 
-For example, the proposition $`1 + 1 = 2` can be written directly in Lean.
-The evidence for this proposition is the constructor {moduleTerm}`rfl`, which is short for _reflexivity_.
-In mathematics, a relation is _reflexive_ if every element is related to itself; this is a basic requirement in order to have a sensible notion of equality.
-Because {moduleTerm}`1 + 1` computes to {moduleTerm}`2`, they are really the same thing:
+たとえば命題$`1 + 1 = 2`はLeanにそのまま書ける。
+この命題の証拠はコンストラクタ{moduleTerm}`rfl`であり、*反射律*（reflexivity）の略である。
+数学では、すべての要素が自分自身と関係を持つとき、その関係は*反射的*であるという。これは、まともな等しさの概念を持つための基本的な要件である。
+{moduleTerm}`1 + 1`は{moduleTerm}`2`に計算されるので、両者は実際に同じものである。
 
 ```anchor onePlusOneIsTwo
 def onePlusOneIsTwo : 1 + 1 = 2 := rfl
 ```
 
-On the other hand, {moduleTerm}`rfl` does not prove the false proposition $`1 + 1 = 15`:
+一方、{moduleTerm}`rfl`は偽の命題$`1 + 1 = 15`を証明しない。
 
 ```anchor onePlusOneIsFifteen
 def onePlusOneIsFifteen : 1 + 1 = 15 := rfl
@@ -122,18 +122,18 @@ but is expected to have type
   1 + 1 = 15
 ```
 
-This error message indicates that {moduleTerm}`rfl` can prove that two expressions are equal when both sides of the equality statement are already the same number.
-Because {moduleTerm}`1 + 1` evaluates directly to {moduleTerm}`2`, they are considered to be the same, which allows {moduleTerm}`onePlusOneIsTwo` to be accepted.
-Just as {moduleTerm}`Type` describes types such as {moduleTerm}`Nat`, {moduleTerm}`String`, and {moduleTerm}`List (Nat × String × (Int → Float))` that represent data structures and functions, {moduleTerm}`Prop` describes propositions.
+このエラーメッセージは、等式の両辺がすでに同じ数であるときに、{moduleTerm}`rfl`が二つの式の等しさを証明できることを示している。
+{moduleTerm}`1 + 1`は直接{moduleTerm}`2`に評価されるので同じものと見なされ、{moduleTerm}`onePlusOneIsTwo`が受け入れられる。
+{moduleTerm}`Type`が、データ構造や関数を表す{moduleTerm}`Nat`、{moduleTerm}`String`、{moduleTerm}`List (Nat × String × (Int → Float))`のような型を記述するのと同じように、{moduleTerm}`Prop`は命題を記述する。
 
-When a proposition has been proven, it is called a _theorem_.
-In Lean, it is conventional to declare theorems with the {kw}`theorem` keyword instead of {kw}`def`.
-This helps readers see which declarations are intended to be read as mathematical proofs, and which are definitions.
-Generally speaking, with a proof, what matters is that there is evidence that a proposition is true, but it's not particularly important _which_ evidence was provided.
-With definitions, on the other hand, it matters very much which particular value is selected—after all, a definition of addition that always returns {anchorTerm SomeNats}`0` is clearly wrong.
-Because the details of a proof don't matter for later proofs, using the {kw}`theorem` keyword enables greater parallelism in the Lean compiler.
+命題が証明されると、それは*定理*と呼ばれる。
+Leanでは、定理は{kw}`def`ではなく{kw}`theorem`キーワードで宣言するのが慣例である。
+これにより、どの宣言が数学的な証明として読まれるべきもので、どれが定義なのかが読み手に分かりやすい。
+一般に、証明では命題が真である証拠があることが重要であり、*どの*証拠が与えられたかはそれほど重要ではない。
+一方、定義では、どの具体的な値が選ばれたかが非常に重要である。常に{anchorTerm SomeNats}`0`を返す加法の定義が明らかに誤っていることを思えばよい。
+証明の細部は後の証明には関係しないので、{kw}`theorem`キーワードを使うとLeanコンパイラがより並列に処理できる。
 
-The prior example could be rewritten as follows:
+先ほどの例は次のように書き直せる。
 
 ```anchor onePlusOneIsTwoProp
 def OnePlusOneIsTwo : Prop := 1 + 1 = 2
@@ -142,66 +142,66 @@ theorem onePlusOneIsTwo : OnePlusOneIsTwo := rfl
 ```
 
 
-# Tactics
+# タクティク
 %%%
 tag := "tactics"
 %%%
 
-Proofs are normally written using _tactics_, rather than by providing evidence directly.
-Tactics are small programs that construct evidence for a proposition.
-These programs run in a _proof state_ that tracks the statement that is to be proved (called the _goal_) along with the assumptions that are available to prove it.
-Running a tactic on a goal results in a new proof state that contains new goals.
-The proof is complete when all goals have been proven.
+証明は通常、証拠を直接与えるのではなく、*タクティク*を使って書く。
+タクティクは、命題の証拠を組み立てる小さなプログラムである。
+これらのプログラムは*証明状態*で動き、証明すべき主張（*ゴール*と呼ぶ）と、証明に使える前提を追跡する。
+ゴールに対してタクティクを実行すると、新しいゴールを含む新しい証明状態になる。
+すべてのゴールが証明されたとき、証明は完了する。
 
-To write a proof with tactics, begin the definition with {kw}`by`.
-Writing {kw}`by` puts Lean into tactic mode until the end of the next indented block.
-While in tactic mode, Lean provides ongoing feedback about the current proof state.
-Written with tactics, {anchorTerm onePlusOneIsTwoTactics}`onePlusOneIsTwo` is still quite short:
+タクティクで証明を書くには、定義を{kw}`by`で始める。
+{kw}`by`と書くと、続くインデントされたブロックの終わりまでLeanはタクティクモードになる。
+タクティクモードの間、Leanは現在の証明状態について随時フィードバックを返す。
+タクティクで書いても、{anchorTerm onePlusOneIsTwoTactics}`onePlusOneIsTwo`はかなり短い。
 
 ```anchor onePlusOneIsTwoTactics
 theorem onePlusOneIsTwo : 1 + 1 = 2 := by
   decide
 ```
 
-The {tactic}`decide` tactic invokes a _decision procedure_, which is a program that can check whether a statement is true or false, returning a suitable proof in either case.
-It is primarily used when working with concrete values like {anchorTerm SomeNats}`1` and {anchorTerm SomeNats}`2`.
-The other important tactics in this book are {tactic}`simp`, short for “simplify,” and {tactic}`grind`, which can automatically prove many theorems.
+{tactic}`decide`タクティクは*決定手続き*を呼び出す。決定手続きは、主張が真か偽かを判定し、どちらの場合も適切な証明を返すプログラムである。
+主に{anchorTerm SomeNats}`1`や{anchorTerm SomeNats}`2`のような具体的な値を扱うときに使う。
+本書で扱う他の重要なタクティクは、「simplify」の略である{tactic}`simp`と、多くの定理を自動で証明できる{tactic}`grind`である。
 
-Tactics are useful for a number of reasons:
- 1. Many proofs are complicated and tedious when written out down to the smallest detail, and tactics can automate these uninteresting parts.
- 2. Proofs written with tactics are easier to maintain over time, because flexible automation can paper over small changes to definitions.
- 3. Because a single tactic can prove many different theorems, Lean can use tactics behind the scenes to free users from writing proofs by hand. For instance, an array lookup requires a proof that the index is in bounds, and a tactic can typically construct that proof without the user needing to worry about it.
+タクティクが役に立つ理由はいくつかある。
+ 1. 多くの証明は、細部まで書き下すと複雑で退屈であり、タクティクはそうした面白くない部分を自動化できる。
+ 2. タクティクで書いた証明は長期的に保守しやすい。柔軟な自動化が、定義の小さな変更を覆い隠してくれるためである。
+ 3. 一つのタクティクで多くの異なる定理を証明できるので、Leanは舞台裏でタクティクを使い、利用者が手で証明を書かなくて済むようにできる。たとえば配列の参照には添字が範囲内にあることの証明が必要だが、タクティクは通常、利用者が気にしなくてもその証明を組み立ててくれる。
 
-Behind the scenes, indexing notation uses a tactic to prove that the user's lookup operation is safe.
-This tactic takes many facts about arithmetic into account, combining them with any locally-known facts to attempt to prove that the index is in bounds.
+舞台裏では、参照の記法がタクティクを使って、利用者の参照操作が安全であることを証明している。
+このタクティクは算術についての多くの事実を考慮し、局所的に分かっている事実と組み合わせて、添字が範囲内にあることを証明しようとする。
 
-The {tactic}`simp` tactic is a workhorse of Lean proofs.
-It rewrites the goal to as simple a form as possible.
-In many cases, this rewriting simplifies the statement so much that it can be automatically proved.
-Behind the scenes, a detailed formal proof is constructed, but using {tactic}`simp` hides this complexity.
+{tactic}`simp`タクティクはLeanの証明の働き者である。
+ゴールをできるだけ単純な形に書き換える。
+多くの場合、この書き換えで主張が自動的に証明できるほど単純になる。
+舞台裏では詳細な形式的証明が組み立てられているが、{tactic}`simp`を使うとその複雑さは見えなくなる。
 
-Like {tactic}`decide`, the {tactic}`grind` tactic is used to finish proofs.
-It uses a collection of techniques from SMT solvers that can prove a wide variety of theorems.
-Unlike {tactic}`simp`, {tactic}`grind` can never make progress towards a proof without completing it entirely; it either succeeds fully or fails.
-The {tactic}`grind` tactic is very powerful, customizable, and extensible; due to this power and flexibility, its output when it fails to prove a theorem contains a lot of information that can help trained Lean users diagnose the reason for the failure.
-This can be overwhelming in the beginning, so this chapter uses only {tactic}`decide` and {tactic}`simp`.
+{tactic}`decide`と同じく、{tactic}`grind`タクティクは証明を終わらせるのに使う。
+SMTソルバの手法を集めたものを使っており、さまざまな定理を証明できる。
+{tactic}`simp`と違い、{tactic}`grind`は証明を完全に終わらせずに途中まで進める、ということがない。完全に成功するか、失敗するかのどちらかである。
+{tactic}`grind`は非常に強力で、カスタマイズも拡張もできる。その力と柔軟さのため、証明に失敗したときの出力には多くの情報が含まれ、慣れたLean利用者が失敗の原因を突き止める助けになる。
+最初は圧倒されかねないので、この章では{tactic}`decide`と{tactic}`simp`だけを使う。
 
-# Connectives
+# 論理結合子
 %%%
 tag := "connectives"
 %%%
 
-The basic building blocks of logic, such as “and”, “or”, “true”, “false”, and “not”, are called {deftech}_logical connectives_.
-Each connective defines what counts as evidence of its truth.
-For example, to prove a statement “_A_ and _B_”, one must prove both _A_ and _B_.
-This means that evidence for “_A_ and _B_” is a pair that contains both evidence for _A_ and evidence for _B_.
-Similarly, evidence for “_A_ or _B_” consists of either evidence for _A_ or evidence for _B_.
+「かつ」「または」「真」「偽」「否定」のような論理の基本的な部品を{deftech}*論理結合子*と呼ぶ。
+各結合子は、その真理の証拠として何が認められるかを定める。
+たとえば「*A*かつ*B*」を証明するには、*A*と*B*の両方を証明しなければならない。
+つまり「*A*かつ*B*」の証拠は、*A*の証拠と*B*の証拠の両方を含む組である。
+同様に、「*A*または*B*」の証拠は、*A*の証拠か*B*の証拠のどちらかである。
 
-In particular, most of these connectives are defined like datatypes, and they have constructors.
-If {anchorTerm AndProp}`A` and {anchorTerm AndProp}`B` are propositions, then “{anchorTerm AndProp}`A` and {anchorTerm AndProp}`B`” (written {anchorTerm AndProp}`A ∧ B`) is a proposition.
-Evidence for {anchorTerm AndProp}`A ∧ B` consists of the constructor {anchorTerm AndIntro}`And.intro`, which has the type {anchorTerm AndIntro}`A → B → A ∧ B`.
-Replacing {anchorTerm AndIntro}`A` and {anchorTerm AndIntro}`B` with concrete propositions, it is possible to prove {anchorTerm AndIntroEx}`1 + 1 = 2 ∧ "Str".append "ing" = "String"` with {anchorTerm AndIntroEx}`And.intro rfl rfl`.
-Of course, {tactic}`decide` is also powerful enough to find this proof:
+とくに、これらの結合子の多くはデータ型のように定義されており、コンストラクタを持つ。
+{anchorTerm AndProp}`A`と{anchorTerm AndProp}`B`が命題なら、「{anchorTerm AndProp}`A`かつ{anchorTerm AndProp}`B`」（{anchorTerm AndProp}`A ∧ B`と書く）も命題である。
+{anchorTerm AndProp}`A ∧ B`の証拠はコンストラクタ{anchorTerm AndIntro}`And.intro`であり、その型は{anchorTerm AndIntro}`A → B → A ∧ B`である。
+{anchorTerm AndIntro}`A`と{anchorTerm AndIntro}`B`を具体的な命題に置き換えると、{anchorTerm AndIntroEx}`1 + 1 = 2 ∧ "Str".append "ing" = "String"`を{anchorTerm AndIntroEx}`And.intro rfl rfl`で証明できる。
+もちろん、{tactic}`decide`もこの証明を見つけられるだけの力がある。
 
 ```anchor AndIntroExTac
 theorem addAndAppend : 1 + 1 = 2 ∧ "Str".append "ing" = "String" := by
@@ -209,15 +209,15 @@ theorem addAndAppend : 1 + 1 = 2 ∧ "Str".append "ing" = "String" := by
 ```
 
 
-Similarly, “{anchorTerm OrProp}`A` or {anchorTerm OrProp}`B`” (written {anchorTerm OrProp}`A ∨ B`) has two constructors, because a proof of “{anchorTerm OrProp}`A` or {anchorTerm OrProp}`B`” requires only that one of the two underlying propositions be true.
-There are two constructors: {anchorTerm OrIntro1}`Or.inl`, with type {anchorTerm OrIntro1}`A → A ∨ B`, and {anchorTerm OrIntro2}`Or.inr`, with type {anchorTerm OrIntro2}`B → A ∨ B`.
+同様に、「{anchorTerm OrProp}`A`または{anchorTerm OrProp}`B`」（{anchorTerm OrProp}`A ∨ B`と書く）には二つのコンストラクタがある。「{anchorTerm OrProp}`A`または{anchorTerm OrProp}`B`」の証明には、二つの命題のどちらか一方が真であればよいためである。
+コンストラクタは二つある。型{anchorTerm OrIntro1}`A → A ∨ B`を持つ{anchorTerm OrIntro1}`Or.inl`と、型{anchorTerm OrIntro2}`B → A ∨ B`を持つ{anchorTerm OrIntro2}`Or.inr`である。
 
-Implication (if {anchorTerm impliesDef}`A` then {anchorTerm impliesDef}`B`) is represented using functions.
-In particular, a function that transforms evidence for {anchorTerm impliesDef}`A` into evidence for {anchorTerm impliesDef}`B` is itself evidence that {anchorTerm impliesDef}`A` implies {anchorTerm impliesDef}`B`.
-This is different from the usual description of implication, in which {anchorTerm impliesDef}`A → B` is shorthand for {anchorTerm impliesDef}`¬A ∨ B`, but the two formulations are equivalent.
+含意（{anchorTerm impliesDef}`A`なら{anchorTerm impliesDef}`B`）は関数で表す。
+とくに、{anchorTerm impliesDef}`A`の証拠を{anchorTerm impliesDef}`B`の証拠に変換する関数が、{anchorTerm impliesDef}`A`が{anchorTerm impliesDef}`B`を含意する証拠そのものである。
+これは、{anchorTerm impliesDef}`A → B`が{anchorTerm impliesDef}`¬A ∨ B`の略であるという通常の説明とは違うが、二つの定式化は同等である。
 
-Because evidence for an “and” is a constructor, it can be used with pattern matching.
-For instance, a proof that {anchorTerm andImpliesOr}`A` and {anchorTerm andImpliesOr}`B` implies {anchorTerm andImpliesOr}`A` or {anchorTerm andImpliesOr}`B` is a function that pulls the evidence of {anchorTerm andImpliesOr}`A` (or of {anchorTerm andImpliesOr}`B`) out of the evidence for {anchorTerm andImpliesOr}`A` and {anchorTerm andImpliesOr}`B`, and then uses this evidence to produce evidence of {anchorTerm andImpliesOr}`A` or {anchorTerm andImpliesOr}`B`:
+「かつ」の証拠はコンストラクタなので、パターンマッチングに使える。
+たとえば、{anchorTerm andImpliesOr}`A`かつ{anchorTerm andImpliesOr}`B`が{anchorTerm andImpliesOr}`A`または{anchorTerm andImpliesOr}`B`を含意する証明は、{anchorTerm andImpliesOr}`A`と{anchorTerm andImpliesOr}`B`の証拠から{anchorTerm andImpliesOr}`A`の証拠（または{anchorTerm andImpliesOr}`B`の証拠）を取り出し、それを使って{anchorTerm andImpliesOr}`A`または{anchorTerm andImpliesOr}`B`の証拠を作る関数である。
 
 ```anchor andImpliesOr
 theorem andImpliesOr : A ∧ B → A ∨ B :=
@@ -229,9 +229,9 @@ theorem andImpliesOr : A ∧ B → A ∨ B :=
 
 :::table +header
 *
-  - Connective
-  - Lean Syntax
-  - Evidence
+  - 結合子
+  - Leanの記法
+  - 証拠
 *
  -  True
  -  {anchorName connectiveTable}`True`
@@ -240,33 +240,33 @@ theorem andImpliesOr : A ∧ B → A ∨ B :=
 *
  -  False
  -  {anchorName connectiveTable}`False`
- -  No evidence
+ -  証拠なし
 
 *
- -  {anchorName connectiveTable}`A` and {anchorName connectiveTable}`B`
+ -  {anchorName connectiveTable}`A`かつ{anchorName connectiveTable}`B`
  -  {anchorTerm connectiveTable}`A ∧ B`
  -  {anchorTerm connectiveTable}`And.intro : A → B → A ∧ B`
 
 *
- -  {anchorName connectiveTable}`A` or {anchorName connectiveTable}`B`
+ -  {anchorName connectiveTable}`A`または{anchorName connectiveTable}`B`
  -  {anchorTerm connectiveTable}`A ∨ B`
- -  Either {anchorTerm connectiveTable}`Or.inl : A → A ∨ B` or {anchorTerm connectiveTable}`Or.inr : B → A ∨ B`
+ -  {anchorTerm connectiveTable}`Or.inl : A → A ∨ B`か{anchorTerm connectiveTable}`Or.inr : B → A ∨ B`のどちらか
 
 *
- -  {anchorName connectiveTable}`A` implies {anchorName connectiveTable}`B`
+ -  {anchorName connectiveTable}`A`が{anchorName connectiveTable}`B`を含意する
  -  {anchorTerm connectiveTable}`A → B`
- -  A function that transforms evidence of {anchorName connectiveTable}`A` into evidence of {anchorName connectiveTable}`B`
+ -  {anchorName connectiveTable}`A`の証拠を{anchorName connectiveTable}`B`の証拠に変換する関数
 
 *
- -  not {anchorName connectiveTable}`A`
+ -  {anchorName connectiveTable}`A`の否定
  -  {anchorTerm connectiveTable}`¬A`
- -  A function that would transform evidence of {anchorName connectiveTable}`A` into evidence of {anchorName connectiveTable}`False`
+ -  {anchorName connectiveTable}`A`の証拠を{anchorName connectiveTable}`False`の証拠に変換するはずの関数
 
 
 :::
 
-The {tactic}`decide` tactic can prove theorems that use these connectives.
-For example:
+{tactic}`decide`タクティクは、これらの結合子を使った定理も証明できる。
+たとえば、
 
 ```anchor connectivesD
 theorem onePlusOneOrLessThan : 1 + 1 = 2 ∨ 3 < 5 := by decide
@@ -277,15 +277,15 @@ theorem falseImpliesTrue : False → True := by decide
 ```
 
 
-# Evidence as Arguments
+# 証拠を引数にする
 %%%
 tag := "evidence-passing"
 %%%
 
-In some cases, safely indexing into a list requires that the list have some minimum size, but the list itself is a variable rather than a concrete value.
-For this lookup to be safe, there must be some evidence that the list is long enough.
-One of the easiest ways to make indexing safe is to have the function that performs a lookup into a data structure take the required evidence of safety as an argument.
-For instance, a function that returns the third entry in a list is not generally safe because lists might contain zero, one, or two entries:
+リストから安全に要素を取り出すには、リストがある大きさ以上である必要があるのに、リスト自体が具体的な値ではなく変数である場合がある。
+この参照を安全にするには、リストが十分長いという証拠が要る。
+安全な参照を実現する最も簡単な方法の一つは、データ構造を参照する関数が、必要な安全性の証拠を引数として受け取ることである。
+たとえば、リストの三番目の要素を返す関数は、一般には安全ではない。リストの要素が0個、1個、2個のこともあるからである。
 
 ```anchor thirdErr
 def third (xs : List α) : α := xs[2]
@@ -302,17 +302,17 @@ xs : List α
 ⊢ 2 < xs.length
 ```
 
-However, the obligation to show that the list has at least three entries can be imposed on the caller by adding an argument that consists of evidence that the indexing operation is safe:
+しかし、参照操作が安全である証拠を引数として加えれば、リストの要素が少なくとも三つあることを示す義務を呼び出し側に負わせられる。
 
 ```anchor third
 def third (xs : List α) (ok : xs.length > 2) : α := xs[2]
 ```
 
-In this example, {anchorTerm third}`xs.length > 2` is not a program that checks _whether_ {anchorTerm third}`xs` has more than 2 entries.
-It is a proposition that could be true or false, and the argument {anchorTerm third}`ok` must be evidence that it is true.
+この例の{anchorTerm third}`xs.length > 2`は、{anchorTerm third}`xs`の要素が2個より多いかどうかを調べるプログラムではない。
+真にも偽にもなりうる命題であり、引数{anchorTerm third}`ok`はそれが真である証拠でなければならない。
 
-When the function is called on a concrete list, its length is known.
-In these cases, {anchorTerm thirdCritters}`by decide` can construct the evidence automatically:
+具体的なリストに対して関数を呼ぶ場合、その長さは分かっている。
+そのような場合は、{anchorTerm thirdCritters}`by decide`が証拠を自動で組み立てられる。
 
 ```anchor thirdCritters
 #eval third woodlandCritters (by decide)
@@ -323,14 +323,14 @@ In these cases, {anchorTerm thirdCritters}`by decide` can construct the evidence
 ```
 
 
-# Indexing Without Evidence
+# 証拠なしの参照
 %%%
 tag := "indexing-without-evidence"
 %%%
 
-In cases where it's not practical to prove that an indexing operation is in bounds, there are other alternatives.
-Adding a question mark results in an {anchorName thirdOption}`Option`, where the result is {anchorName OptionNames}`some` if the index is in bounds, and {anchorName OptionNames}`none` otherwise.
-For example:
+参照操作が範囲内にあることを証明するのが現実的でない場合には、別の選択肢がある。
+疑問符を付けると{anchorName thirdOption}`Option`になり、添字が範囲内なら{anchorName OptionNames}`some`、そうでなければ{anchorName OptionNames}`none`になる。
+たとえば、
 
 
 ```anchor thirdOption
@@ -354,7 +354,7 @@ none
 ```
 
 :::paragraph
-There is also a version that crashes the program when the index is out of bounds, rather than returning an {moduleTerm}`Option`:
+添字が範囲外のときに{moduleTerm}`Option`を返すのではなく、プログラムをクラッシュさせる版もある。
 
 ```anchor crittersBang
 #eval woodlandCritters[1]!
@@ -370,8 +370,8 @@ There is also a version that crashes the program when the index is out of bounds
 %%%
 tag := "props-proofs-indexing-messages"
 %%%
-In addition to proving that a statement is true, the {anchorTerm thirdRabbitErr}`decide` tactic can also prove that it is false.
-When asked to prove that a one-element list has more than two elements, it returns an error that indicates that the statement is indeed false:
+{anchorTerm thirdRabbitErr}`decide`タクティクは、主張が真であることの証明だけでなく、偽であることの証明もできる。
+要素が一つのリストが二つより多くの要素を持つことを証明しようとすると、その主張が実際に偽であることを示すエラーを返す。
 
 ```anchor thirdRabbitErr
 #eval third ["rabbit"] (by decide)
@@ -385,26 +385,26 @@ is false
 ```
 
 
-The {tactic}`simp` and {tactic}`decide` tactics do not automatically unfold definitions with {kw}`def`.
-Attempting to prove {anchorTerm onePlusOneIsStillTwo}`OnePlusOneIsTwo` using {anchorTerm onePlusOneIsStillTwo}`simp` fails:
+{tactic}`simp`と{tactic}`decide`のタクティクは、{kw}`def`による定義を自動では展開しない。
+{anchorTerm onePlusOneIsStillTwo}`OnePlusOneIsTwo`を{anchorTerm onePlusOneIsStillTwo}`simp`で証明しようとすると失敗する。
 
 ```anchor onePlusOneIsStillTwo
 theorem onePlusOneIsStillTwo : OnePlusOneIsTwo := by simp
 ```
 
-The error messages simply states that it could do nothing, because without unfolding {anchorTerm onePlusOneIsStillTwo}`OnePlusOneIsTwo`, no progress can be made:
+エラーメッセージは、何もできなかったとだけ述べている。{anchorTerm onePlusOneIsStillTwo}`OnePlusOneIsTwo`を展開しなければ先に進めないためである。
 
 ```anchorError onePlusOneIsStillTwo
 `simp` made no progress
 ```
 
-Using {anchorTerm onePlusOneIsStillTwo2}`decide` also fails:
+{anchorTerm onePlusOneIsStillTwo2}`decide`を使っても失敗する。
 
 ```anchor onePlusOneIsStillTwo2
 theorem onePlusOneIsStillTwo : OnePlusOneIsTwo := by decide
 ```
 
-This is also due to it not unfolding {anchorName onePlusOneIsStillTwo2}`OnePlusOneIsTwo`:
+これも{anchorName onePlusOneIsStillTwo2}`OnePlusOneIsTwo`を展開しないためである。
 
 ```anchorError onePlusOneIsStillTwo2
 failed to synthesize
@@ -413,9 +413,9 @@ failed to synthesize
 Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
 ```
 
-Defining {anchorName onePlusOneIsStillTwo}`OnePlusOneIsTwo` with {ref "abbrev-vs-def"}[{kw}`abbrev` fixes the problem] by marking the definition for unfolding.
+{anchorName onePlusOneIsStillTwo}`OnePlusOneIsTwo`を{ref "abbrev-vs-def"}[{kw}`abbrev`で定義し直すと解決する]。展開する対象として印が付けられるからである。
 
-In addition to the error that occurs when Lean is unable to find compile-time evidence that an indexing operation is safe, polymorphic functions that use unsafe indexing may produce the following message:
+参照操作が安全である証拠をLeanがコンパイル時に見つけられないときのエラーとは別に、安全でない参照を使う多相関数では次のメッセージが出ることがある。
 
 ```anchor unsafeThird
 def unsafeThird (xs : List α) : α := xs[2]!
@@ -429,17 +429,17 @@ failed to synthesize instance of type class
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
-This is due to a technical restriction that is part of keeping Lean usable as both a logic for proving theorems and a programming language.
-In particular, only programs whose types contain at least one value are allowed to crash.
-This is because a proposition in Lean is a kind of type that classifies evidence of its truth.
-False propositions have no such evidence.
-If a program with an empty type could crash, then that crashing program could be used as a kind of fake evidence for a false proposition.
+これは、Leanを定理証明のための論理としてもプログラミング言語としても使えるようにしておくための、技術的な制限によるものである。
+とくに、クラッシュを許されるのは、型が少なくとも一つの値を持つプログラムだけである。
+Leanの命題は、その真理の証拠を分類する一種の型だからである。
+偽の命題にはそのような証拠がない。
+空の型を持つプログラムがクラッシュできると、そのクラッシュするプログラムが偽の命題の偽の証拠として使えてしまう。
 
-Internally, Lean contains a table of types that are known to have at least one value.
-This error is saying that some arbitrary type {anchorTerm unsafeThird}`α` is not necessarily in that table.
-The next chapter describes how to add to this table, and how to successfully write functions like {anchorTerm unsafeThird}`unsafeThird`.
+Leanの内部には、少なくとも一つの値を持つことが分かっている型の表がある。
+このエラーは、任意の型{anchorTerm unsafeThird}`α`がその表に必ずあるとは限らない、と言っている。
+この表に項目を追加する方法と、{anchorTerm unsafeThird}`unsafeThird`のような関数を正しく書く方法は次の章で説明する。
 
-Adding whitespace between a list and the brackets used for lookup can cause another message:
+リストと参照用の角括弧の間に空白を入れると、別のメッセージが出ることがある。
 
 ```anchor extraSpace
 #eval woodlandCritters [1]
@@ -456,14 +456,14 @@ Note: Expected a function because this term is being applied to the argument
   [1]
 ```
 
-Adding a space causes Lean to treat the expression as a function application, and the index as a list that contains a single number.
-This error message results from having Lean attempt to treat {anchorTerm woodlandCritters}`woodlandCritters` as a function.
+空白を入れると、Leanはその式を関数適用として扱い、添字を数値を一つだけ含むリストとみなす。
+このエラーメッセージは、Leanが{anchorTerm woodlandCritters}`woodlandCritters`を関数として扱おうとした結果である。
 
-## Exercises
+## 練習問題
 %%%
 tag := "props-proofs-indexing-exercises"
 %%%
 
-* Prove the following theorems using {anchorTerm exercises}`rfl`: {anchorTerm exercises}`2 + 3 = 5`, {anchorTerm exercises}`15 - 8 = 7`, {anchorTerm exercises}`"Hello, ".append "world" = "Hello, world"`. What happens if {anchorTerm exercises}`rfl` is used to prove {anchorTerm exercises}`5 < 18`? Why?
-* Prove the following theorems using {anchorTerm exercises}`by decide`: {anchorTerm exercises}`2 + 3 = 5`, {anchorTerm exercises}`15 - 8 = 7`, {anchorTerm exercises}`"Hello, ".append "world" = "Hello, world"`, {anchorTerm exercises}`5 < 18`.
-* Write a function that looks up the fifth entry in a list. Pass the evidence that this lookup is safe as an argument to the function.
+* 次の定理を{anchorTerm exercises}`rfl`で証明せよ。{anchorTerm exercises}`2 + 3 = 5`、{anchorTerm exercises}`15 - 8 = 7`、{anchorTerm exercises}`"Hello, ".append "world" = "Hello, world"`。{anchorTerm exercises}`5 < 18`を{anchorTerm exercises}`rfl`で証明しようとするとどうなるか。その理由は何か。
+* 次の定理を{anchorTerm exercises}`by decide`で証明せよ。{anchorTerm exercises}`2 + 3 = 5`、{anchorTerm exercises}`15 - 8 = 7`、{anchorTerm exercises}`"Hello, ".append "world" = "Hello, world"`、{anchorTerm exercises}`5 < 18`。
+* リストの五番目の要素を参照する関数を書け。その参照が安全である証拠を引数として渡すようにする。

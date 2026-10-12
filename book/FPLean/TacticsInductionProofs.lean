@@ -17,56 +17,56 @@ number := false
 htmlSplit := .never
 %%%
 
-# A Note on Proofs and User Interfaces
+# 証明とユーザーインターフェースについての注意
 %%%
 tag := "proofs-and-uis"
 %%%
 
-This book presents the process of writing proofs as if they are written in one go and submitted to Lean, which then replies with error messages that describe what remains to be done.
-The actual process of interacting with Lean is much more pleasant.
-Lean provides information about the proof as the cursor is moved through it and there are a number of interactive features that make proving easier.
-Please consult the documentation of your Lean development environment for more information.
+本書では、証明は一度に書き上げてLeanに提出し、Leanが残っている作業を説明するエラーメッセージで応答する、という形で説明している。
+実際にLeanとやり取りする過程は、ずっと快適である。
+カーソルを動かすとその位置の証明についての情報が得られ、証明を楽にする対話的な機能も数多くある。
+詳しくは、使っているLeanの開発環境のドキュメントを参照してほしい。
 
-The approach in this book that focuses on incrementally building a proof and showing the messages that result demonstrates the kinds of interactive feedback that Lean provides while writing a proof, even though it is much slower than the process used by experts.
-At the same time, seeing incomplete proofs evolve towards completeness is a useful perspective on proving.
-As your skill in writing proofs increases, Lean's feedback will come to feel less like errors and more like support for your own thought processes.
-Learning the interactive approach is very important.
+本書のように、証明を少しずつ組み立て、その結果のメッセージを示す進め方は、証明を書いている間にLeanが返す対話的なフィードバックの種類を示している。達人が使う進め方よりずっと遅いが、この形で説明している。
+同時に、不完全な証明が完成に近づいていく様子を見ることは、証明を理解する上で役に立つ。
+証明を書く力がつくにつれ、Leanのフィードバックは誤りの指摘というより、自分の思考を支えるものに感じられるようになる。
+対話的な進め方を身につけることは非常に重要である。
 
-# Recursion and Induction
+# 再帰と帰納法
 %%%
 tag := "recursion-vs-induction"
 %%%
 
-The functions {anchorName plusR_succ_left (module := Examples.DependentTypes.Pitfalls)}`plusR_succ_left` and {anchorName plusR_zero_left_thm (module:=Examples.DependentTypes.Pitfalls)}`plusR_zero_left` from the preceding chapter can be seen from two perspectives.
-On the one hand, they are recursive functions that build up evidence for a proposition, just as other recursive functions might construct a list, a string, or any other data structure.
-On the other, they also correspond to proofs by _mathematical induction_.
+前の章の{anchorName plusR_succ_left (module := Examples.DependentTypes.Pitfalls)}`plusR_succ_left`と{anchorName plusR_zero_left_thm (module:=Examples.DependentTypes.Pitfalls)}`plusR_zero_left`という関数は、二つの見方ができる。
+一方では、他の再帰関数がリストや文字列などのデータ構造を組み立てるのと同じように、命題の証拠を組み立てる再帰関数である。
+もう一方では、*数学的帰納法*による証明に相当する。
 
-Mathematical induction is a proof technique where a statement is proven for _all_ natural numbers in two steps:
- 1. The statement is shown to hold for $`0`. This is called the _base case_.
- 2. Under the assumption that the statement holds for some arbitrarily chosen number $`n`, it is shown to hold for $`n + 1`. This is called the _induction step_. The assumption that the statement holds for $`n` is called the _induction hypothesis_.
+数学的帰納法は、*すべての*自然数について主張を証明する技法で、二つの段階から成る。
+ 1. $`0`について主張が成り立つことを示す。これを*基底ケース*と呼ぶ。
+ 2. 任意に選んだ数$`n`について主張が成り立つと仮定したうえで、$`n + 1`について成り立つことを示す。これを*帰納法の段階*と呼ぶ。$`n`について主張が成り立つという仮定を*帰納法の仮定*と呼ぶ。
 
-Because it's impossible to check the statement for _every_ natural number, induction provides a means of writing a proof that could, in principle, be expanded to any particular natural number.
-For example, if a concrete proof were desired for the number 3, then it could be constructed by using first the base case and then the induction step three times, to show the statement for 0, 1, 2, and finally 3.
-Thus, it proves the statement for all natural numbers.
+*すべての*自然数について主張を確かめることはできないので、帰納法は、原理上は任意の自然数について展開できる証明を書く手段を与える。
+たとえば、3について具体的な証明が欲しければ、まず基底ケースを使い、次に帰納法の段階を三度使って、0、1、2、そして最後に3について主張を示せばよい。
+こうして、すべての自然数について主張が証明される。
 
-# The Induction Tactic
+# inductionタクティク
 %%%
 tag := "induction-tactic"
 %%%
 
-Writing proofs by induction as recursive functions that use helpers such as {anchorName plusR_zero_left_done (module:=Examples.DependentTypes.Pitfalls)}`congrArg` does not always do a good job of expressing the intentions behind the proof.
-While recursive functions indeed have the structure of induction, they should probably be viewed as an _encoding_ of a proof.
-Furthermore, Lean's tactic system provides a number of opportunities to automate the construction of a proof that are not available when writing the recursive function explicitly.
-Lean provides an induction _tactic_ that can carry out an entire proof by induction in a single tactic block.
-Behind the scenes, Lean constructs the recursive function that corresponds the use of induction.
+{anchorName plusR_zero_left_done (module:=Examples.DependentTypes.Pitfalls)}`congrArg`のような補助関数を使って帰納法の証明を再帰関数として書くと、証明の意図をうまく表せないことがある。
+再帰関数は確かに帰納法の構造を持つが、証明の*符号化*として捉えるべきだろう。
+さらに、Leanのタクティクの仕組みには、再帰関数を明示的に書くときには得られない、証明の組み立てを自動化する余地がいろいろある。
+Leanには、帰納法による証明を一つのタクティクブロックでやり切れる{kw}`induction`タクティクがある。
+舞台裏では、Leanが帰納法の使用に対応する再帰関数を組み立てる。
 
-To prove {anchorName plusR_zero_left_done (module:=Examples.DependentTypes.Pitfalls)}`plusR_zero_left` with the {kw}`induction` tactic, begin by writing its signature (using {kw}`theorem`, because this really is a proof).
-Then, use {anchorTerm plusR_ind_zero_left_1}`by induction k` as the body of the definition:
+{kw}`induction`タクティクで{anchorName plusR_zero_left_done (module:=Examples.DependentTypes.Pitfalls)}`plusR_zero_left`を証明するには、まずシグネチャを書く（これは本当に証明なので{kw}`theorem`を使う）。
+次に、定義の本体として{anchorTerm plusR_ind_zero_left_1}`by induction k`を使う。
 ```anchor plusR_ind_zero_left_1
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k
 ```
-The resulting message states that there are two goals:
+すると、ゴールが二つあるというメッセージが出る。
 ```anchorError plusR_ind_zero_left_1
 unsolved goals
 case zero
@@ -77,41 +77,41 @@ n✝ : Nat
 a✝ : n✝ = Nat.plusR 0 n✝
 ⊢ n✝ + 1 = Nat.plusR 0 (n✝ + 1)
 ```
-A tactic block is a program that is run while the Lean type checker processes a file, somewhat like a much more powerful C preprocessor macro.
-The tactics generate the actual program.
+タクティクブロックは、Leanの型検査器がファイルを処理している間に走るプログラムで、ずっと強力なCのプリプロセッサマクロのようなものである。
+タクティクが実際のプログラムを生成する。
 
-In the tactic language, there can be a number of goals.
-Each goal consists of a type together with some assumptions.
-These are analogous to using underscores as placeholders—the type in the goal represents what is to be proved, and the assumptions represent what is in-scope and can be used.
-In the case of the goal {lit}`case zero`, there are no assumptions and the type is {anchorTerm others}`Nat.zero = Nat.plusR 0 Nat.zero`—this is the theorem statement with {anchorTerm others}`0` instead of {anchorName plusR_ind_zero_left_1}`k`.
-In the goal {lit}`case succ`, there are two assumptions, named {lit}`n✝` and {lit}`n_ih✝`.
-Behind the scenes, the {anchorTerm plusR_ind_zero_left_1}`induction` tactic creates a dependent pattern match that refines the overall type, and {lit}`n✝` represents the argument to {anchorName others}`Nat.succ` in the pattern.
-The assumption {lit}`n_ih✝` represents the result of calling the generated function recursively on {lit}`n✝`.
-Its type is the overall type of the theorem, just with {lit}`n✝` instead of {anchorName plusR_ind_zero_left_1}`k`.
-The type to be fulfilled as part of the goal {lit}`case succ` is the overall theorem statement, with {lit}`Nat.succ n✝` instead of {anchorName plusR_ind_zero_left_1}`k`.
+タクティク言語では、ゴールが複数あることがある。
+各ゴールは、型と前提から成る。
+これらはアンダースコアを穴埋めに使うのと似ている。ゴールの型が証明すべきものを表し、前提がその時点で使えるものを表す。
+{lit}`case zero`のゴールには前提がなく、型は{anchorTerm others}`Nat.zero = Nat.plusR 0 Nat.zero`である。これは定理の主張の{anchorName plusR_ind_zero_left_1}`k`を{anchorTerm others}`0`に置き換えたものである。
+{lit}`case succ`のゴールには、{lit}`n✝`と{lit}`n_ih✝`という二つの前提がある。
+舞台裏では、{anchorTerm plusR_ind_zero_left_1}`induction`タクティクが全体の型を絞り込む依存パターンマッチを作り、{lit}`n✝`はそのパターンにおける{anchorName others}`Nat.succ`の引数を表す。
+前提{lit}`n_ih✝`は、生成された関数を{lit}`n✝`に対して再帰的に呼び出した結果を表す。
+その型は、定理の全体の型の{anchorName plusR_ind_zero_left_1}`k`を{lit}`n✝`に置き換えたものである。
+{lit}`case succ`のゴールとして満たすべき型は、定理全体の主張の{anchorName plusR_ind_zero_left_1}`k`を{lit}`Nat.succ n✝`に置き換えたものである。
 
-The two goals that result from the use of the {anchorTerm plusR_ind_zero_left_1}`induction` tactic correspond to the base case and the induction step in the description of mathematical induction.
-The base case is {lit}`case zero`.
-In {lit}`case succ`, {lit}`n_ih✝` corresponds to the induction hypothesis, while the whole of {lit}`case succ` is the induction step.
+{anchorTerm plusR_ind_zero_left_1}`induction`タクティクで生じる二つのゴールは、数学的帰納法の説明における基底ケースと帰納法の段階に対応する。
+基底ケースが{lit}`case zero`である。
+{lit}`case succ`では、{lit}`n_ih✝`が帰納法の仮定にあたり、{lit}`case succ`全体が帰納法の段階である。
 
-The next step in writing the proof is to focus on each of the two goals in turn.
-Just as {anchorTerm others}`pure ()` can be used in a {kw}`do` block to indicate “do nothing”, the tactic language has a statement {kw}`skip` that also does nothing.
-This can be used when Lean's syntax requires a tactic, but it's not yet clear which one should be used.
-Adding {kw}`with` to the end of the {kw}`induction` statement provides a syntax that is similar to pattern matching:
+証明を書く次の段階は、二つのゴールを順に扱うことである。
+{kw}`do`ブロックで「何もしない」ことを表すのに{anchorTerm others}`pure ()`が使えるのと同じように、タクティク言語には何もしない{kw}`skip`という文がある。
+Leanの構文がタクティクを要求するのに、どれを使うべきかまだ分からないときに使える。
+{kw}`induction`の文の末尾に{kw}`with`を付けると、パターンマッチングに似た構文になる。
 ```anchor plusR_ind_zero_left_2a
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k with
   | zero => skip
   | succ n ih => skip
 ```
-Each of the two {kw}`skip` statements has a message associated with it.
-The first shows the base case:
+二つの{kw}`skip`の文にはそれぞれメッセージが対応する。
+一つ目が基底ケースを示す。
 ```anchorError plusR_ind_zero_left_2a
 unsolved goals
 case zero
 ⊢ 0 = Nat.plusR 0 0
 ```
-The second shows the induction step:
+二つ目が帰納法の段階を示す。
 ```anchorError plusR_ind_zero_left_2b
 unsolved goals
 case succ
@@ -119,10 +119,10 @@ n : Nat
 ih : n = Nat.plusR 0 n
 ⊢ n + 1 = Nat.plusR 0 (n + 1)
 ```
-In the induction step, the inaccessible names with daggers have been replaced with the names provided after {lit}`succ`, namely {anchorName plusR_ind_zero_left_2a}`n` and {anchorName plusR_ind_zero_left_2a}`ih`.
+帰納法の段階では、ダガー付きの参照できない名前が、{lit}`succ`の後に与えた名前、つまり{anchorName plusR_ind_zero_left_2a}`n`と{anchorName plusR_ind_zero_left_2a}`ih`に置き換わっている。
 
-The cases after {kw}`induction`{lit}` ...`{kw}`with` are not patterns: they consist of the name of a goal followed by zero or more names.
-The names are used for assumptions introduced in the goal; it is an error to provide more names than the goal introduces:
+{kw}`induction`{lit}` ...`{kw}`with`の後に続く場合はパターンではない。ゴールの名前と、0個以上の名前から成る。
+その名前はゴールで導入される前提に使う。ゴールが導入する数より多くの名前を与えるとエラーになる。
 ```anchor plusR_ind_zero_left_3
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k with
@@ -133,16 +133,16 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
 Too many variable names provided at alternative `succ`: 5 provided, but 2 expected
 ```
 
-Focusing on the base case, the {kw}`rfl` tactic works just as well inside of the {kw}`induction` tactic as it does in a recursive function:
+基底ケースに注目すると、{kw}`rfl`タクティクは{kw}`induction`タクティクの中でも、再帰関数の中と同じように働く。
 ```anchor plusR_ind_zero_left_4
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k with
   | zero => rfl
   | succ n ih => skip
 ```
-In the recursive function version of the proof, a type annotation made the expected type something that was easier to understand.
-In the tactic language, there are a number of specific ways to transform a goal to make it easier to solve.
-The {kw}`unfold` tactic replaces a defined name with its definition:
+再帰関数版の証明では、型注釈によって期待される型が分かりやすくなっていた。
+タクティク言語には、ゴールを解きやすい形に変換する具体的な方法がいくつかある。
+{kw}`unfold`タクティクは、定義済みの名前をその定義で置き換える。
 ```anchor plusR_ind_zero_left_5
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k with
@@ -150,7 +150,7 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   | succ n ih =>
     unfold Nat.plusR
 ```
-Now, the right-hand side of the equality in the goal has become {anchorTerm others}`Nat.plusR 0 n + 1` instead of {anchorTerm others}`Nat.plusR 0 (Nat.succ n)`:
+これで、ゴールの等式の右辺は{anchorTerm others}`Nat.plusR 0 (Nat.succ n)`ではなく{anchorTerm others}`Nat.plusR 0 n + 1`になった。
 ```anchorError plusR_ind_zero_left_5
 unsolved goals
 case succ
@@ -159,9 +159,9 @@ ih : n = Nat.plusR 0 n
 ⊢ n + 1 = Nat.plusR 0 n + 1
 ```
 
-Instead of appealing to functions like {anchorName plusR_succ_left (module:=Examples.DependentTypes.Pitfalls)}`congrArg` and operators like {anchorTerm appendR (module:=Examples.DependentTypes.Pitfalls)}`▸`, there are tactics that allow equality proofs to be used to transform proof goals.
-One of the most important is {kw}`rw`, which takes a list of equality proofs and replaces the left side with the right side in the goal.
-This almost does the right thing in {anchorName plusR_ind_zero_left_6}`plusR_zero_left`:
+{anchorName plusR_succ_left (module:=Examples.DependentTypes.Pitfalls)}`congrArg`のような関数や{anchorTerm appendR (module:=Examples.DependentTypes.Pitfalls)}`▸`のような演算子に頼る代わりに、等式の証明を使ってゴールを変換するタクティクがある。
+最も重要なものの一つが{kw}`rw`で、等式の証明のリストを取り、ゴールの中で左辺を右辺で置き換える。
+{anchorName plusR_ind_zero_left_6}`plusR_zero_left`では、これでほぼ正しく動く。
 ```anchor plusR_ind_zero_left_6
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k with
@@ -170,8 +170,8 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
     unfold Nat.plusR
     rw [ih]
 ```
-However, the direction of the rewrite was incorrect.
-Replacing {anchorName others}`n` with {anchorTerm others}`Nat.plusR 0 n` made the goal more complicated rather than less complicated:
+しかし、書き換えの向きが逆であった。
+{anchorName others}`n`を{anchorTerm others}`Nat.plusR 0 n`で置き換えたことで、ゴールは簡単になるどころか複雑になった。
 ```anchorError plusR_ind_zero_left_6
 unsolved goals
 case succ
@@ -179,7 +179,7 @@ n : Nat
 ih : n = Nat.plusR 0 n
 ⊢ Nat.plusR 0 n + 1 = Nat.plusR 0 (Nat.plusR 0 n) + 1
 ```
-This can be remedied by placing a left arrow before {anchorName plusR_zero_left_done}`ih` in the call to {kw}`rw`, which instructs it to replace the right-hand side of the equality with the left-hand side:
+{kw}`rw`の呼び出しで{anchorName plusR_zero_left_done}`ih`の前に左矢印を置くと解決する。等式の右辺を左辺で置き換えるよう指示することになる。
 
 ```anchor plusR_zero_left_done
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
@@ -189,21 +189,21 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
     unfold Nat.plusR
     rw [←ih]
 ```
-This rewrite makes both sides of the equation identical, and Lean takes care of the {kw}`rfl` on its own.
-The proof is complete.
+この書き換えで等式の両辺が同じになり、Leanが{kw}`rfl`を自分で処理する。
+これで証明は完了する。
 
-# Tactic Golf
+# タクティクゴルフ
 %%%
 tag := "tactic-golf"
 %%%
 
-So far, the tactic language has not shown its true value.
-The above proof is no shorter than the recursive function; it's merely written in a domain-specific language instead of the full Lean language.
-But proofs with tactics can be shorter, easier, and more maintainable.
-Just as a lower score is better in the game of golf, a shorter proof is better in the game of tactic golf.
+ここまでは、タクティク言語の本当の価値は示されていない。
+上の証明は再帰関数より短くなく、Leanの言語全体ではなくドメイン固有言語で書かれているだけである。
+しかしタクティクによる証明は、より短く、簡単で、保守しやすくできる。
+ゴルフではスコアが低いほどよいように、タクティクゴルフでは証明が短いほどよい。
 
-The induction step of {anchorName plusR_zero_left_golf_1}`plusR_zero_left` can be proved using the simplification tactic {tactic}`simp`.
-Using {tactic}`simp` on its own does not help:
+{anchorName plusR_zero_left_golf_1}`plusR_zero_left`の帰納法の段階は、簡約タクティク{tactic}`simp`で証明できる。
+{tactic}`simp`をそのまま使ってもうまくいかない。
 ```anchor plusR_zero_left_golf_1
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k with
@@ -214,9 +214,9 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
 ```anchorError plusR_zero_left_golf_1
 `simp` made no progress
 ```
-However, {tactic}`simp` can be configured to make use of a set of definitions.
-Just like {kw}`rw`, these arguments are provided in a list.
-Asking {tactic}`simp` to take the definition of {anchorName plusR_zero_left_golf_1}`Nat.plusR` into account leads to a simpler goal:
+ただし、{tactic}`simp`には定義の集合を使わせるよう設定できる。
+{kw}`rw`と同じく、その引数はリストで与える。
+{tactic}`simp`に{anchorName plusR_zero_left_golf_1}`Nat.plusR`の定義を考慮させると、より単純なゴールになる。
 ```anchor plusR_zero_left_golf_2
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k with
@@ -231,9 +231,9 @@ n : Nat
 ih : n = Nat.plusR 0 n
 ⊢ n = Nat.plusR 0 n
 ```
-In particular, the goal is now identical to the induction hypothesis.
-In addition to automatically proving simple equality statements, the simplifier automatically replaces goals like {anchorTerm others}`Nat.succ A = Nat.succ B` with {anchorTerm others}`A = B`.
-Because the induction hypothesis {anchorName plusR_zero_left_golf_3}`ih` has exactly the right type, the {kw}`exact` tactic can indicate that it should be used:
+とくに、ゴールが帰納法の仮定とまったく同じになっている。
+簡約器は、簡単な等式を自動で証明するだけでなく、{anchorTerm others}`Nat.succ A = Nat.succ B`のようなゴールを{anchorTerm others}`A = B`に自動で置き換える。
+帰納法の仮定{anchorName plusR_zero_left_golf_3}`ih`がちょうど求める型なので、{kw}`exact`タクティクでそれを使うよう指示できる。
 
 ```anchor plusR_zero_left_golf_3
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
@@ -244,9 +244,9 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
     exact ih
 ```
 
-However, the use of {kw}`exact` is somewhat fragile.
-Renaming the induction hypothesis, which may happen while “golfing” the proof, would cause this proof to stop working.
-The {kw}`assumption` tactic solves the current goal if _any_ of the assumptions match it:
+ただし、{kw}`exact`の使用はやや壊れやすい。
+証明を「ゴルフ」しているうちに帰納法の仮定の名前を変えると、この証明は動かなくなる。
+{kw}`assumption`タクティクは、前提の*いずれか*が現在のゴールに一致すれば、そのゴールを解決する。
 
 ```anchor plusR_zero_left_golf_4
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
@@ -257,16 +257,16 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
     assumption
 ```
 
-This proof is no shorter than the prior proof that used unfolding and explicit rewriting.
-However, a series of transformations can make it much shorter, taking advantage of the fact that {tactic}`simp` can solve many kinds of goals.
-The first step is to drop the {kw}`with` at the end of {kw}`induction`.
-For structured, readable proofs, the {kw}`with` syntax is convenient.
-It complains if any cases are missing, and it shows the structure of the induction clearly.
-But shortening proofs can often require a more liberal approach.
+この証明は、展開と明示的な書き換えを使った先ほどの証明より短くはない。
+しかし、{tactic}`simp`が多くの種類のゴールを解けることを活かせば、一連の変形でずっと短くできる。
+まず、{kw}`induction`の末尾の{kw}`with`を外す。
+構造化されて読みやすい証明には{kw}`with`の構文が便利である。
+場合が足りなければ文句を言い、帰納法の構造もはっきり見える。
+しかし証明を短くするには、もっと自由な書き方が要ることが多い。
 
-Using {kw}`induction` without {kw}`with` simply results in a proof state with two goals.
-The {kw}`case` tactic can be used to select one of them, just as in the branches of the {kw}`induction`{lit}` ...`{kw}`with` tactic.
-In other words, the following proof is equivalent to the prior proof:
+{kw}`with`なしで{kw}`induction`を使うと、単にゴールが二つある証明状態になる。
+{kw}`case`タクティクでその一方を選べる。{kw}`induction`{lit}` ...`{kw}`with`タクティクの枝と同じである。
+言い換えれば、次の証明は先ほどの証明と等価である。
 
 ```anchor plusR_zero_left_golf_5
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
@@ -277,22 +277,22 @@ theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
     assumption
 ```
 
-In a context with a single goal (namely, {anchorTerm plusR_zero_left_golf_6a}`k = Nat.plusR 0 k`), the {anchorTerm plusR_zero_left_golf_5}`induction k` tactic yields two goals.
-In general, a tactic will either fail with an error or take a goal and transform it into zero or more new goals.
-Each new goal represents what remains to be proved.
-If the result is zero goals, then the tactic was a success, and that part of the proof is done.
+ゴールが一つだけの状況（つまり{anchorTerm plusR_zero_left_golf_6a}`k = Nat.plusR 0 k`）で、{anchorTerm plusR_zero_left_golf_5}`induction k`タクティクは二つのゴールを生む。
+一般に、タクティクはエラーで失敗するか、ゴールを取り、それを0個以上の新しいゴールに変換する。
+新しいゴールはそれぞれ、残っている証明すべきことを表す。
+結果が0個のゴールなら、そのタクティクは成功であり、証明のその部分は終わったことになる。
 
-The {kw}`<;>` operator takes two tactics as arguments, resulting in a new tactic.
-{lit}`T1 `{kw}`<;>`{lit}` T2` applies {lit}`T1` to the current goal, and then applies {lit}`T2` in _all_ goals created by {lit}`T1`.
-In other words, {kw}`<;>` enables a general tactic that can solve many kinds of goals to be used on multiple new goals all at once.
-One such general tactic is {tactic}`simp`.
+{kw}`<;>`演算子は二つのタクティクを引数に取り、新しいタクティクを作る。
+{lit}`T1 `{kw}`<;>`{lit}` T2`は、{lit}`T1`を現在のゴールに適用し、次に{lit}`T1`が作った*すべての*ゴールに{lit}`T2`を適用する。
+言い換えれば、{kw}`<;>`を使うと、多くの種類のゴールを解ける一般的なタクティクを、複数の新しいゴールに一度に適用できる。
+そのような一般的なタクティクの一つが{tactic}`simp`である。
 
-Because {tactic}`simp` can both complete the proof of the base case and make progress on the proof of the induction step, using it with {kw}`induction` and {kw}`<;>` shortens the proof:
+{tactic}`simp`は基底ケースの証明を完了させ、帰納法の段階の証明も進められるので、{kw}`induction`と{kw}`<;>`と組み合わせると証明が短くなる。
 ```anchor plusR_zero_left_golf_6a
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k <;> simp [Nat.plusR]
 ```
-This results in only a single goal, the transformed induction step:
+するとゴールは一つだけになり、それは変形された帰納法の段階である。
 ```anchorError plusR_zero_left_golf_6a
 unsolved goals
 case succ
@@ -300,35 +300,35 @@ n✝ : Nat
 a✝ : n✝ = Nat.plusR 0 n✝
 ⊢ n✝ = Nat.plusR 0 n✝
 ```
-Running {kw}`assumption` in this goal completes the proof:
+このゴールで{kw}`assumption`を実行すると証明が完了する。
 
 ```anchor plusR_zero_left_golf_6
 theorem plusR_zero_left (k : Nat) : k = Nat.plusR 0 k := by
   induction k <;> simp [Nat.plusR] <;> assumption
 ```
-Here, {kw}`exact` would not have been possible, because {lit}`ih` was never explicitly named.
+ここでは{lit}`ih`に明示的に名前を付けていないので、{kw}`exact`は使えない。
 
-For beginners, this proof is not easier to read.
-However, a common pattern for expert users is to take care of a number of simple cases with powerful tactics like {tactic}`simp`, allowing them to focus the text of the proof on the interesting cases.
-Additionally, these proofs tend to be more robust in the face of small changes to the functions and datatypes involved in the proof.
-The game of tactic golf is a useful part of developing good taste and style when writing proofs.
+初心者にとっては、この証明は読みやすいとは言えない。
+しかし熟練者によくある書き方は、{tactic}`simp`のような強力なタクティクで簡単な場合をまとめて片付け、証明の記述を面白い場合に集中させるものである。
+さらに、こうした証明は、関係する関数やデータ型の小さな変更に対して壊れにくい傾向がある。
+タクティクゴルフは、証明を書くときの良い感覚とスタイルを身につける上で役に立つ。
 
-# Induction on Other Datatypes
+# 他のデータ型についての帰納法
 %%%
 tag := "induction-other-types"
 %%%
 
-Mathematical induction proves a statement for natural numbers by providing a base case for {anchorName others}`Nat.zero` and an induction step for {anchorName others}`Nat.succ`.
-The principle of induction is also valid for other datatypes.
-Constructors without recursive arguments form the base cases, while constructors with recursive arguments form the induction steps.
-The ability to carry out proofs by induction is the very reason why they are called _inductive_ datatypes.
+数学的帰納法は、{anchorName others}`Nat.zero`の場合の基底ケースと、{anchorName others}`Nat.succ`の場合の帰納法の段階を与えることで、自然数についての主張を証明する。
+帰納法の原理は他のデータ型でも成り立つ。
+再帰的な引数を持たないコンストラクタが基底ケースになり、再帰的な引数を持つコンストラクタが帰納法の段階になる。
+帰納法で証明できることが、これらのデータ型が*帰納的*データ型と呼ばれる理由そのものである。
 
-One example of this is induction on binary trees.
-Induction on binary trees is a proof technique where a statement is proven for _all_ binary trees in two steps:
- 1. The statement is shown to hold for {anchorName TreeCtors}`BinTree.leaf`. This is called the base case.
- 2. Under the assumption that the statement holds for some arbitrarily chosen trees {anchorName TreeCtors}`l` and {anchorName TreeCtors}`r`, it is shown to hold for {anchorTerm TreeCtors}`BinTree.branch l x r`, where {anchorName TreeCtors}`x` is an arbitrarily-chosen new data point. This is called the _induction step_. The assumptions that the statement holds for {anchorName TreeCtors}`l` and {anchorName TreeCtors}`r` are called the _induction hypotheses_.
+その一例が二分木についての帰納法である。
+二分木についての帰納法は、*すべての*二分木について主張を証明する技法で、二つの段階から成る。
+ 1. {anchorName TreeCtors}`BinTree.leaf`について主張が成り立つことを示す。これを基底ケースと呼ぶ。
+ 2. 任意に選んだ木{anchorName TreeCtors}`l`と{anchorName TreeCtors}`r`について主張が成り立つと仮定したうえで、{anchorTerm TreeCtors}`BinTree.branch l x r`（{anchorName TreeCtors}`x`は任意に選んだ新しいデータ）について成り立つことを示す。これを*帰納法の段階*と呼ぶ。{anchorName TreeCtors}`l`と{anchorName TreeCtors}`r`について主張が成り立つという仮定を*帰納法の仮定*と呼ぶ。
 
-{anchorName BinTree_count}`BinTree.count` counts the number of branches in a tree:
+{anchorName BinTree_count}`BinTree.count`は木の枝の数を数える。
 
 ```anchor BinTree_count
 def BinTree.count : BinTree α → Nat
@@ -336,9 +336,9 @@ def BinTree.count : BinTree α → Nat
   | .branch l _ r =>
     1 + l.count + r.count
 ```
-{ref "leading-dot-notation"}[Mirroring a tree] does not change the number of branches in it.
-This can be proven using induction on trees.
-The first step is to state the theorem and invoke {kw}`induction`:
+{ref "leading-dot-notation"}[木を鏡映しにしても]、その木の枝の数は変わらない。
+これは木についての帰納法で証明できる。
+まず定理を述べ、{kw}`induction`を呼び出す。
 ```anchor mirror_count_0a
 theorem BinTree.mirror_count (t : BinTree α) :
     t.mirror.count = t.count := by
@@ -346,14 +346,14 @@ theorem BinTree.mirror_count (t : BinTree α) :
   | leaf => skip
   | branch l x r ihl ihr => skip
 ```
-The base case states that counting the mirror of a leaf is the same as counting the leaf:
+基底ケースは、葉を鏡映しにしたものを数えるのは、葉を数えるのと同じである、と述べている。
 ```anchorError mirror_count_0a
 unsolved goals
 case leaf
 α : Type
 ⊢ leaf.mirror.count = leaf.count
 ```
-The induction step allows the assumption that mirroring the left and right subtrees won't affect their branch counts, and requests a proof that mirroring a branch with these subtrees also preserves the overall branch count:
+帰納法の段階では、左と右の部分木を鏡映しにしてもそれぞれの枝の数は変わらないと仮定でき、それらの部分木を持つ枝を鏡映しにしても全体の枝の数が保たれることの証明を求めている。
 ```anchorError mirror_count_0b
 unsolved goals
 case branch
@@ -367,8 +367,8 @@ ihr : r.mirror.count = r.count
 ```
 
 
-The base case is true because mirroring {anchorName mirror_count_1}`leaf` results in {anchorName mirror_count_1}`leaf`, so the left and right sides are definitionally equal.
-This can be expressed by using {tactic}`simp` with instructions to unfold {anchorName mirror_count_1}`BinTree.mirror`:
+{anchorName mirror_count_1}`leaf`を鏡映しにすると{anchorName mirror_count_1}`leaf`になるので、左辺と右辺は定義上等しく、基底ケースは成り立つ。
+これは{anchorName mirror_count_1}`BinTree.mirror`を展開するよう指示した{tactic}`simp`で表せる。
 ```anchor mirror_count_1
 theorem BinTree.mirror_count (t : BinTree α) :
     t.mirror.count = t.count := by
@@ -376,8 +376,8 @@ theorem BinTree.mirror_count (t : BinTree α) :
   | leaf => simp [BinTree.mirror]
   | branch l x r ihl ihr => skip
 ```
-In the induction step, nothing in the goal immediately matches the induction hypotheses.
-Simplifying using the definitions of {anchorName mirror_count_2}`BinTree.count` and {anchorName mirror_count_2}`BinTree.mirror` reveals the relationship:
+帰納法の段階では、ゴールの中に帰納法の仮定とすぐに一致するものはない。
+{anchorName mirror_count_2}`BinTree.count`と{anchorName mirror_count_2}`BinTree.mirror`の定義を使って簡約すると、関係が見えてくる。
 ```anchor mirror_count_2
 theorem BinTree.mirror_count (t : BinTree α) :
     t.mirror.count = t.count := by
@@ -397,7 +397,7 @@ ihl : l.mirror.count = l.count
 ihr : r.mirror.count = r.count
 ⊢ 1 + r.mirror.count + l.mirror.count = 1 + l.count + r.count
 ```
-Both induction hypotheses can be used to rewrite the left-hand side of the goal into something almost like the right-hand side:
+二つの帰納法の仮定を使うと、ゴールの左辺を右辺とほぼ同じ形に書き換えられる。
 ```anchor mirror_count_3
 theorem BinTree.mirror_count (t : BinTree α) :
     t.mirror.count = t.count := by
@@ -419,8 +419,8 @@ ihr : r.mirror.count = r.count
 ⊢ 1 + r.count + l.count = 1 + l.count + r.count
 ```
 
-The {tactic}`simp` tactic can use additional arithmetic identities when passed the {anchorTerm mirror_count_4}`+arith` option.
-It is enough to prove this goal, yielding:
+{tactic}`simp`タクティクは、{anchorTerm mirror_count_4}`+arith`オプションを渡すと、算術に関する追加の等式も使える。
+これだけでこのゴールを証明でき、次のようになる。
 
 ```anchor mirror_count_4
 theorem BinTree.mirror_count (t : BinTree α) :
@@ -433,8 +433,8 @@ theorem BinTree.mirror_count (t : BinTree α) :
     simp +arith
 ```
 
-In addition to definitions to be unfolded, the simplifier can also be passed names of equality proofs to use as rewrites while it simplifies proof goals.
-{anchorName mirror_count_5}`BinTree.mirror_count` can also be written:
+簡約器には、展開する定義だけでなく、ゴールを簡約する際の書き換えに使う等式の証明の名前も渡せる。
+{anchorName mirror_count_5}`BinTree.mirror_count`は次のようにも書ける。
 
 ```anchor mirror_count_5
 theorem BinTree.mirror_count (t : BinTree α) :
@@ -444,10 +444,10 @@ theorem BinTree.mirror_count (t : BinTree α) :
   | branch l x r ihl ihr =>
     simp +arith [BinTree.mirror, BinTree.count, ihl, ihr]
 ```
-As proofs grow more complicated, listing assumptions by hand can become tedious.
-Furthermore, manually writing assumption names can make it more difficult to re-use proof steps for multiple subgoals.
-The argument {lit}`*` to {tactic}`simp` or {kw}`simp +arith` instructs them to use _all_ assumptions while simplifying or solving the goal.
-In other words, the proof could also be written:
+証明が複雑になるにつれ、前提を手で列挙するのは面倒になる。
+さらに、前提の名前を手で書くと、証明の手順を複数のサブゴールで再利用しにくくなる。
+{tactic}`simp`や{kw}`simp +arith`に{lit}`*`という引数を渡すと、ゴールを簡約・解決する際に*すべての*前提を使うよう指示できる。
+言い換えれば、証明は次のようにも書ける。
 
 ```anchor mirror_count_6
 theorem BinTree.mirror_count (t : BinTree α) :
@@ -457,7 +457,7 @@ theorem BinTree.mirror_count (t : BinTree α) :
   | branch l x r ihl ihr =>
     simp +arith [BinTree.mirror, BinTree.count, *]
 ```
-Because both branches are using the simplifier, the proof can be reduced to:
+どちらの枝も簡約器を使っているので、証明は次のように短くできる。
 
 ```anchor mirror_count_7
 theorem BinTree.mirror_count (t : BinTree α) :
@@ -465,32 +465,32 @@ theorem BinTree.mirror_count (t : BinTree α) :
   induction t <;> simp +arith [BinTree.mirror, BinTree.count, *]
 ```
 
-# The {lit}`grind` Tactic
+# {lit}`grind`タクティク
 %%%
 tag := "grind"
 %%%
 
-The {tactic}`grind` tactic can automatically prove many theorems.
-Like {tactic}`simp`, it accepts an optional list of additional facts to take into consideration or functions to unfold; unlike {tactic}`simp`, it automatically takes local hypotheses into consideration.
-Additionally, {tactic}`grind`'s support for reasoning about specific mathematical domains is far stronger than {tactic}`simp`'s arithmetic support.
-The proof of {anchorName mirror_count_8}`BinTree.mirror_count` can rewritten to use {tactic}`grind`:
+{tactic}`grind`タクティクは多くの定理を自動で証明できる。
+{tactic}`simp`と同じく、考慮に入れる追加の事実や展開する関数のリストを省略可能な引数として受け取る。{tactic}`simp`と違い、ローカルの前提は自動で考慮する。
+さらに、{tactic}`grind`の特定の数学領域についての推論の支援は、{tactic}`simp`の算術の支援よりずっと強力である。
+{anchorName mirror_count_8}`BinTree.mirror_count`の証明は、{tactic}`grind`を使う形に書き直せる。
 ```anchor mirror_count_8
 theorem BinTree.mirror_count (t : BinTree α) :
     t.mirror.count = t.count := by
   induction t <;> grind [BinTree.mirror, BinTree.count]
 ```
 
-Because the proofs in this book are fairly modest, most of them do not provide an opportunity for {tactic}`grind` to show its full power.
-However, it is very convenient in some of the later proofs in the book.
+本書の証明はどれも小規模なので、ほとんどは{tactic}`grind`の力を見せる場面にはならない。
+ただし、本書の後半のいくつかの証明では非常に便利である。
 
-# Exercises
+# 練習問題
 %%%
 tag := "tactics-induction-proofs-exercises"
 %%%
 
- * Prove {anchorName plusR_succ_left (module:=Examples.DependentTypes.Pitfalls)}`plusR_succ_left` using the {kw}`induction`{lit}` ...`{kw}`with` tactic.
- * Rewrite the proof of {anchorName plusR_succ_left (module:=Examples.DependentTypes.Pitfalls)}`plusR_succ_left` to use {kw}`<;>` in a single line.
- * Prove that appending lists is associative using induction on lists:
+ * {kw}`induction`{lit}` ...`{kw}`with`タクティクを使って{anchorName plusR_succ_left (module:=Examples.DependentTypes.Pitfalls)}`plusR_succ_left`を証明せよ。
+ * {anchorName plusR_succ_left (module:=Examples.DependentTypes.Pitfalls)}`plusR_succ_left`の証明を、{kw}`<;>`を使って1行に書き直せ。
+ * リストについての帰納法を使って、リストの連結が結合法則を満たすことを証明せよ。
    ```anchorTerm ex
    theorem List.append_assoc (xs ys zs : List α) :
        xs ++ (ys ++ zs) = (xs ++ ys) ++ zs
