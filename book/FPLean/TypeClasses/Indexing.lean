@@ -15,35 +15,35 @@ set_option pp.rawOnError true
 #doc (Manual) "Arrays and Indexing" =>
 
 
-The {ref "props-proofs-indexing"}[Interlude] describes how to use indexing notation in order to look up entries in a list by their position.
-This syntax is also governed by a type class, and it can be used for a variety of different types.
+{ref "props-proofs-indexing"}[幕間]では、リストの要素を位置で参照するための記法を説明した。
+この記法も型クラスで定められており、さまざまな型に使える。
 
-# Arrays
+# 配列
 %%%
 tag := "array-indexing"
 %%%
 
-For instance, Lean arrays are much more efficient than linked lists for most purposes.
-In Lean, the type {anchorTerm arrVsList}`Array α` is a dynamically-sized array holding values of type {anchorName arrVsList}`α`, much like a Java {java}`ArrayList`, a C++ {cpp}`std::vector`, or a Rust {rust}`Vec`.
-Unlike {anchorTerm arrVsList}`List`, which has a pointer indirection on each use of the {anchorName arrVsList}`cons` constructor, arrays occupy a contiguous region of memory, which is much better for processor caches.
-Also, looking up a value in an array takes constant time, while lookup in a linked list takes time proportional to the index being accessed.
+たとえば、Leanの配列はほとんどの用途で連結リストよりずっと効率がよい。
+Leanでは、{anchorTerm arrVsList}`Array α`型は{anchorName arrVsList}`α`型の値を入れる大きさ可変の配列で、Javaの{java}`ArrayList`、C++の{cpp}`std::vector`、Rustの{rust}`Vec`によく似ている。
+{anchorName arrVsList}`cons`コンストラクタを使うたびにポインタをたどる{anchorTerm arrVsList}`List`と違い、配列はメモリ上で連続した領域を占めるので、プロセッサのキャッシュにずっと有利である。
+また、配列の値の参照は定数時間で済むが、連結リストの参照は参照する添字に比例した時間がかかる。
 
-In pure functional languages like Lean, it is not possible to mutate a given position in a data structure.
-Instead, a copy is made that has the desired modifications.
-However, copying is not always necessary: the Lean compiler and runtime contain an optimization that can allow modifications to be implemented as mutations behind the scenes when there is only a single unique reference to an array.
+Leanのような純粋関数型言語では、データ構造の特定の位置を書き換えられない。
+代わりに、望む変更を加えたコピーを作る。
+ただし、コピーが常に必要なわけではない。Leanのコンパイラと実行時システムには、配列への参照がただ一つだけのときは、変更を舞台裏で書き換えとして実装できるようにする最適化がある。
 
-Arrays are written similarly to lists, but with a leading {lit}`#`:
+配列はリストと同様に書くが、先頭に{lit}`#`を付ける。
 
 ```anchor northernTrees
 def northernTrees : Array String :=
   #["sloe", "birch", "elm", "oak"]
 ```
-The number of values in an array can be found using {anchorName arrVsList}`Array.size`.
-For instance, {anchorTerm northernTreesSize}`northernTrees.size` evaluates to {anchorTerm northernTreesSize}`4`.
-For indices that are smaller than an array's size, indexing notation can be used to find the corresponding value, just as with lists.
-That is, {anchorTerm northernTreesTwo}`northernTrees[2]` evaluates to {anchorTerm northernTreesTwo}`"elm"`.
-Similarly, the compiler requires a proof that an index is in bounds, and attempting to look up a value outside the bounds of the array results in a compile-time error, just as with lists.
-For instance, {anchorTerm northernTreesEight}`northernTrees[8]` results in:
+配列に入っている値の個数は{anchorName arrVsList}`Array.size`で分かる。
+たとえば{anchorTerm northernTreesSize}`northernTrees.size`は{anchorTerm northernTreesSize}`4`と評価される。
+配列の大きさより小さい添字なら、リストと同じく参照の記法で対応する値を求められる。
+つまり{anchorTerm northernTreesTwo}`northernTrees[2]`は{anchorTerm northernTreesTwo}`"elm"`と評価される。
+同様に、コンパイラは添字が範囲内にあることの証明を要求し、配列の範囲外の値を参照しようとすると、リストと同じくコンパイル時のエラーになる。
+たとえば{anchorTerm northernTreesEight}`northernTrees[8]`は次のようになる。
 ```anchorError northernTreesEight
 failed to prove index is valid, possible solutions:
   - Use `have`-expressions to prove the index is valid
@@ -53,19 +53,19 @@ failed to prove index is valid, possible solutions:
 ⊢ 8 < northernTrees.size
 ```
 
-# Non-Empty Lists
+# 空でないリスト
 %%%
 tag := "non-empty-list-indexing"
 %%%
 
-A datatype that represents non-empty lists can be defined as a structure with a field for the head of the list and a field for the tail, which is an ordinary, potentially empty list:
+空でないリストを表すデータ型は、リストの先頭のフィールドと、普通の（空になりうる）リストである残りのフィールドを持つ構造体として定義できる。
 
 ```anchor NonEmptyList
 structure NonEmptyList (α : Type) : Type where
   head : α
   tail : List α
 ```
-For example, the non-empty list {moduleName}`idahoSpiders` (which contains some spider species native to the US state of Idaho) consists of {anchorTerm firstSpider}`"Banded Garden Spider"` followed by four other spiders, for a total of five spiders:
+たとえば、空でないリスト{moduleName}`idahoSpiders`（米国アイダホ州に自生するクモの種をいくつか含む）は、{anchorTerm firstSpider}`"Banded Garden Spider"`と、それに続く4種のクモ、合わせて5種のクモから成る。
 
 ```anchor idahoSpiders
 def idahoSpiders : NonEmptyList String := {
@@ -79,12 +79,12 @@ def idahoSpiders : NonEmptyList String := {
 }
 ```
 
-Looking up the value at a specific index in this list with a recursive function should consider three possibilities:
- 1. The index is {anchorTerm NEListGetHuh}`0`, in which case the head of the list should be returned.
- 2. The index is {anchorTerm NEListGetHuh}`n + 1` and the tail is empty, in which case the index is out of bounds.
- 3. The index is {anchorTerm NEListGetHuh}`n + 1` and the tail is non-empty, in which case the function can be called recursively on the tail and {anchorTerm NEListGetHuh}`n`.
+このリストの特定の添字の値を再帰関数で参照するには、三つの場合を考える必要がある。
+ 1. 添字が{anchorTerm NEListGetHuh}`0`なら、リストの先頭を返す。
+ 2. 添字が{anchorTerm NEListGetHuh}`n + 1`で、残りが空なら、添字は範囲外である。
+ 3. 添字が{anchorTerm NEListGetHuh}`n + 1`で、残りが空でなければ、残りと{anchorTerm NEListGetHuh}`n`に対して関数を再帰的に呼び出せる。
 
-For example, a lookup function that returns an {moduleName}`Option` can be written as follows:
+たとえば、{moduleName}`Option`を返す参照関数は次のように書ける。
 
 ```anchor NEListGetHuh
 def NonEmptyList.get? : NonEmptyList α → Nat → Option α
@@ -92,9 +92,9 @@ def NonEmptyList.get? : NonEmptyList α → Nat → Option α
   | {head := _, tail := []}, _ + 1 => none
   | {head := _, tail := h :: t}, n + 1 => get? {head := h, tail := t} n
 ```
-Each case in the pattern match corresponds to one of the possibilities above.
-The recursive call to {anchorName NEListGetHuh}`get?` does not require a {moduleName}`NonEmptyList` namespace qualifier because the body of the definition is implicitly in the definition's namespace.
-Another way to write this function uses a list lookup {anchorTerm NEListGetHuhList}`xs.tail[n]?` when the index is greater than zero:
+パターンマッチングの各場合が、上の可能性のそれぞれに対応する。
+{anchorName NEListGetHuh}`get?`への再帰呼び出しに{moduleName}`NonEmptyList`の名前空間の修飾が要らないのは、定義の本体が暗黙にその定義の名前空間に入るためである。
+この関数の別の書き方では、添字が0より大きいときにリストの参照{anchorTerm NEListGetHuhList}`xs.tail[n]?`を使う。
 
 ```anchor NEListGetHuhList
 def NonEmptyList.get? : NonEmptyList α → Nat → Option α
@@ -102,29 +102,29 @@ def NonEmptyList.get? : NonEmptyList α → Nat → Option α
   | xs, n + 1 => xs.tail[n]?
 ```
 
-If the list contains one entry, then only {anchorTerm nats}`0` is a valid index.
-If it contains two entries, then both {anchorTerm nats}`0` and {anchorTerm nats}`1` are valid indices.
-If it contains three entries, then {anchorTerm nats}`0`, {anchorTerm nats}`1`, and {anchorTerm nats}`2` are valid indices.
-In other words, the valid indices into a non-empty list are natural numbers that are strictly less than the length of the list, which are less than or equal to the length of the tail.
+リストの要素が一つなら、有効な添字は{anchorTerm nats}`0`だけである。
+要素が二つなら、{anchorTerm nats}`0`と{anchorTerm nats}`1`の両方が有効な添字である。
+要素が三つなら、{anchorTerm nats}`0`、{anchorTerm nats}`1`、{anchorTerm nats}`2`が有効な添字である。
+言い換えれば、空でないリストへの有効な添字は、リストの長さより真に小さい自然数であり、これは残りの長さ以下である。
 
-The definition of what it means for an index to be in bounds should be written as an {kw}`abbrev` because the tactics used to find evidence that indices are acceptable are able to solve inequalities of numbers, but they don't know anything about the name {moduleName}`NonEmptyList.inBounds`:
+添字が範囲内にあるとはどういうことかの定義は{kw}`abbrev`で書くべきである。添字が許容される証拠を見つけるのに使うタクティクは数の不等式を解けるが、{moduleName}`NonEmptyList.inBounds`という名前については何も知らないためである。
 
 ```anchor inBoundsNEList
 abbrev NonEmptyList.inBounds (xs : NonEmptyList α) (i : Nat) : Prop :=
   i ≤ xs.tail.length
 ```
-This function returns a proposition that might be true or false.
-For instance, {anchorTerm spiderBoundsChecks}`2` is in bounds for {moduleName}`idahoSpiders`, while {anchorTerm spiderBoundsChecks}`5` is not:
+この関数は、真にも偽にもなりうる命題を返す。
+たとえば{moduleName}`idahoSpiders`に対して{anchorTerm spiderBoundsChecks}`2`は範囲内だが、{anchorTerm spiderBoundsChecks}`5`は範囲外である。
 
 ```anchor spiderBoundsChecks
 theorem atLeastThreeSpiders : idahoSpiders.inBounds 2 := by decide
 
 theorem notSixSpiders : ¬idahoSpiders.inBounds 5 := by decide
 ```
-The logical negation operator has a very low precedence, which means that {anchorTerm spiderBoundsChecks}`¬idahoSpiders.inBounds 5` is equivalent to {anchorTerm spiderBoundsChecks'}`¬(idahoSpiders.inBounds 5)`.
+論理否定の演算子は優先順位が非常に低いので、{anchorTerm spiderBoundsChecks}`¬idahoSpiders.inBounds 5`は{anchorTerm spiderBoundsChecks'}`¬(idahoSpiders.inBounds 5)`と同じである。
 
 
-This fact can be used to write a lookup function that requires evidence that the index is valid, and thus need not return {moduleName}`Option`, by delegating to the version for lists that checks the evidence at compile time:
+この事実を使うと、添字が有効である証拠を要求し、したがって{moduleName}`Option`を返さなくてよい参照関数を、証拠をコンパイル時に検査するリスト版に委譲する形で書ける。
 
 ```anchor NEListGet
 def NonEmptyList.get (xs : NonEmptyList α)
@@ -133,24 +133,24 @@ def NonEmptyList.get (xs : NonEmptyList α)
   | 0 => xs.head
   | n + 1 => xs.tail[n]
 ```
-It is, of course, possible to write this function to use the evidence directly, rather than delegating to a standard library function that happens to be able to use the same evidence.
-This requires techniques for working with proofs and propositions that are described later in this book.
+もちろん、たまたま同じ証拠を使える標準ライブラリの関数に委譲するのではなく、この関数が証拠を直接使うように書くこともできる。
+それには、証明と命題を扱う技法が必要であり、本書の後半で説明する。
 
 
-# Overloading Indexing
+# 参照のオーバーロード
 %%%
 tag := "overloading-indexing"
 %%%
 
-Indexing notation for a collection type can be overloaded by defining an instance of the {anchorName GetElem}`GetElem` type class.
-For the sake of flexibility, {anchorName GetElem}`GetElem` has four parameters:
- * The type of the collection
- * The type of the index
- * The type of elements that are extracted from the collection
- * A function that determines what counts as evidence that the index is in bounds
+コレクション型の参照の記法は、{anchorName GetElem}`GetElem`型クラスのインスタンスを定義してオーバーロードできる。
+柔軟にするため、{anchorName GetElem}`GetElem`は四つの引数を持つ。
+ * コレクションの型
+ * 添字の型
+ * コレクションから取り出す要素の型
+ * 添字が範囲内にある証拠として何が認められるかを定める関数
 
-The element type and the evidence function are both output parameters.
-{anchorName GetElem}`GetElem` has a single method, {anchorName GetElem}`getElem`, which takes a collection value, an index value, and evidence that the index is in bounds as arguments, and returns an element:
+要素の型と証拠の関数はどちらも出力パラメータである。
+{anchorName GetElem}`GetElem`は{anchorName GetElem}`getElem`というメソッドを一つだけ持ち、コレクションの値、添字の値、添字が範囲内にある証拠を引数に取って要素を返す。
 
 ```anchor GetElem
 class GetElem
@@ -161,20 +161,20 @@ class GetElem
   getElem : (c : coll) → (i : idx) → inBounds c i → item
 ```
 
-In the case of {anchorTerm GetElemNEList}`NonEmptyList α`, these parameters are:
- * The collection is {anchorTerm GetElemNEList}`NonEmptyList α`
- * Indices have type {anchorName GetElemNEList}`Nat`
- * The type of elements is {anchorName GetElemNEList}`α`
- * An index is in bounds if it is less than or equal to the length of the tail
+{anchorTerm GetElemNEList}`NonEmptyList α`の場合は、これらの引数は次のようになる。
+ * コレクションは{anchorTerm GetElemNEList}`NonEmptyList α`
+ * 添字の型は{anchorName GetElemNEList}`Nat`
+ * 要素の型は{anchorName GetElemNEList}`α`
+ * 添字が残りの長さ以下なら範囲内である
 
-In fact, the {anchorTerm GetElemNEList}`GetElem` instance can delegate directly to {anchorTerm GetElemNEList}`NonEmptyList.get`:
+実際、{anchorTerm GetElemNEList}`GetElem`のインスタンスは{anchorTerm GetElemNEList}`NonEmptyList.get`にそのまま委譲できる。
 
 ```anchor GetElemNEList
 instance : GetElem (NonEmptyList α) Nat α NonEmptyList.inBounds where
   getElem := NonEmptyList.get
 ```
-With this instance, {anchorTerm GetElemNEList}`NonEmptyList` becomes just as convenient to use as {moduleName}`List`.
-Evaluating {anchorTerm firstSpider}`idahoSpiders.head` yields {anchorTerm firstSpider}`"Banded Garden Spider"`, while {anchorTerm tenthSpider}`idahoSpiders[9]` leads to the compile-time error:
+このインスタンスにより、{anchorTerm GetElemNEList}`NonEmptyList`は{moduleName}`List`と同じくらい便利に使える。
+{anchorTerm firstSpider}`idahoSpiders.head`を評価すると{anchorTerm firstSpider}`"Banded Garden Spider"`になり、{anchorTerm tenthSpider}`idahoSpiders[9]`はコンパイル時のエラーになる。
 ```anchorError tenthSpider
 failed to prove index is valid, possible solutions:
   - Use `have`-expressions to prove the index is valid
@@ -184,9 +184,9 @@ failed to prove index is valid, possible solutions:
 ⊢ idahoSpiders.inBounds 9
 ```
 
-Because both the collection type and the index type are input parameters to the {anchorTerm ListPosElem}`GetElem` type class, new types can be used to index into existing collections.
-The positive number type {anchorTerm ListPosElem}`Pos` is a perfectly reasonable index into a {anchorTerm ListPosElem}`List`, with the caveat that it cannot point at the first entry.
-The following instance of {anchorTerm ListPosElem}`GetElem` allows {anchorTerm ListPosElem}`Pos` to be used just as conveniently as {moduleName}`Nat` to find a list entry:
+{anchorTerm ListPosElem}`GetElem`型クラスではコレクションの型と添字の型がどちらも入力パラメータなので、既存のコレクションに対して新しい型を添字に使える。
+正の数の型{anchorTerm ListPosElem}`Pos`は{anchorTerm ListPosElem}`List`の添字として十分に安当だが、最初の要素を指せないという但し書きが付く。
+次の{anchorTerm ListPosElem}`GetElem`のインスタンスにより、リストの要素を求めるのに{moduleName}`Nat`と同じくらい便利に{anchorTerm ListPosElem}`Pos`を使える。
 
 ```anchor ListPosElem
 instance : GetElem (List α) Pos α
@@ -194,13 +194,13 @@ instance : GetElem (List α) Pos α
   getElem (xs : List α) (i : Pos) ok := xs[i.toNat]
 ```
 
-Indexing can also make sense for non-numeric indices.
-For example, {moduleName}`Bool` can be used to select between the fields in a point, with {moduleName}`false` corresponding to {anchorTerm PPointBoolGetElem}`x` and {moduleName}`true` corresponding to {anchorTerm PPointBoolGetElem}`y`:
+数値でない添字にも意味があることがある。
+たとえば、点のフィールドを選ぶのに{moduleName}`Bool`を使える。{moduleName}`false`が{anchorTerm PPointBoolGetElem}`x`、{moduleName}`true`が{anchorTerm PPointBoolGetElem}`y`に対応する。
 
 ```anchor PPointBoolGetElem
 instance : GetElem (PPoint α) Bool α (fun _ _ => True) where
   getElem (p : PPoint α) (i : Bool) _ :=
     if not i then p.x else p.y
 ```
-In this case, both Booleans are valid indices.
-Because every possible {moduleName}`Bool` is in bounds, the evidence is simply the true proposition {moduleName}`True`.
+この場合、どちらの真偽値も有効な添字である。
+取りうる{moduleName}`Bool`がすべて範囲内なので、証拠は真の命題{moduleName}`True`そのものである。
