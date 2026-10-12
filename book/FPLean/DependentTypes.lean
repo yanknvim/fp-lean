@@ -22,20 +22,20 @@ set_option verso.exampleModule "Examples.DependentTypes"
 tag := "dependent-types"
 %%%
 
-In most statically-typed programming languages, there is a hermetic seal between the world of types and the world of programs.
-Types and programs have different grammars and they are used at different times.
-Types are typically used at compile time, to check that a program obeys certain invariants.
-Programs are used at run time, to actually perform computations.
-When the two interact, it is usually in the form of a type-case operator like an “instance-of” check or a casting operator that provides the type checker with information that was otherwise unavailable, to be verified at run time.
-In other words, the interaction consists of types being inserted into the world of programs, where they gain some limited run-time meaning.
+ほとんどの静的に型付けされたプログラミング言語では、型の世界とプログラムの世界の間に隙間のない壁がある。
+型とプログラムは文法が異なり、使われる時期も異なる。
+型は通常コンパイル時に、プログラムが一定の不変条件を守っているかを調べるのに使う。
+プログラムは実行時に、実際に計算を行うのに使う。
+両者が関わるときは通常、「instance-of」の検査のような型の判定や、型検査器にそれまで得られなかった情報を与えて実行時に検証させるキャスト演算子の形を取る。
+言い換えれば、その関わりとは、型がプログラムの世界に持ち込まれ、そこで限られた実行時の意味を得ることである。
 
-Lean does not impose this strict separation.
-In Lean, programs may compute types and types may contain programs.
-Placing programs in types allows their full computational power to be used at compile time, and the ability to return types from functions makes types into first-class participants in the programming process.
+Leanはこの厳密な分離を課さない。
+Leanでは、プログラムが型を計算してもよく、型がプログラムを含んでもよい。
+プログラムを型に置くことで、その計算の力をコンパイル時にすべて使えるようになり、関数が型を返せることで、型がプログラミングの過程の第一級の参加者になる。
 
-_Dependent types_ are types that contain non-type expressions.
-A common source of dependent types is a named argument to a function.
-For example, the function {anchorName natOrStringThree}`natOrStringThree` returns either a natural number or a string, depending on which {anchorName natOrStringThree}`Bool` it is passed:
+*依存型*とは、型でない式を含む型である。
+依存型のよくある源は、関数の名前付きの引数である。
+たとえば{anchorName natOrStringThree}`natOrStringThree`関数は、渡された{anchorName natOrStringThree}`Bool`に応じて自然数か文字列のどちらかを返す。
 
 ```anchor natOrStringThree
 def natOrStringThree (b : Bool) : if b then Nat else String :=
@@ -44,21 +44,21 @@ def natOrStringThree (b : Bool) : if b then Nat else String :=
   | false => "three"
 ```
 
-Further examples of dependent types include:
- * {ref "polymorphism"}[The introductory section on polymorphism] contains {anchorName posOrNegThree (module:= Examples.Intro)}`posOrNegThree`, in which the function's return type depends on the value of the argument.
- * {ref "literal-numbers"}[The {anchorName OfNat (module := Examples.Classes)}`OfNat` type class] depends on the specific natural number literal being used.
- * {ref "validated-input"}[The {anchorName CheckedInput (module := Examples.FunctorApplicativeMonad)}`CheckedInput` structure] used in the example of validators depends on the year in which validation occurred.
- * {ref "subtypes"}[Subtypes] contain propositions that refer to particular values.
- * Essentially all interesting propositions, including those that determine the validity of {ref "props-proofs-indexing"}[array indexing notation], are types that contain values and are thus dependent types.
+依存型のさらなる例には次のものがある。
+ * {ref "polymorphism"}[多相についての最初の節]には{anchorName posOrNegThree (module:= Examples.Intro)}`posOrNegThree`があり、関数の戻り値の型が引数の値に依存する。
+ * {ref "literal-numbers"}[{anchorName OfNat (module := Examples.Classes)}`OfNat`型クラス]は、使われる具体的な自然数のリテラルに依存する。
+ * 検査器の例で使った{ref "validated-input"}[{anchorName CheckedInput (module := Examples.FunctorApplicativeMonad)}`CheckedInput`構造体]は、検査が行われた年に依存する。
+ * {ref "subtypes"}[部分型]は、特定の値を参照する命題を含む。
+ * {ref "props-proofs-indexing"}[配列の参照記法]の妥当性を決めるものを含め、興味深い命題はほぼすべて、値を含む型であり、したがって依存型である。
 
-Dependent types vastly increase the power of a type system.
-The flexibility of return types that branch on argument values enables programs to be written that cannot easily be given types in other type systems.
-At the same time, dependent types allow a type signature to restrict which values may be returned from a function, enabling strong invariants to be enforced at compile time.
+依存型は型システムの力を大幅に増やす。
+引数の値で分岐する戻り値の型の柔軟さにより、他の型システムでは型を与えるのが難しいプログラムを書けるようになる。
+同時に、依存型により、型シグネチャで関数から返してよい値を制限でき、強い不変条件をコンパイル時に強制できる。
 
-However, programming with dependent types can be quite complex, and it requires a whole set of skills above and beyond functional programming.
-Expressive specifications can be complicated to fulfill, and there is a real risk of tying oneself in knots and being unable to complete the program.
-On the other hand, this process can lead to new understanding, which can be expressed in a refined type that can be fulfilled.
-While this chapter scratches the surface of dependently typed programming, it is a deep topic that deserves an entire book of its own.
+しかし、依存型を使ったプログラミングはかなり複雑になりうるし、関数型プログラミングに加えて一そろいの技能が要る。
+表現力のある仕様は満たすのが複雑なことがあり、自分で袋小路に陥ってプログラムを完成できなくなる危険も現実にある。
+一方、この過程が新たな理解につながることもあり、その理解は満たせる洗練された型として表せる。
+この章は依存型を使ったプログラミングの表面をなぞるだけだが、これは一冊の本に値する深い話題である。
 
 {include 1 FPLean.DependentTypes.IndexedFamilies}
 
