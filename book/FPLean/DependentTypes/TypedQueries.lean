@@ -173,7 +173,7 @@ def waterfallDiary : Table waterfall := [
 ]
 ```
 
-## Recursion and Universes, Revisited
+## 再帰と宇宙、再訪
 %%%
 tag := "recursion-universes-revisited"
 %%%

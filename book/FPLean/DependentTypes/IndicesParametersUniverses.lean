@@ -15,42 +15,42 @@ set_option verso.exampleModule "Examples.DependentTypes.IndicesParameters"
 tag := "indices-parameters-universe-levels"
 %%%
 
-The distinction between indices and parameters of an inductive type is more than just a way to describe arguments to the type that either vary or do not between the constructors.
-Whether an argument to an inductive type is a parameter or an index also matters when it comes time to determine the relationships between their universe levels.
-In particular, an inductive type may have the same universe level as a parameter, but it must be in a larger universe than its indices.
-This restriction is necessary to ensure that Lean can be used as a theorem prover as well as a programming language—without it, Lean's logic would be inconsistent.
-Experimenting with error messages is a good way to illustrate these rules, as well as the precise rules that determine whether an argument to a type is a parameter or an index.
+帰納型の添字とパラメータの区別は、コンストラクタ間で変わるか変わらないかによって型への引数を記述する手段にとどまらない。
+帰納型への引数がパラメータか添字かは、それらの宇宙の段階の関係を決めるときにも問題になる。
+特に、帰納型はパラメータと同じ宇宙の段階を持ってよいが、添字より大きな宇宙になければならない。
+この制限は、Leanをプログラミング言語としてだけでなく定理証明器としても使えるようにするのに必要である。これがなければLeanの論理は矛盾する。
+エラーメッセージを試すのは、これらの規則と、型への引数がパラメータか添字かを決める正確な規則を示すよい方法である。
 
-Generally speaking, the definition of an inductive type takes its parameters before a colon and its indices after the colon.
-Parameters are given names like function arguments, whereas indices only have their types described.
-This can be seen in the definition of {anchorName Vect (module := Examples.DependentTypes)}`Vect`:
+一般に、帰納型の定義ではパラメータをコロンの前に、添字をコロンの後に置く。
+パラメータは関数の引数のように名前を付けるが、添字はその型を記述するだけである。
+これは{anchorName Vect (module := Examples.DependentTypes)}`Vect`の定義に見られる。
 
 ```anchor Vect (module := Examples.DependentTypes)
 inductive Vect (α : Type u) : Nat → Type u where
    | nil : Vect α 0
    | cons : α → Vect α n → Vect α (n + 1)
 ```
-In this definition, {anchorName Vect (module:=Examples.DependentTypes)}`α` is a parameter and the {anchorName Vect (module:=Examples.DependentTypes)}`Nat` is an index.
-Parameters may be referred to throughout the definition (for example, {anchorName consNotLengthN (module:=Examples.DependentTypes)}`Vect.cons` uses {anchorName Vect (module:=Examples.DependentTypes)}`α` for the type of its first argument), but they must always be used consistently.
-Because indices are expected to change, they are assigned individual values at each constructor, rather than being provided as arguments at the top of the datatype definition.
+この定義で{anchorName Vect (module:=Examples.DependentTypes)}`α`はパラメータであり、{anchorName Vect (module:=Examples.DependentTypes)}`Nat`は添字である。
+パラメータは定義全体で参照してよい（たとえば{anchorName consNotLengthN (module:=Examples.DependentTypes)}`Vect.cons`は最初の引数の型に{anchorName Vect (module:=Examples.DependentTypes)}`α`を使う）が、常に一貫して使わねばならない。
+添字は変わることが想定されているので、データ型の定義の先頭で引数として与えるのではなく、各コンストラクタで個々の値が割り当てられる。
 
 
-A very simple datatype with a parameter is {anchorName WithParameter}`WithParameter`:
+パラメータを持つごく単純なデータ型が{anchorName WithParameter}`WithParameter`である。
 
 ```anchor WithParameter
 inductive WithParameter (α : Type u) : Type u where
   | test : α → WithParameter α
 ```
-The universe level {anchorTerm WithParameter}`u` can be used for both the parameter and for the inductive type itself, illustrating that parameters do not increase the universe level of a datatype.
-Similarly, when there are multiple parameters, the inductive type receives whichever universe level is greater:
+宇宙の段階{anchorTerm WithParameter}`u`をパラメータにも帰納型自体にも使える。これは、パラメータがデータ型の宇宙の段階を上げないことを示している。
+同様に、パラメータが複数あるとき、帰納型はより大きなほうの宇宙の段階を受け取る。
 
 ```anchor WithTwoParameters
 inductive WithTwoParameters (α : Type u) (β : Type v) : Type (max u v) where
   | test : α → β → WithTwoParameters α β
 ```
-Because parameters do not increase the universe level of a datatype, they can be more convenient to work with.
-Lean attempts to identify arguments that are described like indices (after the colon), but used like parameters, and turn them into parameters:
-Both of the following inductive datatypes have their parameter written after the colon:
+パラメータはデータ型の宇宙の段階を上げないので、扱いやすいことがある。
+Leanは、添字のように（コロンの後に）記述されていてもパラメータのように使われている引数を見つけ出し、パラメータにしようとする。
+次の二つの帰納的データ型はどちらもパラメータをコロンの後に書いている。
 
 ```anchor WithParameterAfterColon
 inductive WithParameterAfterColon : Type u → Type u where
@@ -63,15 +63,15 @@ inductive WithParameterAfterColon2 : Type u → Type u where
   | test2 : WithParameterAfterColon2 α
 ```
 
-When a parameter is not named in the initial datatype declaration, different names may be used for it in each constructor, so long as they are used consistently.
-The following declaration is accepted:
+パラメータがデータ型の最初の宣言で名前を付けられていないときは、一貫して使う限り、コンストラクタごとに違う名前を使ってもよい。
+次の宣言は受け付けられる。
 
 ```anchor WithParameterAfterColonDifferentNames
 inductive WithParameterAfterColonDifferentNames : Type u → Type u where
   | test1 : α → WithParameterAfterColonDifferentNames α
   | test2 : β → WithParameterAfterColonDifferentNames β
 ```
-However, this flexibility does not extend to datatypes that explicitly declare the names of their parameters:
+しかし、この柔軟さはパラメータの名前を明示的に宣言したデータ型には及ばない。
 ```anchor WithParameterBeforeColonDifferentNames
 inductive WithParameterBeforeColonDifferentNames (α : Type u) : Type u where
   | test1 : α → WithParameterBeforeColonDifferentNames α
@@ -87,7 +87,7 @@ is not definitionally equal to the expected parameter
 
 Note: The value of parameter `α` must be fixed throughout the inductive declaration. Consider making this parameter an index if it must vary.
 ```
-Similarly, attempting to name an index results in an error:
+同様に、添字に名前を付けようとするとエラーになる。
 ```anchor WithNamedIndex
 inductive WithNamedIndex (α : Type u) : Type (u + 1) where
   | test1 : WithNamedIndex α
@@ -104,7 +104,7 @@ is not definitionally equal to the expected parameter
 Note: The value of parameter `α` must be fixed throughout the inductive declaration. Consider making this parameter an index if it must vary.
 ```
 
-Using an appropriate universe level and placing the index after the colon results in a declaration that is acceptable:
+適切な宇宙の段階を使い、添字をコロンの後に置けば、受け付けられる宣言になる。
 
 ```anchor WithIndex
 inductive WithIndex : Type u → Type (u + 1) where
@@ -113,8 +113,8 @@ inductive WithIndex : Type u → Type (u + 1) where
 ```
 
 
-Even though Lean can sometimes determine that an argument after the colon in an inductive type declaration is a parameter when it is used consistently in all constructors, all parameters are still required to come before all indices.
-Attempting to place a parameter after an index results in the argument being considered an index itself, which would require the universe level of the datatype to increase:
+帰納型の宣言でコロンの後の引数がすべてのコンストラクタで一貫して使われているとき、Leanがそれをパラメータだと判断できることもあるが、それでもパラメータはすべて添字より前に来る必要がある。
+パラメータを添字の後に置こうとすると、その引数自体が添字と見なされ、データ型の宇宙の段階を上げる必要が生じる。
 ```anchor ParamAfterIndex
 inductive ParamAfterIndex : Nat → Type u → Type u where
   | test1 : ParamAfterIndex 0 γ
@@ -129,8 +129,8 @@ which is not less than or equal to the inductive type's resulting universe level
   u + 1
 ```
 
-Parameters need not be types.
-This example shows that ordinary datatypes such as {anchorName NatParamFour}`Nat` may be used as parameters:
+パラメータは型である必要はない。
+この例は、{anchorName NatParamFour}`Nat`のような普通のデータ型もパラメータに使えることを示している。
 ```anchor NatParamFour
 inductive NatParam (n : Nat) : Nat → Type u where
   | five : NatParam 4 5
@@ -145,7 +145,7 @@ is not definitionally equal to the expected parameter
 
 Note: The value of parameter `n` must be fixed throughout the inductive declaration. Consider making this parameter an index if it must vary.
 ```
-Using the {anchorName NatParam}`n` as suggested causes the declaration to be accepted:
+示唆どおりに{anchorName NatParam}`n`を使うと、その宣言は受け付けられる。
 
 ```anchor NatParam
 inductive NatParam (n : Nat) : Nat → Type u where
@@ -155,15 +155,15 @@ inductive NatParam (n : Nat) : Nat → Type u where
 
 
 
-What can be concluded from these experiments?
-The rules of parameters and indices are as follows:
- 1. Parameters must be used identically in each constructor's type.
- 2. All parameters must come before all indices.
- 3. The universe level of the datatype being defined must be at least as large as the largest parameter, and strictly larger than the largest index.
- 4. Named arguments written before the colon are always parameters, while arguments after the colon are typically indices. Lean may determine that the usage of arguments after the colon makes them into parameters if they are used consistently in all constructors and don't come after any indices.
+これらの実験から何が結論できるか。
+パラメータと添字の規則は次のとおりである。
+ 1. パラメータは各コンストラクタの型で同じように使わねばならない。
+ 2. パラメータはすべて添字より前に来なければならない。
+ 3. 定義するデータ型の宇宙の段階は、最も大きなパラメータ以上で、最も大きな添字より真に大きくなければならない。
+ 4. コロンの前に書かれた名前付きの引数は常にパラメータであり、コロンの後の引数は通常は添字である。Leanは、コロンの後の引数がすべてのコンストラクタで一貫して使われ、かつどの添字よりも後に来ないなら、その使い方からそれらをパラメータだと判断することがある。
 
-When in doubt, the Lean command {kw}`#print` can be used to check how many of a datatype's arguments are parameters.
-For example, for {anchorTerm printVect}`Vect`, it points out that the number of parameters is 1:
+迷ったときは、Leanの{kw}`#print`コマンドで、データ型の引数のうちいくつがパラメータかを調べられる。
+たとえば{anchorTerm printVect}`Vect`については、パラメータの数が1であると指摘する。
 ```anchor printVect
 #print Vect
 ```
@@ -175,9 +175,9 @@ Vect.nil : {α : Type u} → Vect α 0
 Vect.cons : {α : Type u} → {n : Nat} → α → Vect α n → Vect α (n + 1)
 ```
 
-It is worth thinking about which arguments should be parameters and which should be indices when choosing the order of arguments to a datatype.
-Having as many arguments as possible be parameters helps keep universe levels under control, which can make a complicated program easier to type check.
-One way to make this possible is to ensure that all parameters come before all indices in the argument list.
+データ型への引数の順序を選ぶときは、どの引数をパラメータにし、どれを添字にすべきかを考える価値がある。
+できるだけ多くの引数をパラメータにすると宇宙の段階を抑えられ、複雑なプログラムの型検査が通りやすくなることがある。
+それを可能にする一つの方法は、引数の並びでパラメータをすべて添字より前にすることである。
 
-Additionally, even though Lean is capable of determining that arguments after the colon are nonetheless parameters by their usage, it's a good idea to write parameters with explicit names.
-This makes the intention clear to readers, and it causes Lean to report an error if the argument is mistakenly used inconsistently across the constructors.
+さらに、Leanがコロンの後の引数を使い方からパラメータだと判断できるとしても、パラメータは明示的に名前を付けて書くのがよい。
+そうすれば読み手に意図が明確になり、その引数が誤ってコンストラクタ間で一貫しない使われ方をしたときにLeanがエラーを報告する。
