@@ -18,75 +18,69 @@ set_option verso.exampleModule "Examples.Intro"
 tag := "getting-to-know-types"
 %%%
 
-Types classify programs based on the values that they can
-compute. Types serve a number of roles in a program:
+型は、プログラムが計算しうる値に基づいてプログラムを分類する。型はプログラムの中でいくつもの役割を担う。
 
- 1. They allow the compiler to make decisions about the in-memory representation of a value.
+ 1. 値のメモリ上での表現をコンパイラが決めるための手がかりになる。
 
- 2. They help programmers to communicate their intent to others, serving as a lightweight specification for the inputs and outputs of a function.
-    The compiler ensures that the program adheres to this specification.
+ 2. 関数の入力と出力についての簡潔な仕様として働き、プログラマが意図を他の人に伝える助けになる。コンパイラは、プログラムがこの仕様に従っていることを保証する。
 
- 3. They prevent various potential mistakes, such as adding a number to a string, and thus reduce the number of tests that are necessary for a program.
+ 3. 数値に文字列を足すといった、起こりうるさまざまな間違いを防ぎ、プログラムに必要なテストの数を減らす。
 
- 4. They help the Lean compiler automate the production of auxiliary code that can save boilerplate.
+ 4. 定型的な記述を減らす補助コードの生成を、Leanコンパイラが自動で行えるようにする。
 
-Lean's type system is unusually expressive.
-Types can encode strong specifications like “this sorting function returns a permutation of its input” and flexible specifications like “this function has different return types, depending on the value of its argument”.
-The type system can even be used as a full-blown logic for proving mathematical theorems.
-This cutting-edge expressive power doesn't make simpler types unnecessary, however, and understanding these simpler types is a prerequisite for using the more advanced features.
+Leanの型システムは並外れて表現力が高い。
+型には、「この整列関数は入力の並べ替えを返す」といった強い仕様も、「この関数は引数の値に応じて戻り値の型が変わる」といった柔軟な仕様も書き表せる。
+型システムは、数学の定理を証明するための本格的な論理としても使える。
+とはいえ、この先進的な表現力があっても単純な型が不要になるわけではない。より進んだ機能を使うには、まずそうした単純な型を理解しておく必要がある。
 
 :::paragraph
-Every program in Lean must have a type. In particular, every
-expression must have a type before it can be evaluated. In the
-examples so far, Lean has been able to discover a type on its own, but
-it is sometimes necessary to provide one. This is done using the colon
-operator inside parentheses:
+Leanのプログラムは必ず型を持たなければならない。とくに、式は評価する前に型が決まっていなければならない。これまでの例ではLeanが型を自分で見つけられていたが、こちらから指定しなければならないこともある。指定するには、括弧の中でコロン演算子を使う。
 
 ```anchor onePlusTwoEval
 #eval (1 + 2 : Nat)
 ```
 
 
-Here, {anchorName onePlusTwoEval}`Nat` is the type of _natural numbers_, which are arbitrary-precision unsigned integers.
-In Lean, {anchorName onePlusTwoEval}`Nat` is the default type for non-negative integer literals.
-This default type is not always the best choice.
-In C, unsigned integers underflow to the largest representable numbers when subtraction would otherwise yield a result less than zero.
-{anchorName onePlusTwoEval}`Nat`, however, can represent arbitrarily-large unsigned numbers, so there is no largest number to underflow to.
-Thus, subtraction on {anchorName onePlusTwoEval}`Nat` returns {anchorName Nat}`zero` when the answer would have otherwise been negative.
-For instance,
+ここで{anchorName onePlusTwoEval}`Nat`は*自然数*の型であり、精度の制限がない符号なし整数を表す。
+Leanでは、負でない整数リテラルの既定の型が{anchorName onePlusTwoEval}`Nat`である。
+この既定の型が常に最善とは限らない。
+Cでは、引き算の結果が負になるはずのときに、符号なし整数は表現できる最大値に回り込む。
+しかし{anchorName onePlusTwoEval}`Nat`はいくらでも大きな符号なしの数を表せるので、回り込む先の最大値が存在しない。
+そのため、{anchorName onePlusTwoEval}`Nat`の引き算では、答えが負になるはずの場合に{anchorName Nat}`zero`が返る。
+たとえば、
 
 ```anchor oneMinusTwoEval
 #eval (1 - 2 : Nat)
 ```
 
-evaluates to {anchorInfo oneMinusTwoEval}`0` rather than {lit}`-1`.
-To use a type that can represent the negative integers, provide it directly:
+これは{lit}`-1`ではなく{anchorInfo oneMinusTwoEval}`0`と評価される。
+負の整数を表せる型を使うには、その型を直接書けばよい。
 
 ```anchor oneMinusTwoIntEval
 #eval (1 - 2 : Int)
 ```
 
-With this type, the result is {anchorInfo oneMinusTwoIntEval}`-1`, as expected.
+この型では、期待どおり{anchorInfo oneMinusTwoIntEval}`-1`という結果になる。
 :::
 
 :::paragraph
-To check the type of an expression without evaluating it, use {kw}`#check` instead of {kw}`#eval`. For instance:
+式を評価せずに型だけを調べるには、{kw}`#eval`の代わりに{kw}`#check`を使う。たとえば、
 
 ```anchor oneMinusTwoIntType
 #check (1 - 2 : Int)
 ```
 
-reports {anchorInfo oneMinusTwoIntType}`1 - 2 : Int` without actually performing the subtraction.
+これは引き算を実際には行わずに、{anchorInfo oneMinusTwoIntType}`1 - 2 : Int`と報告する。
 :::
 
 :::paragraph
-When a program can't be given a type, an error is returned from both {kw}`#check` and {kw}`#eval`. For instance:
+プログラムに型を与えられない場合、{kw}`#check`と{kw}`#eval`のどちらもエラーを返す。たとえば、
 
 ```anchor stringAppendList
 #check String.append ["hello", " "] "world"
 ```
 
-outputs
+出力は次のようになる。
 
 ```anchorError stringAppendList
 Application type mismatch: The argument
@@ -99,5 +93,5 @@ in the application
   String.append ["hello", " "]
 ```
 
-because the first argument to {anchorName stringAppendList}`String.append` is expected to be a string, but a list of strings was provided instead.
+{anchorName stringAppendList}`String.append`の最初の引数には文字列が期待されているのに、文字列のリストが渡されたためである。
 :::

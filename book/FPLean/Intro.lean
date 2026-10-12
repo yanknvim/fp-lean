@@ -16,58 +16,58 @@ htmlSplit := .never
 number := false
 %%%
 
-Lean is an interactive theorem prover based on dependent type theory.
-Originally developed at Microsoft Research, development now takes place at the [Lean FRO](https://lean-fro.org).
-Dependent type theory unites the worlds of programs and proofs; thus, Lean is also a programming language.
-Lean takes its dual nature seriously, and it is designed to be suitable for use as a general-purpose programming language—Lean is even implemented in itself.
-This book is about writing programs in Lean.
+Leanは依存型理論に基づく対話型の定理証明支援系である。
+当初はマイクロソフトリサーチで開発され、現在は[Lean FRO](https://lean-fro.org)で開発が進められている。
+依存型理論はプログラムと証明の世界を一つにまとめる。そのため、Leanはプログラミング言語でもある。
+Leanはこの二面性を真剣に受け止め、汎用プログラミング言語として使えるように設計されている。Lean自身がLeanで実装されているほどである。
+本書はLeanでプログラムを書くことについての本である。
 
-When viewed as a programming language, Lean is a strict pure functional language with dependent types.
-A large part of learning to program with Lean consists of learning how each of these attributes affects the way programs are written, and how to think like a functional programmer.
-_Strictness_ means that function calls in Lean work similarly to the way they do in most languages: the arguments are fully computed before the function's body begins running.
-_Purity_ means that Lean programs cannot have side effects such as modifying locations in memory, sending emails, or deleting files without the program's type saying so.
-Lean is a _functional_ language in the sense that functions are first-class values like any other and that the execution model is inspired by the evaluation of mathematical expressions.
-_Dependent types_, which are the most unusual feature of Lean, make types into a first-class part of the language, allowing types to contain programs and programs to compute types.
+プログラミング言語として見れば、Leanは依存型を備えた厳格な純粋関数型言語である。
+Leanでプログラミングを学ぶことの多くは、これらの性質がプログラムの書き方にどう影響するか、そして関数型プログラマのように考えるにはどうすればよいかを学ぶことに費やされる。
+*厳格性*とは、Leanの関数呼び出しがほとんどの言語と同じように動作することを意味する。関数本体の実行が始まる前に、引数がすべて計算し終わるのである。
+*純粋性*とは、メモリ上の位置の書き換え、メールの送信、ファイルの削除といった副作用を、プログラムの型にそう書かれていない限りLeanのプログラムが起こせないことを意味する。
+関数が他の値と同じ第一級の値であり、実行モデルが数式の評価に着想を得ているという意味で、Leanは*関数型*言語である。
+Leanの最も特異な機能である*依存型*は、型を言語の第一級の要素にする。これにより、型がプログラムを含み、プログラムが型を計算できるようになる。
 
-This book is intended for programmers who want to learn Lean, but who have not necessarily used a functional programming language before.
-Familiarity with functional languages such as Haskell, OCaml, or F# is not required.
-On the other hand, this book does assume knowledge of concepts like loops, functions, and data structures that are common to most programming languages.
-While this book is intended to be a good first book on functional programming, it is not a good first book on programming in general.
+本書は、Leanを学びたいが、関数型プログラミング言語を使った経験は必ずしもない、というプログラマを対象としている。
+Haskell、OCaml、F#などの関数型言語に詳しい必要はない。
+一方で、ほとんどのプログラミング言語に共通するループ、関数、データ構造といった概念についての知識は前提としている。
+本書は関数型プログラミングの最初の一冊としては適しているが、プログラミング一般の最初の一冊としては適していない。
 
-Mathematicians who are using Lean as a proof assistant will likely need to write custom proof automation tools at some point.
-This book is also for them.
-As these tools become more sophisticated, they begin to resemble programs in functional languages, but most working mathematicians are trained in languages like Python and Mathematica.
-This book can help bridge the gap, empowering more mathematicians to write maintainable and understandable proof automation tools.
+Leanを証明支援系として使っている数学者は、いずれ証明の自動化ツールを自分で書く必要が出てくるだろう。
+本書はそうした数学者にも向けたものである。
+ツールが洗練されてくると、その姿は関数型言語のプログラムに近づく。ただし、数学の実務に携わる人の多くは、PythonやMathematicaのような言語で訓練を受けている。
+本書はその隔たりを埋める一助となり、保守しやすく理解しやすい証明自動化ツールを書ける数学者を増やす。
 
-This book is intended to be read linearly, from the beginning to the end.
-Concepts are introduced one at a time, and later sections assume familiarity with earlier sections.
-Sometimes, later chapters will go into depth on a topic that was only briefly addressed earlier on.
-Some sections of the book contain exercises.
-These are worth doing, in order to cement your understanding of the section.
-It is also useful to explore Lean as you read the book, finding creative new ways to use what you have learned.
+本書は最初から最後まで順に読むことを想定している。
+概念は一度に一つずつ導入され、後の節はそれより前の節を読んでいることを前提とする。
+前に少し触れただけの話題を、後の章で詳しく扱うこともある。
+本書のいくつかの節には練習問題がある。
+その節の理解を確かなものにするために、解いておく価値がある。
+本書を読みながらLeanを自分で触り、学んだことを使う新しい方法を見つけるのも役に立つ。
 
-# Getting Lean
+# Leanの入手
 %%%
 tag := "getting-lean"
 %%%
 
-Before writing and running programs written in Lean, you'll need to set up Lean on your own computer.
-The Lean tooling consists of the following:
+Leanで書いたプログラムを書いて動かすには、まず自分のコンピュータにLeanを用意する必要がある。
+Leanのツール一式は次のとおりである。
 
- * {lit}`elan` manages the Lean compiler toolchains, similarly to {lit}`rustup` or {lit}`ghcup`.
- * {lit}`lake` builds Lean packages and their dependencies, similarly to {lit}`cargo`, {lit}`make`, or Gradle.
- * {lit}`lean` type checks and compiles individual Lean files as well as providing information to programmer tools about files that are currently being written.
-   Normally, {lit}`lean` is invoked by other tools rather than directly by users.
- * Plugins for editors, such as Visual Studio Code or Emacs, that communicate with {lit}`lean` and present its information conveniently.
+ * {lit}`elan`はLeanのコンパイラツールチェーンを管理する。{lit}`rustup`や{lit}`ghcup`に相当する。
+ * {lit}`lake`はLeanのパッケージとその依存関係をビルドする。{lit}`cargo`、{lit}`make`、Gradleに相当する。
+ * {lit}`lean`は個々のLeanファイルの型検査とコンパイルを行い、書きかけのファイルに関する情報をプログラマ向けツールに渡す。
+   通常、{lit}`lean`は利用者が直接呼び出すのではなく、他のツールから呼び出される。
+ * Visual Studio CodeやEmacsなどのエディタ用プラグイン。これらは{lit}`lean`とやり取りし、得られた情報を扱いやすく表示する。
 
-Please refer to the [Lean manual](https://lean-lang.org/lean4/doc/quickstart.html) for up-to-date instructions for installing Lean.
+Leanのインストール方法については、最新の手順が載っている[Lean manual](https://lean-lang.org/lean4/doc/quickstart.html)を参照するとよい。
 
-# Typographical Conventions
+# 表記の約束
 %%%
 tag := "typographical-conventions"
 %%%
 
-Code examples that are provided to Lean as _input_ are formatted like this:
+Leanに*入力*として渡すコード例は、次のように書く。
 
 ```anchor add1
 def add1 (n : Nat) : Nat := n + 1
@@ -77,14 +77,14 @@ def add1 (n : Nat) : Nat := n + 1
 #eval add1 7
 ```
 
-The last line above (beginning with {kw}`#eval`) is a command that instructs Lean to calculate an answer.
-Lean's replies are formatted like this:
+上の最後の行（{kw}`#eval`で始まる行）は、Leanに答えを計算させるコマンドである。
+Leanの返事は次のように表示される。
 
 ```anchorInfo add1_7
 8
 ```
 
-Error messages returned by Lean are formatted like this:
+Leanが返すエラーメッセージは次のように表示される。
 
 ```anchorError add1_string
 Application type mismatch: The argument
@@ -97,7 +97,7 @@ in the application
   add1 "seven"
 ```
 
-Warnings are formatted like this:
+警告は次のように表示される。
 
 ```anchorWarning add1_warn
 declaration uses `sorry`
@@ -109,167 +109,167 @@ tag := "unicode"
 %%%
 
 
-Idiomatic Lean code makes use of a variety of Unicode characters that are not part of ASCII.
-For instance, Greek letters like {lit}`α` and {lit}`β` and the arrow {lit}`→` both occur in the first chapter of this book.
-This allows Lean code to more closely resemble ordinary mathematical notation.
+慣用的なLeanのコードでは、ASCIIに含まれないさまざまなUnicode文字を使う。
+たとえば、{lit}`α`や{lit}`β`のようなギリシャ文字や、矢印{lit}`→`は、本書の第1章にも出てくる。
+これにより、Leanのコードは普通の数学の記法に近づく。
 
-With the default Lean settings, both Visual Studio Code and Emacs allow these characters to be typed with a backslash ({lit}`\`) followed by a name.
-For example, to enter {lit}`α`, type {lit}`\alpha`.
-To find out how to type a character in Visual Studio Code, point the mouse at it and look at the tooltip.
-In Emacs, use {lit}`C-c C-k` with point on the character in question.
+Leanの既定の設定では、Visual Studio CodeでもEmacsでも、バックスラッシュ（{lit}`\`）に続けて名前を打つとこれらの文字を入力できる。
+たとえば{lit}`α`を入力するには{lit}`\alpha`と打つ。
+Visual Studio Codeで文字の入力方法を知るには、その文字にマウスを合わせてツールチップを見る。
+Emacsでは、目的の文字にカーソルを置いて{lit}`C-c C-k`を押す。
 
 
 
-# Release history
+# リリース履歴
 %%%
 tag := "release-history"
 number := false
 htmlSplit := .never
 %%%
 
-## October, 2025
+## 2025年10月
 %%%
 tag := none
 %%%
 
-The book has been updated to the latest stable Lean release (version 4.23.0), and now describes functional induction and the {tactic}`grind` tactic.
+本書を最新の安定版Lean（バージョン4.23.0）に合わせ、関数的帰納法と{tactic}`grind`タクティクについても説明するようにした。
 
-## August, 2025
+## 2025年8月
 %%%
 tag := none
 %%%
 
-This is a maintenance release to resolve an issue with copy-pasting code from the book.
+本書のコードをコピー＆ペーストするときの問題を解消したメンテナンスリリースである。
 
-## July, 2025
+## 2025年7月
 %%%
 tag := none
 %%%
 
-The book has been updated for version 4.21 of Lean.
+本書をLeanのバージョン4.21に合わせた。
 
-## June, 2025
+## 2025年6月
 %%%
 tag := none
 %%%
 
-The book has been reformatted with Verso.
+本書の組版をVersoで作り直した。
 
-## April, 2025
+## 2025年4月
 %%%
 tag := none
 %%%
 
-The book has been extensively updated and now describes Lean version 4.18.
+本書を大幅に更新し、Leanのバージョン4.18について説明するようにした。
 
-## January, 2024
+## 2024年1月
 %%%
 tag := none
 %%%
 
-This is a minor bugfix release that fixes a regression in an example program.
+サンプルプログラムに生じていた回帰不具合を修正した、小さなバグ修正リリースである。
 
-## October, 2023
+## 2023年10月
 %%%
 tag := none
 %%%
 
-In this first maintenance release, a number of smaller issues were fixed and the text was brought up to date with the latest release of Lean.
+最初のメンテナンスリリースである今回は、いくつかの細かな問題を修正し、本文を最新のLeanに合わせた。
 
-## May, 2023
+## 2023年5月
 %%%
 tag := none
 %%%
 
-The book is now complete! Compared to the April pre-release, many small details have been improved and minor mistakes have been fixed.
+これで本書は完成した。4月の先行公開版と比べて、細かな点の多くを改善し、ささいな誤りを修正した。
 
-## April, 2023
+## 2023年4月
 %%%
 tag := none
 %%%
 
-This release adds an interlude on writing proofs with tactics as well as a final chapter that combines discussion of performance and cost models with proofs of termination and program equivalence.
-This is the last release prior to the final release.
+このリリースでは、タクティクで証明を書くための幕間と、性能とコストのモデルの話に停止性とプログラムの等価性の証明を組み合わせた最終章を追加した。
+最終リリースの前の最後のリリースである。
 
-## March, 2023
+## 2023年3月
 %%%
 tag := none
 %%%
 
-This release adds a chapter on programming with dependent types and indexed families.
+このリリースでは、依存型とインデックス付き族を使ったプログラミングの章を追加した。
 
-## January, 2023
+## 2023年1月
 %%%
 tag := none
 %%%
 
-This release adds a chapter on monad transformers that includes a description of the imperative features that are available in {kw}`do`-notation.
+このリリースでは、モナド変換子の章を追加した。{kw}`do`記法で使える命令的な機能についても説明している。
 
-## December, 2022
+## 2022年12月
 %%%
 tag := none
 %%%
 
-This release adds a chapter on applicative functors that additionally describes structures and type classes in more detail.
-This is accompanied with improvements to the description of monads.
-The December 2022 release was delayed until January 2023 due to winter holidays.
+このリリースでは、アプリカティブファンクタの章を追加した。構造体と型クラスについても、より詳しく説明している。
+あわせて、モナドの説明も改善した。
+2022年12月のリリースは、年末年始の休暇のために2023年1月にずれ込んだ。
 
-## November, 2022
+## 2022年11月
 %%%
 tag := none
 %%%
-This release adds a chapter on programming with monads. Additionally, the example of using JSON in the coercions section has been updated to include the complete code.
+このリリースでは、モナドを使ったプログラミングの章を追加した。あわせて、型強制の節で使っているJSONの例を、コード全体を含む形に更新した。
 
-## October, 2022
+## 2022年10月
 %%%
 tag := none
 %%%
-This release completes the chapter on type classes. In addition, a short interlude introducing propositions, proofs, and tactics has been added just before the chapter on type classes, because a small amount of familiarity with the concepts helps to understand some of the standard library type classes.
+このリリースでは、型クラスの章が完成した。あわせて、型クラスの章の直前に、命題、証明、タクティクを紹介する短い幕間を追加した。これらの概念に少し慣れておくと、標準ライブラリの型クラスのいくつかを理解しやすくなるためである。
 
-## September, 2022
+## 2022年9月
 %%%
 tag := none
 %%%
-This release adds the first half of a chapter on type classes, which are Lean's mechanism for overloading operators and an important means of organizing code and structuring libraries. Additionally, the second chapter has been updated to account for changes in Lean's stream API.
+このリリースでは、型クラスの章の前半を追加した。型クラスはLeanで演算子をオーバーロードする仕組みであり、コードを整理しライブラリを組み立てるための重要な手段でもある。あわせて、第2章をLeanのストリームAPIの変更に合わせて更新した。
 
-## August, 2022
+## 2022年8月
 %%%
 tag := none
 %%%
-This third public release adds a second chapter, which describes compiling and running programs along with Lean's model for side effects.
+3回目の公開となる今回は、第2章を追加した。プログラムのコンパイルと実行、およびLeanの副作用のモデルについて説明している。
 
-## July, 2022
+## 2022年7月
 %%%
 tag := none
 %%%
-The second public release completes the first chapter.
+2回目の公開で、第1章が完成した。
 
-## June, 2022
+## 2022年6月
 %%%
 tag := none
 %%%
-This was the first public release, consisting of an introduction and part of the first chapter.
+最初の公開で、序論と第1章の一部を収録している。
 
 
-# About the Author
+# 著者について
 %%%
 tag := "about-the-author"
 %%%
 
-David Thrane Christiansen has been using functional languages for twenty years, and dependent types for ten.
-Together with Daniel P. Friedman, he wrote [_The Little Typer_](https://thelittletyper.com/), an introduction to the key ideas of dependent type theory.
-He has a Ph.D. from the IT University of Copenhagen.
-During his studies, he was a major contributor to the first version of the Idris language.
-Since leaving academia, he has worked as a software developer at Galois in Portland, Oregon and Deon Digital in Copenhagen, Denmark, and he was the Executive Director of the Haskell Foundation.
-At the time of writing, he is employed at the [Lean Focused Research Organization](https://lean-fro.org) working full-time on Lean.
+David Thrane Christiansenは、関数型言語を20年、依存型を10年使ってきた。
+Daniel P. Friedmanとの共著に、依存型理論の中心的な考え方を紹介する[_The Little Typer_](https://thelittletyper.com/)がある。
+コペンハーゲンIT大学で博士号を取得した。
+在学中は、Idris言語の最初のバージョンに大きく貢献した。
+学界を離れてからは、オレゴン州ポートランドのGaloisとデンマーク・コペンハーゲンのDeon Digitalでソフトウェア開発者として働き、Haskell FoundationのExecutive Directorを務めた。
+執筆時点では[Lean Focused Research Organization](https://lean-fro.org)に所属し、Leanの開発に専念している。
 
-# License
+# ライセンス
 %%%
 tag := "license"
 %%%
 
 {creativeCommons}
 
-The original version of the book was written by David Thrane Christiansen on contract to Microsoft Corporation, who generously released it under a Creative Commons Attribution 4.0 International License.
-The current version has been modified by the author from the original version to account for changes in newer versions of Lean.
-A detailed account of the changes can be found in the book's [source code repository](https://github.com/leanprover/fp-lean/).
+本書の原版は、David Thrane Christiansenがマイクロソフトの委託を受けて執筆した。同社はそれをクリエイティブ・コモンズ表示4.0国際ライセンスの下で公開した。
+現在の版は、新しいLeanでの変更に合わせて著者自身が原版を修正したものである。
+変更の詳細は本書の[ソースコードリポジトリ](https://github.com/leanprover/fp-lean/)にある。

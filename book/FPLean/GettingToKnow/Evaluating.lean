@@ -21,35 +21,34 @@ tag := "evaluating"
 %%%
 
 
-The most important thing to understand as a programmer learning Lean is how evaluation works.
-Evaluation is the process of finding the value of an expression, just as one does in arithmetic.
-For instance, the value of $`15 - 6` is $`9` and the value of $`2 × (3 + 1)` is $`8`.
-To find the value of the latter expression, $`3 + 1` is first replaced by $`4`, yielding $`2 × 4`, which itself can be reduced to $`8`.
-Sometimes, mathematical expressions contain variables: the value of $`x + 1` cannot be computed until we know what the value of $`x` is.
-In Lean, programs are first and foremost expressions, and the primary way to think about computation is as evaluating expressions to find their values.
+Leanを学ぶプログラマが最初に理解すべきことは、評価がどのように行われるかである。
+評価とは、算数で計算するのと同じように、式の値を求める手順である。
+たとえば$`15 - 6`の値は$`9`、$`2 × (3 + 1)`の値は$`8`である。
+後の式の値を求めるには、まず$`3 + 1`を$`4`に置き換えて$`2 × 4`とし、これをさらに$`8`に簡約する。
+数式には変数が含まれることもある。$`x + 1`の値は、$`x`の値が分かるまで計算できない。
+Leanでは、プログラムは何よりもまず式であり、計算を考えるときの基本は、式を評価してその値を求めることである。
 
-Most programming languages are _imperative_, where a program consists of a series of statements that should be carried out in order to find the program's result.
-Programs have access to mutable memory, so the value referred to by a variable can change over time.
-In addition to mutable state, programs may have other side effects, such as deleting files, making outgoing network connections,
-throwing or catching exceptions, and reading data from a database.
-“Side effects” is essentially a catch-all term for describing things that may happen in a program that don't follow the model of evaluating mathematical expressions.
+ほとんどのプログラミング言語は*命令型*であり、プログラムは、結果を得るために順に実行すべき文の並びである。
+プログラムは書き換え可能なメモリに触れられるため、変数が指す値は時間とともに変わりうる。
+書き換え可能な状態のほかにも、プログラムにはファイルの削除、外部へのネットワーク接続、例外の送出や捕捉、データベースからの読み出しといった副作用がありうる。
+「副作用」とは、数式の評価というモデルに当てはまらずにプログラム中で起こりうる事柄を、まとめて指す言葉である。
 
-In Lean, however, programs work the same way as mathematical expressions.
-Once given a value, variables cannot be reassigned. Evaluating an expression cannot have side effects.
-If two expressions have the same value, then replacing one with the other will not cause the program to compute a different result.
-This does not mean that Lean cannot be used to write {lit}`Hello, world!` to the console, but performing I/O is not a core part of the experience of using Lean in the same way.
-Thus, this chapter focuses on how to evaluate expressions interactively with Lean, while the next chapter describes how to write, compile, and run the {lit}`Hello, world!` program.
+しかしLeanでは、プログラムは数式と同じように扱う。
+変数は、一度値を与えたら別の値を割り当て直せない。式の評価が副作用を起こすこともない。
+二つの式の値が等しいなら、一方を他方に置き換えてもプログラムの計算結果は変わらない。
+だからといって、Leanで{lit}`Hello, world!`をコンソールに書き出せないわけではない。ただし、入出力を行うことがLeanを使う上での中心的な部分になるわけではない。
+そこでこの章では、Leanと対話しながら式を評価する方法を扱う。次の章では、{lit}`Hello, world!`プログラムを書き、コンパイルし、実行する方法を説明する。
 
 :::paragraph
-To ask Lean to evaluate an expression, write {kw}`#eval` before it in your editor, which will then report the result back.
-Typically, the result is found by putting the cursor or mouse pointer over {kw}`#eval`.
-For instance,
+Leanに式を評価させるには、エディタで式の前に{kw}`#eval`を書く。結果はエディタが知らせてくれる。
+結果は通常、カーソルかマウスポインタを{kw}`#eval`に合わせると分かる。
+たとえば、
 
 ```anchor threeEval
 #eval 1 + 2
 ```
 
-yields the value
+これは次のように評価される。
 
 ```anchorInfo threeEval
 3
@@ -58,80 +57,79 @@ yields the value
 :::
 
 :::paragraph
-Lean obeys the ordinary rules of precedence and associativity for
-arithmetic operators. That is,
+Leanは算術演算子について、通常の優先順位と結合性の規則に従う。つまり、
 
 ```anchor orderOfOperations
 #eval 1 + 2 * 5
 ```
 
-yields the value {anchorInfo orderOfOperations}`11` rather than {anchorInfo orderOfOperationsWrong}`15`.
+の値は{anchorInfo orderOfOperationsWrong}`15`ではなく{anchorInfo orderOfOperations}`11`になる。
 
 :::
 
 :::paragraph
-While both ordinary mathematical notation and the majority of programming languages use parentheses (e.g. {lit}`f(x)`) to apply a function to its arguments, Lean simply writes the function next to its arguments (e.g. {lit}`f x`).
-Function application is one of the most common operations, so it pays to keep it concise.
-Rather than writing
+普通の数学の記法やほとんどのプログラミング言語では、関数を引数に適用するのに括弧を使う（{lit}`f(x)`など）。Leanは関数を引数の隣に書くだけでよい（{lit}`f x`など）。
+関数適用はよく使う操作なので、簡潔に書けることに意味がある。
+たとえば、{anchorInfo stringAppendHello}`"Hello, Lean!"`を計算するのに
 
 ```
 #eval String.append("Hello, ", "Lean!")
 ```
 
-to compute {anchorInfo stringAppendHello}`"Hello, Lean!"`, one would instead write
+と書く代わりに、
 
 ```anchor stringAppendHello
 #eval String.append "Hello, " "Lean!"
 ```
 
-where the function's two arguments are simply written next to it with spaces.
+と書く。関数の二つの引数は、空白で区切って並べるだけでよい。
 :::
 
 
 :::paragraph
-Just as the order-of-operations rules for arithmetic demand parentheses in the expression {anchorTerm orderOfOperationsWrong}`(1 + 2) * 5`, parentheses are also necessary when a function's argument is to be computed via another function call.
-For instance, parentheses are required in
+算数の計算順序の規則が{anchorTerm orderOfOperationsWrong}`(1 + 2) * 5`という式に括弧を要求するのと同じように、関数の引数を別の関数呼び出しで計算するときにも括弧が要る。
+たとえば、次の式には括弧が必要である。
 
 ```anchor stringAppendNested
 #eval String.append "great " (String.append "oak " "tree")
 ```
 
-because otherwise the second {moduleTerm (anchor := stringAppendNested)}`String.append` would be interpreted as an argument to the first, rather than as a function being passed {moduleTerm (anchor := stringAppendNested)}`"oak "` and {moduleTerm (anchor := stringAppendNested)}`"tree"` as arguments.
-The value of the inner {anchorTerm stringAppendNested}`String.append` call must be found first, after which it can be appended to {moduleTerm (anchor := stringAppendNested)}`"great "`, yielding the final value {anchorInfo stringAppendNested}`"great oak tree"`.
+括弧がないと、二つ目の{moduleTerm (anchor := stringAppendNested)}`String.append`が、{moduleTerm (anchor := stringAppendNested)}`"oak "`と{moduleTerm (anchor := stringAppendNested)}`"tree"`を引数として受け取る関数ではなく、一つ目の関数の引数として解釈されてしまうためである。
+内側の{anchorTerm stringAppendNested}`String.append`呼び出しの値を先に求める必要があり、それを{moduleTerm (anchor := stringAppendNested)}`"great "`に追加すると、最終的な値{anchorInfo stringAppendNested}`"great oak tree"`になる。
 :::
 
 :::paragraph
-Imperative languages often have two kinds of conditional: a conditional _statement_ that determines which instructions to carry out based on a Boolean value, and a conditional _expression_ that determines which of two expressions to evaluate based on a Boolean value.
-For instance, in C and C++, the conditional statement is written using {c}`if` and {c}`else`, while the conditional expression is written with a ternary operator in which {c}`?` and {c}`:` separate the condition from the branches.
-In Python, the conditional statement begins with {python}`if`, while the conditional expression puts {python}`if` in the middle.
-Because Lean is an expression-oriented functional language, there are no conditional statements, only conditional expressions.
-They are written using {kw}`if`, {kw}`then`, and {kw}`else`.
-For example,
+命令型言語には、しばしば二種類の条件分岐がある。真偽値に応じて実行する命令を選ぶ条件*文*と、真偽値に応じて二つの式のどちらを評価するかを選ぶ条件*式*である。
+たとえばCとC++では、条件文は{c}`if`と{c}`else`で書き、条件式は三項演算子で書く。三項演算子では{c}`?`と{c}`:`が条件と分岐を区切る。
+Pythonでは、条件文は{python}`if`で始まり、条件式は{python}`if`を途中に置く。
+Leanは式を中心とする関数型言語なので、条件文はなく、あるのは条件式だけである。
+条件式は{kw}`if`、{kw}`then`、{kw}`else`で書く。
+たとえば、
 
 ```anchorEvalStep stringAppend 0
 String.append "it is " (if 1 > 2 then "yes" else "no")
 ```
 
-evaluates to
+これは次のように評価される。
 
 ```anchorEvalStep stringAppend 1
 String.append "it is " (if false then "yes" else "no")
 ```
 
-which evaluates to
+さらに次のように評価される。
 
 ```anchorEvalStep stringAppend 2
 String.append "it is " "no"
 ```
 
-which finally evaluates to {anchorEvalStep stringAppend 3}`"it is no"`.
+最終的に{anchorEvalStep stringAppend 3}`"it is no"`になる。
 
 
 :::
 
 
 :::paragraph
-For the sake of brevity, a series of evaluation steps like this will sometimes be written with arrows between them:
+簡潔にするため、このような評価の手順を、間に矢印を挟んで書くことがある。
 
 ```anchorEvalSteps stringAppend
 String.append "it is " (if 1 > 2 then "yes" else "no")
@@ -145,20 +143,20 @@ String.append "it is " "no"
 :::
 
 
-# Messages You May Meet
+# 評価中に現れるメッセージ
 %%%
 tag := "evaluating-messages"
 %%%
 
 :::paragraph
-Asking Lean to evaluate a function application that is missing an argument will lead to an error message.
-In particular, the example
+引数が足りない関数適用をLeanに評価させると、エラーメッセージが出る。
+たとえば、次の例を考える。
 
 ```anchor stringAppendReprFunction
 #eval String.append "it is "
 ```
 
-yields a quite long error message:
+これはかなり長いエラーメッセージになる。
 
 ```anchorError stringAppendReprFunction
 Could not synthesize a `ToExpr`, `Repr`, or `ToString` instance for type
@@ -167,17 +165,16 @@ Could not synthesize a `ToExpr`, `Repr`, or `ToString` instance for type
 
 :::
 
-This message occurs because Lean functions that are applied to only some of their arguments return new functions that are waiting for the rest of the arguments.
-Lean cannot display functions to users, and thus returns an error when asked to do so.
+このメッセージが出るのは、Leanの関数が、引数の一部だけを適用された状態では、残りの引数を待つ新しい関数を返すためである。
+Leanは関数を利用者に見せられないため、表示しようとするとエラーになる。
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "evaluating-exercises"
 %%%
 
-What are the values of the following expressions? Work them out by hand,
-then enter them into Lean to check your work.
+次の式の値はそれぞれ何か。まず手で計算し、その答えをLeanに入力して確かめてみるとよい。
 
  * {anchorTerm evalEx}`42 + 19`
  * {anchorTerm evalEx}`String.append "A" (String.append "B" "C")`

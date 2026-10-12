@@ -25,20 +25,20 @@ set_option verso.exampleModule "Hello"
 tag := "getting-to-know"
 %%%
 
-According to tradition, a programming language should be introduced by compiling and running a program that displays {moduleTerm}`"Hello, world!"` on the console.
-This simple program ensures that the language tooling is installed correctly and that the programmer is able to run the compiled code.
+伝統にならえば、プログラミング言語の紹介は、コンソールに{moduleTerm}`"Hello, world!"`を表示するプログラムをコンパイルして実行するところから始めるものとされている。
+この単純なプログラムは、言語のツール一式が正しくインストールされ、コンパイルしたコードを実行できることを確かめる役割を果たす。
 
-Since the 1970s, however, programming has changed.
-Today, compilers are typically integrated into text editors, and the programming environment offers feedback as the program is written.
-Lean is no exception: it implements an extended version of the Language Server Protocol that allows it to communicate with a text editor and provide feedback as the user types.
+しかし、1970年代以降、プログラミングは変わった。
+現在では、コンパイラはテキストエディタに組み込まれているのが普通であり、プログラムを書いている最中に環境がフィードバックを返してくれる。
+Leanも例外ではない。Language Server Protocolを拡張した実装を持ち、テキストエディタと通信して、利用者が入力するそばからフィードバックを返す。
 
-Languages as varied as Python, Haskell, and JavaScript offer a read-eval-print-loop (REPL), also known as an interactive toplevel or a browser console, in which expressions or statements can be entered.
-The language then computes and displays the result of the user's input.
-Lean, on the other hand, integrates these features into the interaction with the editor, providing commands that cause the text editor to display feedback integrated into the program text itself.
-This chapter provides a short introduction to interacting with Lean in an editor, while {ref "hello-world"}[Hello, World!] describes how to use Lean traditionally from the command line in batch mode.
+Python、Haskell、JavaScriptなど、さまざまな言語にはread-eval-print-loop（REPL）がある。対話的なトップレベルやブラウザのコンソールとも呼ばれ、式や文を入力できる。
+入力すると、言語がその結果を計算して表示する。
+一方Leanは、こうした機能をエディタとのやり取りに取り込んでいる。コマンドを書くと、テキストエディタがプログラム本文に重ねてフィードバックを表示する。
+この章では、エディタ上でLeanを操作する方法を短く紹介する。コマンドラインからバッチ的にLeanを使う伝統的な方法は{ref "hello-world"}[Hello, World!]で説明する。
 
-It is best if you read this book with Lean open in your editor, following along and typing in each example. Please play with the
-examples, and see what happens!
+エディタでLeanを開いたまま本書を読み、各例を打ち込みながら進めるのがよい。掲載した例を
+ いろいろと触って、何が起きるか見てみてほしい。
 
 {include 1 FPLean.GettingToKnow.Evaluating}
 
