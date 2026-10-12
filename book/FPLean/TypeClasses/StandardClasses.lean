@@ -20,25 +20,25 @@ tag := "standard-classes"
 %%%
 
 
-This section presents a variety of operators and functions that can be overloaded using type classes in Lean.
-Each operator or function corresponds to a method of a type class.
-Unlike C++, infix operators in Lean are defined as abbreviations for named functions; this means that overloading them for new types is not done using the operator itself, but rather using the underlying name (such as {moduleName}`HAdd.hAdd`).
+この節では、Leanで型クラスを使ってオーバーロードできるさまざまな演算子と関数を紹介する。
+各演算子や関数は、型クラスのメソッドに対応する。
+C++と違い、Leanの中置演算子は名前付きの関数の略として定義されている。つまり、新しい型に対してオーバーロードするときは、演算子そのものではなく、その下にある名前（{moduleName}`HAdd.hAdd`など）を使う。
 
-# Arithmetic
+# 算術
 %%%
 tag := "arithmetic-classes"
 %%%
 
-Most arithmetic operators are available in a heterogeneous form, where the arguments may have different type and an output parameter decides the type of the resulting expression.
-For each heterogeneous operator, there is a corresponding homogeneous version that can be found by removing the letter {lit}`h`, so that {moduleName}`HAdd.hAdd` becomes {moduleName}`Add.add`.
-The following arithmetic operators are overloaded:
+ほとんどの算術演算子には異種の形があり、引数の型が異なってもよく、出力パラメータが結果の式の型を決める。
+異種の演算子にはそれぞれ対応する同種の版があり、{lit}`h`の文字を取ると得られる。{moduleName}`HAdd.hAdd`なら{moduleName}`Add.add`である。
+次の算術演算子がオーバーロードされている。
 
 :::table +header
 
 *
- -  Expression
- -  Desugaring
- -  Class Name
+ -  式
+ -  脱糖した形
+ -  クラス名
 *
  -  {anchorTerm plusDesugar}`x + y`
  -  {anchorTerm plusDesugar}`HAdd.hAdd x y`
@@ -71,21 +71,21 @@ The following arithmetic operators are overloaded:
 
 :::
 
-# Bitwise Operators
+# ビット演算子
 %%%
 tag := "bitwise-classes"
 %%%
 
-Lean contains a number of standard bitwise operators that are overloaded using type classes.
-There are instances for fixed-width types such as {anchorTerm UInt8}`UInt8`, {anchorTerm UInt16}`UInt16`, {anchorTerm UInt32}`UInt32`, {anchorTerm UInt64}`UInt64`, and {anchorTerm USize}`USize`.
-The latter is the size of words on the current platform, typically 32 or 64 bits.
-The following bitwise operators are overloaded:
+Leanには、型クラスでオーバーロードされた標準的なビット演算子がいくつかある。
+{anchorTerm UInt8}`UInt8`、{anchorTerm UInt16}`UInt16`、{anchorTerm UInt32}`UInt32`、{anchorTerm UInt64}`UInt64`、{anchorTerm USize}`USize`のような固定幅の型に対するインスタンスがある。
+最後のものは、現在のプラットフォームのワード長（通常32ビットか64ビット）である。
+次のビット演算子がオーバーロードされている。
 
 :::table +header
 *
- -  Expression
- -  Desugaring
- -  Class Name
+ -  式
+ -  脱糖した形
+ -  クラス名
 
 *
  -  {anchorTerm bAndDesugar}`x &&& y`
@@ -114,63 +114,63 @@ The following bitwise operators are overloaded:
 
 :::
 
-Because the names {anchorName chapterIntro}`And` and {anchorName chapterIntro}`Or` are already taken as the names of logical connectives, the homogeneous versions of {anchorName chapterIntro}`HAnd` and {anchorName chapterIntro}`HOr` are called {anchorName moreOps}`AndOp` and {anchorName moreOps}`OrOp` rather than {anchorName chapterIntro}`And` and {anchorName chapterIntro}`Or`.
+{anchorName chapterIntro}`And`と{anchorName chapterIntro}`Or`という名前はすでに論理結合子の名前として使われているので、{anchorName chapterIntro}`HAnd`と{anchorName chapterIntro}`HOr`の同種版は、{anchorName chapterIntro}`And`と{anchorName chapterIntro}`Or`ではなく{anchorName moreOps}`AndOp`と{anchorName moreOps}`OrOp`という名前である。
 
-# Equality and Ordering
+# 等価性と順序
 %%%
 tag := "equality-and-ordering"
 %%%
 
-Testing equality of two values typically uses the {moduleName}`BEq` class, which is short for “Boolean equality”.
-Due to Lean's use as a theorem prover, there are really two kinds of equality operators in Lean:
- * {deftech}_Boolean equality_ is the same kind of equality that is found in other programming languages. It is a function that takes two values and returns a {anchorName CoeBoolProp}`Bool`. Boolean equality is written with two equals signs, just as in Python and C#. Because Lean is a pure functional language, there's no separate notions of reference vs value equality—pointers cannot be observed directly.
- * {deftech}_Propositional equality_ is the mathematical statement that two things are equal. Propositional equality is not a function; rather, it is a mathematical statement that admits proof. It is written with a single equals sign. A statement of propositional equality is like a type that classifies evidence of this equality.
+二つの値が等しいかを調べるには通常{moduleName}`BEq`クラスを使う。これは「Boolean equality」の略である。
+Leanが定理証明器として使われるため、Leanには実質的に二種類の等価演算子がある。
+ * {deftech}*ブール値の等価性*は、他のプログラミング言語にあるのと同じ種類の等価性である。二つの値を取り{anchorName CoeBoolProp}`Bool`を返す関数であり、PythonやC#と同じく等号二つで書く。Leanは純粋関数型言語なので、参照の等価性と値の等価性という区別はない。ポインタを直接観察できないからである。
+ * {deftech}*命題的等価性*は、二つのものが等しいという数学的な主張である。関数ではなく、証明を受け付ける数学的な主張であり、等号一つで書く。命題的等価性の主張は、その等価性の証拠を分類する型のようなものである。
 
-Both notions of equality are important, and used for different purposes.
-Boolean equality is useful in programs, when a decision needs to be made about whether two values are equal.
-For example, {anchorTerm boolEqTrue}`"Octopus" ==  "Cuttlefish"` evaluates to {anchorTerm boolEqTrue}`false`, and {anchorTerm boolEqFalse}`"Octopodes" ==  "Octo".append "podes"` evaluates to {anchorTerm boolEqFalse}`true`.
-Some values, such as functions, cannot be checked for equality.
-For example, {anchorTerm functionEq}`(fun (x : Nat) => 1 + x) == (Nat.succ ·)` yields the error:
+どちらの等価性も重要であり、用途が異なる。
+ブール値の等価性は、二つの値が等しいかどうかをプログラムで判断する必要があるときに役に立つ。
+たとえば{anchorTerm boolEqTrue}`"Octopus" ==  "Cuttlefish"`は{anchorTerm boolEqTrue}`false`に、{anchorTerm boolEqFalse}`"Octopodes" ==  "Octo".append "podes"`は{anchorTerm boolEqFalse}`true`に評価される。
+関数のようないくつかの値は、等しさを調べられない。
+たとえば{anchorTerm functionEq}`(fun (x : Nat) => 1 + x) == (Nat.succ ·)`は次のエラーになる。
 ```anchorError functionEq
 failed to synthesize instance of type class
   BEq (Nat → Nat)
 
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
-As this message indicates, {lit}`==` is overloaded using a type class.
-The expression {anchorTerm beqDesugar}`x == y` is actually shorthand for {anchorTerm beqDesugar}`BEq.beq x y`.
+このメッセージが示すように、{lit}`==`は型クラスでオーバーロードされている。
+式{anchorTerm beqDesugar}`x == y`は実際には{anchorTerm beqDesugar}`BEq.beq x y`の略である。
 
-Propositional equality is a mathematical statement rather than an invocation of a program.
-Because propositions are like types that describe evidence for some statement, propositional equality has more in common with types like {anchorName readFile}`String` and {anchorTerm moreOps}`Nat → List Int` than it does with Boolean equality.
-This means that it can't automatically be checked.
-However, the equality of any two expressions can be stated in Lean, so long as they have the same type.
-The statement {anchorTerm functionEqProp}`(fun (x : Nat) => 1 + x) = (Nat.succ ·)` is a perfectly reasonable statement.
-From the perspective of mathematics, two functions are equal if they map equal inputs to equal outputs, so this statement is even true, though it requires a one-line proof to convince Lean of this fact.
+命題的等価性は、プログラムの呼び出しではなく数学的な主張である。
+命題はある主張の証拠を記述する型のようなものなので、命題的等価性はブール値の等価性より、{anchorName readFile}`String`や{anchorTerm moreOps}`Nat → List Int`のような型と共通点が多い。
+つまり、自動で調べることはできない。
+ただし、同じ型を持つ二つの式なら、その等しさはLeanで主張できる。
+{anchorTerm functionEqProp}`(fun (x : Nat) => 1 + x) = (Nat.succ ·)`という主張は完全に安当な主張である。
+数学の観点では、二つの関数は等しい入力を等しい出力に写すとき等しいので、この主張は真でもある。ただし、Leanにそれを納得させるには1行の証明が要る。
 
-Generally speaking, when using Lean as a programming language, it's easiest to stick to Boolean functions rather than propositions.
-However, as the names {moduleName}`true` and {moduleName}`false` for {moduleName}`Bool`'s constructors suggest, this difference is sometimes blurred.
-Some propositions are _decidable_, which means that they can be checked just like a Boolean function.
-The function that checks whether the proposition is true or false is called a _decision procedure_, and it returns _evidence_ of the truth or falsity of the proposition.
-Some examples of decidable propositions include equality and inequality of natural numbers, equality of strings, and “ands” and “ors” of propositions that are themselves decidable.
+一般に、Leanをプログラミング言語として使うときは、命題よりブール値の関数に留まる方が楽である。
+しかし、{moduleName}`Bool`のコンストラクタの名前が{moduleName}`true`と{moduleName}`false`であることからも分かるように、この違いはときに曖昧になる。
+命題の中には*決定可能*なものがあり、ブール値の関数と同じように調べられる。
+その命題が真か偽かを調べる関数を*決定手続き*と呼び、命題の真偽の*証拠*を返す。
+決定可能な命題の例には、自然数の等価性と非等価性、文字列の等価性、それ自体が決定可能な命題の「かつ」と「または」がある。
 
 :::paragraph
-In Lean, {kw}`if` works with decidable propositions.
-For example, {anchorTerm twoLessFour}`2 < 4` is a proposition:
+Leanでは、{kw}`if`は決定可能な命題に対して働く。
+たとえば{anchorTerm twoLessFour}`2 < 4`は命題である。
 ```anchor twoLessFour
 #check 2 < 4
 ```
 ```anchorInfo twoLessFour
 2 < 4 : Prop
 ```
-Nonetheless, it is perfectly acceptable to write it as the condition in an {kw}`if`.
-For example, {anchorTerm ifProp}`if 2 < 4 then 1 else 2` has type {moduleName}`Nat` and evaluates to {anchorTerm ifProp}`1`.
+それでも、{kw}`if`の条件として書くことはまったく問題ない。
+たとえば{anchorTerm ifProp}`if 2 < 4 then 1 else 2`は{moduleName}`Nat`型であり、{anchorTerm ifProp}`1`と評価される。
 :::
 
-Not all propositions are decidable.
-If they were, then computers would be able to prove any true proposition just by running the decision procedure, and mathematicians would be out of a job.
-More specifically, decidable propositions have an instance of the {anchorName DecLTLEPos}`Decidable` type class, which contains the decision procedure.
-Trying to use a proposition that isn't decidable as if it were a {anchorName CoeBoolProp}`Bool` results in a failure to find the {anchorName DecLTLEPos}`Decidable` instance.
-For example, {anchorTerm funEqDec}`if (fun (x : Nat) => 1 + x) = (Nat.succ ·) then "yes" else "no"` results in:
+すべての命題が決定可能なわけではない。
+もしそうなら、コンピュータは決定手続きを走らせるだけで任意の真の命題を証明でき、数学者は職を失うことになる。
+より正確には、決定可能な命題には{anchorName DecLTLEPos}`Decidable`型クラスのインスタンスがあり、それに決定手続きが入っている。
+決定可能でない命題を{anchorName CoeBoolProp}`Bool`のように使おうとすると、{anchorName DecLTLEPos}`Decidable`のインスタンスが見つからずに失敗する。
+たとえば{anchorTerm funEqDec}`if (fun (x : Nat) => 1 + x) = (Nat.succ ·) then "yes" else "no"`は次のようになる。
 ```anchorError funEqDec
 failed to synthesize instance of type class
   Decidable ((fun x => 1 + x) = fun x => x.succ)
@@ -178,13 +178,13 @@ failed to synthesize instance of type class
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
-The following propositions, that are usually decidable, are overloaded with type classes:
+次の命題は通常は決定可能であり、型クラスでオーバーロードされている。
 
 :::table +header
 *
- -  Expression
- -  Desugaring
- -  Class Name
+ -  式
+ -  脱糖した形
+ -  クラス名
 *
  -  {anchorTerm ltDesugar}`x < y`
  -  {anchorTerm ltDesugar}`LT.lt x y`
@@ -203,9 +203,9 @@ The following propositions, that are usually decidable, are overloaded with type
  -  {moduleName}`LE`
 :::
 
-Because defining new propositions hasn't yet been demonstrated, it may be difficult to define completely new instances of {moduleName}`LT` and {moduleName}`LE`.
-However, they can be defined in terms of existing instances.
-{moduleName}`LT` and {moduleName}`LE` instances for {anchorName LTPos}`Pos` can use the existing instances for {moduleName}`Nat`:
+新しい命題の定義はまだ示していないので、{moduleName}`LT`と{moduleName}`LE`のまったく新しいインスタンスを定義するのは難しいかもしれない。
+ただし、既存のインスタンスを使って定義できる。
+{anchorName LTPos}`Pos`に対する{moduleName}`LT`と{moduleName}`LE`のインスタンスは、{moduleName}`Nat`の既存のインスタンスを使える。
 
 ```anchor LTPos
 instance : LT Pos where
@@ -216,9 +216,9 @@ instance : LT Pos where
 instance : LE Pos where
   le x y := LE.le x.toNat y.toNat
 ```
-These propositions are not decidable by default because Lean doesn't unfold the definitions of propositions while synthesizing an instance.
-This can be bridged using the {anchorName DecLTLEPos}`inferInstance` operator, which finds an instance if it exists.
-The type annotations direct {anchorName DecLTLEPos}`inferInstance` to infer instances of {anchorTerm DecLTLEPos}`Decidable (x.toNat < y.toNat)` and {anchorTerm DecLTLEPos}`Decidable (x.toNat ≤ y.toNat)`, which are the unfolded versions:
+これらの命題は既定では決定可能ではない。Leanがインスタンスを合成するときに命題の定義を展開しないためである。
+これは、インスタンスがあれば見つける{anchorName DecLTLEPos}`inferInstance`演算子で橋渡しできる。
+型注釈は、{anchorName DecLTLEPos}`inferInstance`に{anchorTerm DecLTLEPos}`Decidable (x.toNat < y.toNat)`と{anchorTerm DecLTLEPos}`Decidable (x.toNat ≤ y.toNat)`のインスタンスを推論するよう指示している。これらは展開後の形である。
 
 ```anchor DecLTLEPos
 instance {x : Pos} {y : Pos} : Decidable (x < y) :=
@@ -227,8 +227,8 @@ instance {x : Pos} {y : Pos} : Decidable (x < y) :=
 instance {x : Pos} {y : Pos} : Decidable (x ≤ y) :=
   (inferInstance : Decidable (x.toNat ≤ y.toNat))
 ```
-The type checker confirms that the definitions of the propositions match.
-Confusing them results in an error:
+型検査器は、命題の定義が一致していることを確認する。
+取り違えるとエラーになる。
 ```anchor LTLEMismatch
 instance {x : Pos} {y : Pos} : Decidable (x ≤ y) :=
   (inferInstance : Decidable (x.toNat < y.toNat))
@@ -243,19 +243,19 @@ but is expected to have type
 ```
 
 :::paragraph
-Comparing values using {lit}`<`, {lit}`==`, and {lit}`>` can be inefficient.
-Checking first whether one value is less than another, and then whether they are equal, can require two traversals over large data structures.
-To solve this problem, Java and C# have standard {java}`compareTo` and {CSharp}`CompareTo` methods (respectively) that can be overridden by a class in order to implement all three operations at the same time.
-These methods return a negative integer if the receiver is less than the argument, zero if they are equal, and a positive integer if the receiver is greater than the argument.
-Rather than overloading the meaning of integers, Lean has a built-in inductive type that describes these three possibilities:
+{lit}`<`、{lit}`==`、{lit}`>`で値を比べるのは効率が悪いことがある。
+まず一方が他方より小さいかを調べ、次に等しいかを調べると、大きなデータ構造を二度たどることになりうる。
+この問題を解決するため、JavaとC#には標準の{java}`compareTo`と{CSharp}`CompareTo`メソッド（それぞれ）があり、クラスが上書きして三つの操作を一度に実装できる。
+これらのメソッドは、受け手が引数より小さければ負の整数、等しければ0、大きければ正の整数を返す。
+整数の意味をオーバーロードする代わりに、Leanにはこの三つの可能性を表す組み込みの帰納型がある。
 ```anchor Ordering
 inductive Ordering where
   | lt
   | eq
   | gt
 ```
-The {anchorName OrdPos}`Ord` type class can be overloaded to produce these comparisons.
-For {anchorName OrdPos}`Pos`, an implementation can be:
+{anchorName OrdPos}`Ord`型クラスをオーバーロードしてこの比較を行える。
+{anchorName OrdPos}`Pos`の場合、実装は次のようにできる。
 ```anchor OrdPos
 def Pos.comp : Pos → Pos → Ordering
   | Pos.one, Pos.one => Ordering.eq
@@ -266,29 +266,29 @@ def Pos.comp : Pos → Pos → Ordering
 instance : Ord Pos where
   compare := Pos.comp
 ```
-In situations where {java}`compareTo` would be the right approach in Java, use {moduleName}`Ord.compare` in Lean.
+Javaで{java}`compareTo`が適切な場面では、Leanでは{moduleName}`Ord.compare`を使う。
 :::
 
-# Hashing
+# ハッシュ
 %%%
 tag := "hashing"
 %%%
 
-Java and C# have {java}`hashCode` and {CSharp}`GetHashCode` methods, respectively, that compute a hash of a value for use in data structures such as hash tables.
-The Lean equivalent is a type class called {anchorName Hashable}`Hashable`:
+JavaとC#には{java}`hashCode`と{CSharp}`GetHashCode`メソッド（それぞれ）があり、ハッシュ表のようなデータ構造で使うための値のハッシュを計算する。
+Leanでの対応物は{anchorName Hashable}`Hashable`という型クラスである。
 
 ```anchor Hashable
 class Hashable (α : Type) where
   hash : α → UInt64
 ```
-If two values are considered equal according to a {moduleName}`BEq` instance for their type, then they should have the same hashes.
-In other words, if {anchorTerm HashableSpec}`x == y` then {anchorTerm HashableSpec}`hash x == hash y`.
-If {anchorTerm HashableSpec}`x ≠ y`, then {anchorTerm HashableSpec}`hash x` won't necessarily differ from {anchorTerm HashableSpec}`hash y` (after all, there are infinitely more {moduleName}`Nat` values than there are {moduleName}`UInt64` values), but data structures built on hashing will have better performance if unequal values are likely to have unequal hashes.
-This is the same expectation as in Java and C#.
+ある型の{moduleName}`BEq`インスタンスで二つの値が等しいと見なされるなら、それらのハッシュも同じでなければならない。
+言い換えれば、{anchorTerm HashableSpec}`x == y`なら{anchorTerm HashableSpec}`hash x == hash y`である。
+{anchorTerm HashableSpec}`x ≠ y`でも{anchorTerm HashableSpec}`hash x`と{anchorTerm HashableSpec}`hash y`が必ず違うとは限らない（{moduleName}`UInt64`の値より{moduleName}`Nat`の値の方が無限に多いからである）。ただし、等しくない値のハッシュが違う可能性が高いほど、ハッシュを使うデータ構造の性能がよくなる。
+これはJavaやC#でも同じ期待である。
 
-The standard library contains a function {anchorTerm mixHash}`mixHash` with type {anchorTerm mixHash}`UInt64 → UInt64 → UInt64` that can be used to combine hashes for different fields for a constructor.
-A reasonable hash function for an inductive datatype can be written by assigning a unique number to each constructor, and then mixing that number with the hashes of each field.
-For example, a {anchorName HashablePos}`Hashable` instance for {anchorName HashablePos}`Pos` can be written:
+標準ライブラリには、コンストラクタの異なるフィールドのハッシュを組み合わせるのに使える{anchorTerm mixHash}`mixHash`という型{anchorTerm mixHash}`UInt64 → UInt64 → UInt64`の関数がある。
+帰納的データ型の安当なハッシュ関数は、各コンストラクタに一意な数を割り当て、その数を各フィールドのハッシュと混ぜ合わせることで書ける。
+たとえば{anchorName HashablePos}`Pos`に対する{anchorName HashablePos}`Hashable`のインスタンスは次のように書ける。
 
 ```anchor HashablePos
 def hashPos : Pos → UInt64
@@ -300,15 +300,15 @@ instance : Hashable Pos where
 ```
 
 :::paragraph
-{anchorTerm HashableNonEmptyList}`Hashable` instances for polymorphic types can use recursive instance search.
-Hashing a {anchorTerm HashableNonEmptyList}`NonEmptyList α` is only possible when {anchorName HashableNonEmptyList}`α` can be hashed:
+多相型に対する{anchorTerm HashableNonEmptyList}`Hashable`のインスタンスは、再帰的なインスタンス探索を使える。
+{anchorTerm HashableNonEmptyList}`NonEmptyList α`のハッシュは、{anchorName HashableNonEmptyList}`α`をハッシュできるときにだけ計算できる。
 ```anchor HashableNonEmptyList
 instance [Hashable α] : Hashable (NonEmptyList α) where
   hash xs := mixHash (hash xs.head) (hash xs.tail)
 ```
 :::
 :::paragraph
-Binary trees use both recursion and recursive instance search in the implementations of {anchorName TreeHash}`BEq` and {anchorName TreeHash}`Hashable`:
+二分木では、{anchorName TreeHash}`BEq`と{anchorName TreeHash}`Hashable`の実装に再帰と再帰的なインスタンス探索の両方を使う。
 
 ```anchor TreeHash
 inductive BinTree (α : Type) where
@@ -340,29 +340,29 @@ instance [Hashable α] : Hashable (BinTree α) where
 ```
 :::
 
-# Deriving Standard Classes
+# 標準クラスの導出
 %%%
 tag := "deriving-standard-classes"
 %%%
 
-Instance of classes like {moduleName}`BEq` and {moduleName}`Hashable` are often quite tedious to implement by hand.
-Lean includes a feature called _instance deriving_ that allows the compiler to automatically construct well-behaved instances of many type classes.
-In fact, the {anchorTerm Firewood (module := Examples.Intro)}`deriving Repr` phrase in the definition of {anchorName Firewood (module:=Examples.Intro)}`Firewood` in the {ref "polymorphism"}[first section on polymorphism] is an example of instance deriving.
+{moduleName}`BEq`や{moduleName}`Hashable`のようなクラスのインスタンスは、手で実装するのがかなり面倒なことが多い。
+Leanには*インスタンスの導出*という機能があり、コンパイラが多くの型クラスの行儀のよいインスタンスを自動で組み立てられる。
+実際、{ref "polymorphism"}[多相性の最初の節]で{anchorName Firewood (module:=Examples.Intro)}`Firewood`を定義したときの{anchorTerm Firewood (module := Examples.Intro)}`deriving Repr`という句が、インスタンスの導出の例である。
 
-Instances can be derived in two ways.
-The first can be used when defining a structure or inductive type.
-In this case, add {kw}`deriving` to the end of the type declaration followed by the names of the classes for which instances should be derived.
-For a type that is already defined, a standalone {kw}`deriving` command can be used.
-Write {kw}`deriving instance`{lit}` C1, C2, ... `{kw}`for`{lit}` T` to derive instances of {lit}`C1, C2, ...` for the type {lit}`T` after the fact.
+インスタンスは二つの方法で導出できる。
+一つ目は、構造体や帰納型を定義するときに使える。
+その場合は、型の宣言の末尾に{kw}`deriving`を付け、その後にインスタンスを導出したいクラスの名前を書く。
+すでに定義済みの型には、単独の{kw}`deriving`コマンドを使える。
+{kw}`deriving instance`{lit}` C1, C2, ... `{kw}`for`{lit}` T`と書くと、型{lit}`T`に対する{lit}`C1, C2, ...`のインスタンスを後から導出できる。
 
-{moduleName}`BEq` and {moduleName}`Hashable` instances can be derived for {anchorName BEqHashableDerive}`Pos` and {anchorName BEqHashableDerive}`NonEmptyList` using a very small amount of code:
+{anchorName BEqHashableDerive}`Pos`と{anchorName BEqHashableDerive}`NonEmptyList`に対する{moduleName}`BEq`と{moduleName}`Hashable`のインスタンスは、ごくわずかなコードで導出できる。
 
 ```anchor BEqHashableDerive
 deriving instance BEq, Hashable for Pos
 deriving instance BEq, Hashable for NonEmptyList
 ```
 
-Instances can be derived for at least the following classes:
+少なくとも次のクラスのインスタンスを導出できる。
 
  * {moduleName}`Inhabited`
  * {moduleName}`BEq`
@@ -370,27 +370,27 @@ Instances can be derived for at least the following classes:
  * {moduleName}`Hashable`
  * {moduleName}`Ord`
 
-In some cases, however, the derived {moduleName}`Ord` instance may not produce precisely the ordering desired in an application.
-When this is the case, it's fine to write an {moduleName}`Ord` instance by hand.
-The collection of classes for which instances can be derived can be extended by advanced users of Lean.
+ただし、導出した{moduleName}`Ord`インスタンスが、アプリケーションで望む順序を正確に与えないこともある。
+そのような場合は、{moduleName}`Ord`インスタンスを手で書けばよい。
+インスタンスを導出できるクラスの集まりは、Leanに慣れた利用者が拡張できる。
 
-Aside from the clear advantages in programmer productivity and code readability, deriving instances also makes code easier to maintain, because the instances are updated as the definitions of types evolve.
-When reviewing changes to code, modifications that involve updates to datatypes are much easier to read without line after line of formulaic modifications to equality tests and hash computation.
+プログラマの生産性とコードの読みやすさが明らかに向上するだけでなく、インスタンスの導出はコードを保守しやすくもする。型の定義が変わるとインスタンスも更新されるためである。
+コードの変更をレビューするとき、等価性の検査やハッシュの計算を定型的に何行も直す必要がなければ、データ型の更新を含む変更はずっと読みやすい。
 
-# Appending
+# 連結
 %%%
 tag := "append-class"
 %%%
 
-Many datatypes have some sort of append operator.
-In Lean, appending two values is overloaded with the type class {anchorName HAppend}`HAppend`, which is a heterogeneous operation like that used for arithmetic operations:
+多くのデータ型には、何らかの連結の演算子がある。
+Leanでは、二つの値の連結は{anchorName HAppend}`HAppend`型クラスでオーバーロードされている。算術演算と同じく異種の演算である。
 
 ```anchor HAppend
 class HAppend (α : Type) (β : Type) (γ : outParam Type) where
   hAppend : α → β → γ
 ```
-The syntax {anchorTerm desugarHAppend}`xs ++ ys` desugars to {anchorTerm desugarHAppend}`HAppend.hAppend xs ys`.
-For homogeneous cases, it's enough to implement an instance of {moduleName}`Append`, which follows the usual pattern:
+{anchorTerm desugarHAppend}`xs ++ ys`という記法は{anchorTerm desugarHAppend}`HAppend.hAppend xs ys`に脱糖される。
+同種の場合は、{moduleName}`Append`のインスタンスを実装すれば足りる。通常の形に従う。
 
 ```anchor AppendNEList
 instance : Append (NonEmptyList α) where
@@ -398,11 +398,11 @@ instance : Append (NonEmptyList α) where
     { head := xs.head, tail := xs.tail ++ ys.head :: ys.tail }
 ```
 
-After defining the above instance,
+上のインスタンスを定義すると、
 ```anchor appendSpiders
 #eval idahoSpiders ++ idahoSpiders
 ```
-has the following output:
+は次の出力になる。
 ```anchorInfo appendSpiders
 { head := "Banded Garden Spider",
   tail := ["Long-legged Sac Spider",
@@ -416,71 +416,71 @@ has the following output:
            "Cat-faced Spider"] }
 ```
 
-Similarly, a definition of {moduleName}`HAppend` allows non-empty lists to be appended to ordinary lists:
+同様に、{moduleName}`HAppend`の定義により、普通のリストに空でないリストを連結できる。
 
 ```anchor AppendNEListList
 instance : HAppend (NonEmptyList α) (List α) (NonEmptyList α) where
   hAppend xs ys :=
     { head := xs.head, tail := xs.tail ++ ys }
 ```
-With this instance available,
+このインスタンスがあれば、
 ```anchor appendSpidersList
 #eval idahoSpiders ++ ["Trapdoor Spider"]
 ```
-results in
+次のようになる。
 ```anchorInfo appendSpidersList
 { head := "Banded Garden Spider",
   tail := ["Long-legged Sac Spider", "Wolf Spider", "Hobo Spider", "Cat-faced Spider", "Trapdoor Spider"] }
 ```
 
-# Functors
+# ファンクタ
 %%%
 tag := "Functor"
 %%%
 
-A polymorphic type is a {deftech}_functor_ if it has an overload for a function named {anchorName FunctorDef}`map` that transforms every element contained in it by a function.
-While most languages use this terminology, C#'s equivalent of {anchorName FunctorDef}`map` is called {CSharp}`System.Linq.Enumerable.Select`.
-For example, mapping a function over a list constructs a new list in which each entry from the starting list has been replaced by the result of the function on that entry.
-Mapping a function {anchorName optionFMeta}`f` over an {anchorName optionFMeta}`Option` leaves {anchorName optionFMeta}`none` untouched, and replaces {anchorTerm optionFMeta}`some x` with {anchorTerm optionFMeta}`some (f x)`.
+多相型が{deftech}*ファンクタ*であるとは、その中に入っているすべての要素を関数で変換する{anchorName FunctorDef}`map`という関数のオーバーロードを持つことである。
+ほとんどの言語がこの用語を使うが、C#では{anchorName FunctorDef}`map`にあたるものを{CSharp}`System.Linq.Enumerable.Select`と呼ぶ。
+たとえば、リストに関数をマップすると、元のリストの各要素をその要素に対する関数の結果で置き換えた新しいリストができる。
+{anchorName optionFMeta}`Option`に関数{anchorName optionFMeta}`f`をマップすると、{anchorName optionFMeta}`none`はそのままで、{anchorTerm optionFMeta}`some x`は{anchorTerm optionFMeta}`some (f x)`に置き換わる。
 
-Here are some examples of functors and how their {anchorName FunctorDef}`Functor` instances overload {anchorName FunctorDef}`map`:
+ファンクタの例と、その{anchorName FunctorDef}`Functor`インスタンスが{anchorName FunctorDef}`map`をどうオーバーロードするかを示す。
  * {anchorTerm mapList}`Functor.map (· + 5) [1, 2, 3]` evaluates to {anchorTerm mapList}`[6, 7, 8]`
  * {anchorTerm mapOption}`Functor.map toString (some (List.cons 5 List.nil))` evaluates to {anchorTerm mapOption}`some "[5]"`
  * {anchorTerm mapListList}`Functor.map List.reverse [[1, 2, 3], [4, 5, 6]]` evaluates to {anchorTerm mapListList}`[[3, 2, 1], [6, 5, 4]]`
 
-Because {anchorName mapList}`Functor.map` is a bit of a long name for this common operation, Lean also provides an infix operator for mapping a function, namely {lit}`<$>`.
-The prior examples can be rewritten as follows:
+{anchorName mapList}`Functor.map`はこのよく使う操作には少し長い名前なので、Leanには関数をマップするための中置演算子{lit}`<$>`もある。
+先ほどの例は次のように書き直せる。
  * {anchorTerm mapInfixList}`(· + 5) <$> [1, 2, 3]` evaluates to {anchorTerm mapInfixList}`[6, 7, 8]`
  * {anchorTerm mapInfixOption}`toString <$> (some (List.cons 5 List.nil))` evaluates to {anchorTerm mapInfixOption}`some "[5]"`
  * {anchorTerm mapInfixListList}`List.reverse <$> [[1, 2, 3], [4, 5, 6]]` evaluates to {anchorTerm mapInfixListList}`[[3, 2, 1], [6, 5, 4]]`
 
-An instance of {anchorTerm FunctorNonEmptyList}`Functor` for {anchorTerm FunctorNonEmptyList}`NonEmptyList` requires specifying the {anchorName FunctorNonEmptyList}`map` function.
+{anchorTerm FunctorNonEmptyList}`NonEmptyList`に対する{anchorTerm FunctorNonEmptyList}`Functor`のインスタンスでは、{anchorName FunctorNonEmptyList}`map`関数を指定する必要がある。
 
 ```anchor FunctorNonEmptyList
 instance : Functor NonEmptyList where
   map f xs := { head := f xs.head, tail := f <$> xs.tail }
 ```
-Here, {anchorTerm FunctorNonEmptyList}`map` uses the {anchorTerm FunctorNonEmptyList}`Functor` instance for {moduleName}`List` to map the function over the tail.
-This instance is defined for {anchorTerm FunctorNonEmptyList}`NonEmptyList` rather than for {anchorTerm FunctorNonEmptyListA}`NonEmptyList α` because the argument type {anchorTerm FunctorNonEmptyListA}`α` plays no role in resolving the type class.
-A {anchorTerm FunctorNonEmptyList}`NonEmptyList` can have a function mapped over it _no matter what the type of entries is_.
-If {anchorTerm FunctorNonEmptyListA}`α` were a parameter to the class, then it would be possible to make versions of {anchorTerm FunctorNonEmptyList}`Functor` that only worked for {anchorTerm FunctorNonEmptyListA}`NonEmptyList Nat`, but part of being a functor is that {anchorName FunctorNonEmptyList}`map` works for any entry type.
+ここで{anchorTerm FunctorNonEmptyList}`map`は、{moduleName}`List`に対する{anchorTerm FunctorNonEmptyList}`Functor`のインスタンスを使って、残りの部分に関数をマップしている。
+このインスタンスが{anchorTerm FunctorNonEmptyListA}`NonEmptyList α`ではなく{anchorTerm FunctorNonEmptyList}`NonEmptyList`に対して定義されているのは、引数の型{anchorTerm FunctorNonEmptyListA}`α`が型クラスの解決に何の役割も果たさないためである。
+{anchorTerm FunctorNonEmptyList}`NonEmptyList`には、*要素の型が何であっても*関数をマップできる。
+{anchorTerm FunctorNonEmptyListA}`α`がクラスの引数なら、{anchorTerm FunctorNonEmptyListA}`NonEmptyList Nat`にだけ働く{anchorTerm FunctorNonEmptyList}`Functor`の版を作れてしまう。しかし、ファンクタであることの一部は、{anchorName FunctorNonEmptyList}`map`がどの要素の型に対しても働くことである。
 
 :::paragraph
-Here is an instance of {anchorTerm FunctorPPoint}`Functor` for {anchorTerm FunctorPPoint}`PPoint`:
+{anchorTerm FunctorPPoint}`PPoint`に対する{anchorTerm FunctorPPoint}`Functor`のインスタンスは次のとおりである。
 
 ```anchor FunctorPPoint
 instance : Functor PPoint where
   map f p := { x := f p.x, y := f p.y }
 ```
-In this case, {anchorName FunctorPPoint}`f` has been applied to both {anchorName FunctorPPoint}`x` and {anchorName FunctorPPoint}`y`.
+この場合、{anchorName FunctorPPoint}`f`は{anchorName FunctorPPoint}`x`と{anchorName FunctorPPoint}`y`の両方に適用されている。
 :::
 
-Even when the type contained in a functor is itself a functor, mapping a function only goes down one layer.
-That is, when using  {anchorName FunctorPPoint}`map` on a {anchorTerm NEPP}`NonEmptyList (PPoint Nat)`, the function being mapped should take {anchorTerm NEPP}`PPoint Nat` as its argument rather than {moduleName}`Nat`.
+ファンクタに入っている型自体がファンクタであっても、関数のマップは一層しか下りない。
+つまり、{anchorTerm NEPP}`NonEmptyList (PPoint Nat)`に{anchorName FunctorPPoint}`map`を使うとき、マップする関数は{moduleName}`Nat`ではなく{anchorTerm NEPP}`PPoint Nat`を引数に取るべきである。
 
-The definition of the {anchorName FunctorLaws}`Functor` class uses one more language feature that has not yet been discussed: default method definitions.
-Normally, a class will specify some minimal set of overloadable operations that make sense together, and then use polymorphic functions with instance implicit arguments that build on the overloaded operations to provide a larger library of features.
-For example, the function {anchorName concat}`concat` can concatenate any non-empty list whose entries are appendable:
+{anchorName FunctorLaws}`Functor`クラスの定義は、まだ説明していない言語機能をもう一つ使っている。既定のメソッド定義である。
+通常、クラスはまとめて意味をなす最小限のオーバーロード可能な操作を定め、そのうえで、オーバーロードされた操作を土台にした、インスタンスの暗瞑引数を持つ多相関数を使って、より大きな機能の集まりを提供する。
+たとえば、関数{anchorName concat}`concat`は、要素が連結可能な空でないリストを連結できる。
 
 ```anchor concat
 def concat [Append α] (xs : NonEmptyList α) : α :=
@@ -489,16 +489,16 @@ def concat [Append α] (xs : NonEmptyList α) : α :=
     | (z :: zs) => catList (start ++ z) zs
   catList xs.head xs.tail
 ```
-However, for some classes, there are operations that can be more efficiently implemented with knowledge of the internals of a datatype.
+しかしクラスによっては、データ型の内部を知ることでより効率よく実装できる操作がある。
 
-In these cases, a default method definition can be provided.
-A default method definition provides a default implementation of a method in terms of the other methods.
-However, instance implementors may choose to override this default with something more efficient.
-Default method definitions contain {lit}`:=` in a {kw}`class` definition.
+そのような場合は、既定のメソッド定義を用意できる。
+既定のメソッド定義は、他のメソッドを使ってそのメソッドの既定の実装を与える。
+ただし、インスタンスの実装者は、より効率のよいものでこの既定を上書きしてよい。
+既定のメソッド定義は、{kw}`class`の定義の中に{lit}`:=`を書く。
 
-In the case of {anchorName FunctorDef}`Functor`, some types have a more efficient way of implementing {anchorName FunctorDef}`map` when the function being mapped ignores its argument.
-Functions that ignore their arguments are called _constant functions_ because they always return the same value.
-Here is the definition of {anchorName FunctorDef}`Functor`, in which {anchorName FunctorDef}`mapConst` has a default implementation:
+{anchorName FunctorDef}`Functor`の場合、マップする関数が引数を無視するとき、{anchorName FunctorDef}`map`をより効率よく実装できる型がある。
+引数を無視する関数は、常に同じ値を返すので*定数関数*と呼ばれる。
+{anchorName FunctorDef}`Functor`の定義は次のとおりで、{anchorName FunctorDef}`mapConst`に既定の実装がある。
 
 ```anchor FunctorDef
 class Functor (f : Type → Type) where
@@ -508,40 +508,40 @@ class Functor (f : Type → Type) where
     map (fun _ => x) coll
 ```
 
-Just as a {anchorName HashableSpec}`Hashable` instance that doesn't respect {moduleName}`BEq` is buggy, a {moduleName}`Functor` instance that moves around the data as it maps the function is also buggy.
-For example, a buggy {moduleName}`Functor` instance for {moduleName}`List` might throw away its argument and always return the empty list, or it might reverse the list.
-A bad {moduleName}`Functor` instance for {moduleName}`PPoint` might place {anchorTerm FunctorPPointBad}`f x` in both the {anchorName FunctorPPointBad}`x` and the {anchorName FunctorPPointBad}`y` fields, or swap them.
-Specifically, {anchorName FunctorDef}`Functor` instances should follow two rules:
- 1. Mapping the identity function should result in the original argument.
- 2. Mapping two composed functions should have the same effect as composing their mapping.
+{moduleName}`BEq`を尊重しない{anchorName HashableSpec}`Hashable`インスタンスが誤りであるのと同じく、関数をマップするときにデータを動かす{moduleName}`Functor`インスタンスも誤りである。
+たとえば、{moduleName}`List`に対する誤った{moduleName}`Functor`インスタンスは、引数を捨てて常に空のリストを返したり、リストを反転させたりするかもしれない。
+{moduleName}`PPoint`に対する誤った{moduleName}`Functor`インスタンスは、{anchorTerm FunctorPPointBad}`f x`を{anchorName FunctorPPointBad}`x`と{anchorName FunctorPPointBad}`y`の両方のフィールドに入れたり、入れ替えたりするかもしれない。
+具体的には、{anchorName FunctorDef}`Functor`インスタンスは二つの規則に従うべきである。
+ 1. 恒等関数をマップすると、元の引数になる。
+ 2. 二つの関数の合成をマップすることは、それぞれのマップを合成するのと同じ結果になる。
 
-More formally, the first rule says that {anchorTerm FunctorLaws}`id <$> x` equals {anchorTerm FunctorLaws}`x`.
-The second rule says that {anchorTerm FunctorLaws}`map (fun y => f (g y)) x` equals {anchorTerm FunctorLaws}`map f (map g x)`.
-The composition {anchorTerm compDef}`f ∘ g` can also be written {anchorTerm compDef}`fun y => f (g y)`.
-These rules prevent implementations of {anchorName FunctorDef}`map` that move the data around or delete some of it.
+より形式的には、第一の規則は{anchorTerm FunctorLaws}`id <$> x`が{anchorTerm FunctorLaws}`x`に等しいと述べている。
+第二の規則は、{anchorTerm FunctorLaws}`map (fun y => f (g y)) x`が{anchorTerm FunctorLaws}`map f (map g x)`に等しいと述べている。
+合成{anchorTerm compDef}`f ∘ g`は{anchorTerm compDef}`fun y => f (g y)`とも書ける。
+これらの規則は、データを動かしたり一部を削除したりする{anchorName FunctorDef}`map`の実装を防ぐ。
 
-# Messages You May Meet
+# 出会うかもしれないメッセージ
 %%%
 tag := "standard-classes-messages"
 %%%
 
-Lean is not able to derive instances for all classes.
-For example, the code
+Leanがすべてのクラスのインスタンスを導出できるわけではない。
+たとえば、次のコードは、
 ```anchor derivingNotFound
 deriving instance ToString for NonEmptyList
 ```
-results in the following error:
+次のエラーになる。
 ```anchorError derivingNotFound
 No deriving handlers have been implemented for class `ToString`
 ```
-Invoking {anchorTerm derivingNotFound}`deriving instance` causes Lean to consult an internal table of code generators for type class instances.
-If the code generator is found, then it is invoked on the provided type to create the instance.
-This message, however, means that no code generator was found for {anchorName derivingNotFound}`ToString`.
+{anchorTerm derivingNotFound}`deriving instance`を呼び出すと、Leanは型クラスのインスタンス用のコード生成器の内部の表を参照する。
+コード生成器が見つかれば、与えられた型に対してそれを呼び出してインスタンスを作る。
+しかしこのメッセージは、{anchorName derivingNotFound}`ToString`に対するコード生成器が見つからなかったという意味である。
 
-# Exercises
+# 練習問題
 %%%
 tag := "standard-classes-exercises"
 %%%
 
- * Write an instance of {anchorTerm moreOps}`HAppend (List α) (NonEmptyList α) (NonEmptyList α)` and test it.
- * Implement a {anchorTerm FunctorLaws}`Functor` instance for the binary tree datatype.
+ * {anchorTerm moreOps}`HAppend (List α) (NonEmptyList α) (NonEmptyList α)`のインスタンスを書いて試せ。
+ * 二分木のデータ型に対する{anchorTerm FunctorLaws}`Functor`インスタンスを実装せよ。
