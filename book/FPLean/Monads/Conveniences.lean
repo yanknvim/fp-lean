@@ -15,13 +15,13 @@ set_option verso.exampleModule "Examples.Monads.Conveniences"
 tag := "monads-conveniences"
 %%%
 
-# Shared Argument Types
+# 引数の型の共有
 %%%
 tag := "shared-argument-types"
 %%%
 
-When defining a function that takes multiple arguments that have the same type, both can be written before the same colon.
-For example,
+同じ型の引数を複数取る関数を定義するときは、両方とも同じコロンの前に書ける。
+たとえば、
 
 ```anchor equalHuhOld
 def equal? [BEq α] (x : α) (y : α) : Option α :=
@@ -30,7 +30,7 @@ def equal? [BEq α] (x : α) (y : α) : Option α :=
   else
     none
 ```
-can be written
+次のように書ける。
 
 ```anchor equalHuhNew
 def equal? [BEq α] (x y : α) : Option α :=
@@ -39,24 +39,24 @@ def equal? [BEq α] (x y : α) : Option α :=
   else
     none
 ```
-This is especially useful when the type signature is large.
+型シグネチャが大きいときには特に役に立つ。
 
-# Leading Dot Notation
+# 先頭のドット記法
 %%%
 tag := "leading-dot-notation"
 %%%
 
-The constructors of an inductive type are in a namespace.
-This allows multiple related inductive types to use the same constructor names, but it can lead to programs becoming verbose.
-In contexts where the inductive type in question is known, the namespace can be omitted by preceding the constructor's name with a dot, and Lean uses the expected type to resolve the constructor names.
-For example, a function that mirrors a binary tree can be written:
+帰納型のコンストラクタは名前空間に入っている。
+これにより、関連する複数の帰納型が同じコンストラクタ名を使えるが、プログラムが冗長になることもある。
+問題の帰納型が分かっている文脈では、コンストラクタの名前の前にドットを付けて名前空間を省ける。Leanは期待される型を使ってコンストラクタ名を解決する。
+たとえば、二分木を反転する関数は次のように書ける。
 
 ```anchor mirrorOld
 def BinTree.mirror : BinTree α → BinTree α
   | BinTree.leaf => BinTree.leaf
   | BinTree.branch l x r => BinTree.branch (mirror r) x (mirror l)
 ```
-Omitting the namespaces makes it significantly shorter, at the cost of making the program harder to read in contexts like code review tools that don't include the Lean compiler:
+名前空間を省くとかなり短くなるが、Leanコンパイラを備えないコードレビューツールのような場面ではプログラムが読みにくくなる。
 
 ```anchor mirrorNew
 def BinTree.mirror : BinTree α → BinTree α
@@ -64,8 +64,8 @@ def BinTree.mirror : BinTree α → BinTree α
   | .branch l x r => .branch (mirror r) x (mirror l)
 ```
 
-Using the expected type of an expression to disambiguate a namespace is also applicable to names other than constructors.
-If {anchorName BinTreeEmpty}`BinTree.empty` is defined as an alternative way of creating {anchorName BinTreeEmpty}`BinTree`s, then it can also be used with dot notation:
+式の期待される型を使って名前空間の曖昧さを解消するのは、コンストラクタ以外の名前にも当てはまる。
+{anchorName BinTreeEmpty}`BinTree.empty`を{anchorName BinTreeEmpty}`BinTree`を作る別の方法として定義すれば、これもドット記法で使える。
 
 ```anchor BinTreeEmpty
 def BinTree.empty : BinTree α := .leaf
@@ -77,13 +77,13 @@ def BinTree.empty : BinTree α := .leaf
 BinTree.empty : BinTree Nat
 ```
 
-# Or-Patterns
+# またはパターン
 %%%
 tag := "or-patterns"
 %%%
 
-In contexts that allow multiple patterns, such as {kw}`match`-expressions, multiple patterns may share their result expressions.
-The datatype {anchorName Weekday}`Weekday` that represents days of the week:
+{kw}`match`式のように複数のパターンを書ける文脈では、複数のパターンが同じ結果の式を共有できる。
+曜日を表すデータ型{anchorName Weekday}`Weekday`を考える。
 
 ```anchor Weekday
 inductive Weekday where
@@ -97,7 +97,7 @@ inductive Weekday where
 deriving Repr
 ```
 
-Pattern matching can be used to check whether a day is a weekend:
+パターンマッチングでその日が週末かどうかを調べられる。
 
 ```anchor isWeekendA
 def Weekday.isWeekend (day : Weekday) : Bool :=
@@ -106,7 +106,7 @@ def Weekday.isWeekend (day : Weekday) : Bool :=
   | Weekday.sunday => true
   | _ => false
 ```
-This can already be simplified by using constructor dot notation:
+これはコンストラクタのドット記法を使えばすでに簡略化できる。
 
 ```anchor isWeekendB
 def Weekday.isWeekend (day : Weekday) : Bool :=
@@ -115,7 +115,7 @@ def Weekday.isWeekend (day : Weekday) : Bool :=
   | .sunday => true
   | _ => false
 ```
-Because both weekend patterns have the same result expression ({anchorName isWeekendC}`true`), they can be condensed into one:
+週末の二つのパターンは結果の式（{anchorName isWeekendC}`true`）が同じなので、一つにまとめられる。
 
 ```anchor isWeekendC
 def Weekday.isWeekend (day : Weekday) : Bool :=
@@ -123,7 +123,7 @@ def Weekday.isWeekend (day : Weekday) : Bool :=
   | .saturday | .sunday => true
   | _ => false
 ```
-This can be further simplified into a version in which the argument is not named:
+さらに、引数に名前を付けない版に簡略化できる。
 
 ```anchor isWeekendD
 def Weekday.isWeekend : Weekday → Bool
@@ -131,28 +131,28 @@ def Weekday.isWeekend : Weekday → Bool
   | _ => false
 ```
 
-Behind the scenes, the result expression is simply duplicated across each pattern.
-This means that patterns can bind variables, as in this example that removes the {anchorName SumNames}`inl` and {anchorName SumNames}`inr` constructors from a sum type in which both contain the same type of value:
+裏では、結果の式が各パターンに複製されるだけである。
+つまりパターンは変数を束縛できる。次の例は、どちらの側も同じ型の値を持つ直和型から{anchorName SumNames}`inl`と{anchorName SumNames}`inr`のコンストラクタを取り除く。
 
 ```anchor condense
 def condense : α ⊕ α → α
   | .inl x | .inr x => x
 ```
-Because the result expression is duplicated, the variables bound by the patterns are not required to have the same types.
-Overloaded functions that work for multiple types may be used to write a single result expression that works for patterns that bind variables of different types:
+結果の式が複製されるので、パターンが束縛する変数の型が同じである必要はない。
+複数の型で働くオーバーロードされた関数を使えば、異なる型の変数を束縛するパターンに共通して働く一つの結果の式を書ける。
 
 ```anchor stringy
 def stringy : Nat ⊕ Weekday → String
   | .inl x | .inr x => s!"It is {repr x}"
 ```
-In practice, only variables shared in all patterns can be referred to in the result expression, because the result must make sense for each pattern.
-In {anchorName getTheNat}`getTheNat`, only {anchorName getTheNat}`n` can be accessed, and attempts to use either {anchorName getTheNat}`x` or {anchorName getTheNat}`y` lead to errors.
+実際には、すべてのパターンに共通する変数だけが結果の式で参照できる。結果はどのパターンについても意味をなす必要があるためである。
+{anchorName getTheNat}`getTheNat`では{anchorName getTheNat}`n`だけが参照でき、{anchorName getTheNat}`x`や{anchorName getTheNat}`y`を使おうとするとエラーになる。
 
 ```anchor getTheNat
 def getTheNat : (Nat × α) ⊕ (Nat × β) → Nat
   | .inl (n, x) | .inr (n, y) => n
 ```
-Attempting to access {anchorName getTheAlpha}`x` in a similar definition causes an error because there is no {anchorName getTheAlpha}`x` available in the second pattern:
+似た定義で{anchorName getTheAlpha}`x`を参照しようとすると、二つ目のパターンでは{anchorName getTheAlpha}`x`が使えないのでエラーになる。
 ```anchor getTheAlpha
 def getTheAlpha : (Nat × α) ⊕ (Nat × α) → α
   | .inl (n, x) | .inr (n, y) => x
@@ -161,8 +161,8 @@ def getTheAlpha : (Nat × α) ⊕ (Nat × α) → α
 Unknown identifier `x`
 ```
 
-The fact that the result expression is essentially copy-pasted to each branch of the pattern match can lead to some surprising behavior.
-For example, the following definitions are acceptable because the {anchorName SumNames}`inr` version of the result expression refers to the global definition of {anchorName getTheString}`str`:
+結果の式が実質的にパターンマッチの各枝にコピーされるという事実は、驚くような振る舞いを生むことがある。
+たとえば次の定義は受け付けられる。結果の式の{anchorName SumNames}`inr`の版が、大域的な{anchorName getTheString}`str`の定義を参照するためである。
 
 ```anchor getTheString
 def str := "Some string"
@@ -170,15 +170,15 @@ def str := "Some string"
 def getTheString : (Nat × String) ⊕ (Nat × β) → String
   | .inl (n, str) | .inr (n, y) => str
 ```
-Calling this function on both constructors reveals the confusing behavior.
-In the first case, a type annotation is needed to tell Lean which type {anchorName getTheString}`β` should be:
+この関数を両方のコンストラクタについて呼ぶと、紛らわしい振る舞いが現れる。
+一つ目の場合は、{anchorName getTheString}`β`をどの型にすべきかをLeanに伝える型注釈が要る。
 ```anchor getOne
 #eval getTheString (.inl (20, "twenty") : (Nat × String) ⊕ (Nat × String))
 ```
 ```anchorInfo getOne
 "twenty"
 ```
-In the second case, the global definition is used:
+二つ目の場合は、大域的な定義が使われる。
 ```anchor getTwo
 #eval getTheString (.inr (20, "twenty"))
 ```
@@ -186,5 +186,5 @@ In the second case, the global definition is used:
 "Some string"
 ```
 
-Using or-patterns can vastly simplify some definitions and increase their clarity, as in {anchorName isWeekendD}`Weekday.isWeekend`.
-Because there is a potential for confusing behavior, it's a good idea to be careful when using them, especially when variables of multiple types or disjoint sets of variables are involved.
+またはパターンを使うと、{anchorName isWeekendD}`Weekday.isWeekend`のように、定義を大幅に簡単にして明快さを増せる。
+紛らわしい振る舞いを生む可能性があるので、使うときは注意するのがよい。特に、複数の型の変数や、重なりのない変数の集合が関わるときには注意が要る。
