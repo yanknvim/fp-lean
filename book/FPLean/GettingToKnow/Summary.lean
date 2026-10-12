@@ -31,7 +31,7 @@ Leanでは、計算は式を評価することで起こる。
 
 # 関数
 %%%
-tag := none
+tag := "getting-to-know-summary-functions"
 %%%
 
 Leanの関数は第一級の値である。他の関数に引数として渡せ、変数に入れておけ、他の値と同じように使える。
@@ -102,7 +102,7 @@ Leanは純粋関数型言語なので、文字列から空白を取り除くよ�
 
 # 再帰
 %%%
-tag := none
+tag := "getting-to-know-summary-recursion"
 %%%
 
 定義しようとしている名前がその定義の中で使われているとき、その定義は再帰的である。

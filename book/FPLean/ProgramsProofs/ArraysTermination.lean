@@ -36,9 +36,9 @@ tag := "inequality"
 
 :::table +header
 *
-  * Expression
-  * Desugaring
-  * Class Name
+  * 式
+  * 脱糖した形
+  * クラス名
 
 *
   * {anchorTerm ltDesugar (module := Examples.Classes)}`x < y`

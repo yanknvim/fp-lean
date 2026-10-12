@@ -17,7 +17,7 @@ tag := "monads-summary"
 
 # 副作用の符号化
 %%%
-tag := none
+tag := "monads-summary-encoding-effects"
 %%%
 
 Leanは純粋な関数型言語である。
@@ -32,7 +32,7 @@ Leanの型シグネチャは、関数が期待する引数の型と返す結果�
 
 # モナド型クラス
 %%%
-tag := none
+tag := "monads-summary-monad-class"
 %%%
 
 どこでも副作用を許す言語でも、純粋な関数型のプログラムは書ける。

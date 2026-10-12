@@ -17,7 +17,7 @@ tag := "programs-proofs-summary"
 
 # 末尾再帰
 %%%
-tag := none
+tag := "programs-proofs-summary-tail-recursion"
 %%%
 
 末尾再帰とは、再帰呼び出しの結果が他の使われ方をされることなく、すぐに返される再帰である。
@@ -34,7 +34,7 @@ Leanでは、自分自身への末尾呼び出しだけがループに最適化�
 
 # 参照カウントとその場での更新
 %%%
-tag := none
+tag := "programs-proofs-summary-reference-counting"
 %%%
 
 Java、C#、ほとんどのJavaScriptの実装がそうしているような追跡型のガベージコレクタを使う代わりに、Leanはメモリ管理に参照カウントを使う。
@@ -51,7 +51,7 @@ Leanで効率のよいコードを書くには、末尾再帰を使い、大き�
 
 # プログラムが正しいことの証明
 %%%
-tag := none
+tag := "programs-proofs-summary-proving-correct"
 %%%
 
 プログラムをアキュムレータを渡す流儀で書き直したり、速く動くようにする他の変換を加えたりすると、理解しにくくなることもある。
@@ -82,7 +82,7 @@ Leanは{anchorName names}`Fin`に、役に立つ数の型クラスのほとん�
 
 # 仮の証明
 %%%
-tag := none
+tag := "programs-proofs-summary-provisional-proofs"
 %%%
 
 ときに、実際に証明する作業をせずに、ある言明が証明されたふりをできると役に立つ。

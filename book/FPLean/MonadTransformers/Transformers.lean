@@ -576,14 +576,14 @@ tag := "monad-transformer-exercises"
 
 ## モナドの契約
 %%%
-tag := none
+tag := "transformers-exercises-monad-contract"
 %%%
 
 紙と鉛筆を使って、この節の各モナド変換子についてモナド変換子の契約の規則が満たされていることを確かめよ。
 
 ## ログの変換子
 %%%
-tag := none
+tag := "transformers-exercises-logging-transformer"
 %%%
 
 {anchorName WithLog (module:=Examples.Monads)}`WithLog`のモナド変換子版を定義せよ。
