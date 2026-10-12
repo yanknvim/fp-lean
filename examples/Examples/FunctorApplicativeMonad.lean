@@ -628,23 +628,23 @@ equational steps  {{{ mSeqRespId }}}
 -- ANCHOR: mSeqRespId
 pure id >>= fun g => v >>= fun y => pure (g y)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp [LawfulMonad.pure_bind]
 }=
 v >>= fun y => pure (id y)
 ={
-/-- Reduce the call to `id` -/
+/-- `id` の呼び出しを簡約する -/
 }=
 v >>= fun y => pure y
 ={
-/-- `fun x => f x` is the same as `f` -/
+/-- `fun x => f x` は `f` と同じ -/
 by
   have {α β } {f : α → β} : (fun x => f x) = (f) := rfl
   rfl
 }=
 v >>= pure
 ={
-/-- `pure` is a right identity of `>>=` -/
+/-- `pure` は `>>=` の右単位元 -/
 by simp
 }=
 v
@@ -686,7 +686,7 @@ seq (seq (seq (pure (· ∘ ·)) (fun _ => u))
       (fun _ => v))
   (fun _ => w)
 ={
-/-- Definition of `seq` -/
+/-- `seq` の定義 -/
 }=
 ((pure (· ∘ ·) >>= fun f =>
    u >>= fun x =>
@@ -696,7 +696,7 @@ seq (seq (seq (pure (· ∘ ·)) (fun _ => u))
  w >>= fun z =>
  pure (h z)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp only [LawfulMonad.pure_bind]
 }=
 ((u >>= fun x =>
@@ -706,7 +706,7 @@ by simp only [LawfulMonad.pure_bind]
  w >>= fun z =>
  pure (h z)
 ={
-/-- Insertion of parentheses for clarity -/
+/-- 分かりやすさのため括弧を挿入 -/
 }=
 ((u >>= fun x =>
    pure (x ∘ ·)) >>= (fun g =>
@@ -715,7 +715,7 @@ by simp only [LawfulMonad.pure_bind]
  w >>= fun z =>
  pure (h z)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp only [LawfulMonad.bind_assoc]
 }=
 (u >>= fun x =>
@@ -724,7 +724,7 @@ by simp only [LawfulMonad.bind_assoc]
  w >>= fun z =>
  pure (h z)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp only [LawfulMonad.pure_bind]
 }=
 (u >>= fun x =>
@@ -733,7 +733,7 @@ by simp only [LawfulMonad.pure_bind]
  w >>= fun z =>
  pure (h z)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp only [LawfulMonad.bind_assoc]
 }=
 u >>= fun x =>
@@ -742,7 +742,7 @@ pure (x ∘ y) >>= fun h =>
 w >>= fun z =>
 pure (h z)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp [bind_pure_comp]; rfl
 }=
 u >>= fun x =>
@@ -750,7 +750,7 @@ v >>= fun y =>
 w >>= fun z =>
 pure ((x ∘ y) z)
 ={
-/-- Definition of function composition -/
+/-- 関数の合成の定義 -/
 }=
 u >>= fun x =>
 v >>= fun y =>
@@ -758,8 +758,8 @@ w >>= fun z =>
 pure (x (y z))
 ={
 /--
-Time to start moving backwards!
-`pure` is a left identity of `>>=`
+ここから逆向きに進む。
+`pure` は `>>=` の左単位元
 -/
 by simp
 }=
@@ -769,7 +769,7 @@ w >>= fun z =>
 pure (y z) >>= fun q =>
 pure (x q)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp
 }=
 u >>= fun x =>
@@ -778,7 +778,7 @@ v >>= fun y =>
   pure (y p)) >>= fun q =>
  pure (x q)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp
 }=
 u >>= fun x =>
@@ -787,13 +787,13 @@ u >>= fun x =>
   pure (y q)) >>= fun z =>
  pure (x z)
 ={
-/-- This includes the definition of `seq` -/
+/-- ここには `seq` の定義も含まれる -/
 }=
 u >>= fun x =>
 seq v (fun () => w) >>= fun q =>
 pure (x q)
 ={
-/-- This also includes the definition of `seq` -/
+/-- ここにも `seq` の定義が含まれる -/
 }=
 seq u (fun () => seq v (fun () => w))
 -- ANCHOR_END: mSeqRespComp
@@ -815,19 +815,19 @@ equational steps : m β {{{ mSeqPureNoOp }}}
 -- ANCHOR: mSeqPureNoOp
 seq (pure f) (fun () => pure x)
 ={
-/-- Replacing `seq` with its definition -/
+/-- `seq` をその定義で置き換える -/
 }=
 pure f >>= fun g =>
 pure x >>= fun y =>
 pure (g y)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp
 }=
 pure f >>= fun g =>
 pure (g x)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp
 }=
 pure (f x)
@@ -849,31 +849,31 @@ equational steps : m β {{{ mSeqPureNoOrder }}}
 -- ANCHOR: mSeqPureNoOrder
 seq u (fun () => pure x)
 ={
-/-- Definition of `seq` -/
+/-- `seq` の定義 -/
 }=
 u >>= fun f =>
 pure x >>= fun y =>
 pure (f y)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp
 }=
 u >>= fun f =>
 pure (f x)
 ={
-/-- Clever replacement of one expression by an equivalent one that makes the rule match -/
+/-- 規則が当てはまるように、ある式を等価な式で巧みに置き換える -/
 }=
 u >>= fun f =>
 pure ((fun g => g x) f)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp [LawfulMonad.pure_bind]
 }=
 pure (fun g => g x) >>= fun h =>
 u >>= fun f =>
 pure (h f)
 ={
-/-- Definition of `seq` -/
+/-- `seq` の定義 -/
 }=
 seq (pure (fun f => f x)) (fun () => u)
 -- ANCHOR_END: mSeqPureNoOrder

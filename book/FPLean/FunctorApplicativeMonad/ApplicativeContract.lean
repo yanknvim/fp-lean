@@ -15,23 +15,23 @@ set_option verso.exampleModule "Examples.FunctorApplicativeMonad"
 tag := "applicative-laws"
 %%%
 
-Just like {anchorName ApplicativeLaws}`Functor`, {anchorName ApplicativeLaws}`Monad`, and types that implement {anchorName SizedCreature}`BEq` and {anchorName MonstrousAssistantMore}`Hashable`, {anchorName ApplicativeLaws}`Applicative` has a set of rules that all instances should adhere to.
+{anchorName ApplicativeLaws}`Functor`、{anchorName ApplicativeLaws}`Monad`、そして{anchorName SizedCreature}`BEq`と{anchorName MonstrousAssistantMore}`Hashable`を実装する型と同じく、{anchorName ApplicativeLaws}`Applicative`にも、すべてのインスタンスが守るべき規則がある。
 
-There are four rules that an applicative functor should follow:
-1. It should respect identity, so {anchorTerm ApplicativeLaws}`pure id <*> v = v`
-2. It should respect function composition, so {anchorTerm ApplicativeLaws}`pure (· ∘ ·) <*> u <*> v <*> w = u <*> (v <*> w)`
-3. Sequencing pure operations should be a no-op, so {anchorTerm ApplicativeLaws}`pure f <*> pure x`{lit}` = `{anchorTerm ApplicativeLaws}`pure (f x)`
-4. The ordering of pure operations doesn't matter, so {anchorTerm ApplicativeLaws}`u <*> pure x = pure (fun f => f x) <*> u`
+アプリカティブファンクタが従うべき規則は四つある。
+1. 恒等性を尊重する。つまり{anchorTerm ApplicativeLaws}`pure id <*> v = v`。
+2. 関数の合成を尊重する。つまり{anchorTerm ApplicativeLaws}`pure (· ∘ ·) <*> u <*> v <*> w = u <*> (v <*> w)`。
+3. 純粋な操作をつなげても何も変わらない。つまり{anchorTerm ApplicativeLaws}`pure f <*> pure x`{lit}` = `{anchorTerm ApplicativeLaws}`pure (f x)`。
+4. 純粋な操作の順序は問題にならない。つまり{anchorTerm ApplicativeLaws}`u <*> pure x = pure (fun f => f x) <*> u`。
 
-To check these for the {anchorTerm ApplicativeOption}`Applicative Option` instance, start by expanding {anchorName ApplicativeLaws}`pure` into {anchorName ApplicativeOption}`some`.
+{anchorTerm ApplicativeOption}`Applicative Option`インスタンスについてこれらを確かめるには、まず{anchorName ApplicativeLaws}`pure`を{anchorName ApplicativeOption}`some`に展開する。
 
-The first rule states that {anchorTerm ApplicativeOptionLaws1}`some id <*> v = v`.
-The definition of {anchorName fakeSeq}`seq` for {anchorName ApplicativeOption}`Option` states that this is the same as {anchorTerm ApplicativeOptionLaws1}`id <$> v = v`, which is one of the {anchorName ApplicativeLaws}`Functor` rules that have already been checked.
+一つ目の規則は{anchorTerm ApplicativeOptionLaws1}`some id <*> v = v`を述べている。
+{anchorName ApplicativeOption}`Option`の{anchorName fakeSeq}`seq`の定義によれば、これは{anchorTerm ApplicativeOptionLaws1}`id <$> v = v`と同じであり、すでに確かめた{anchorName ApplicativeLaws}`Functor`の規則の一つである。
 
-The second rule states that {anchorTerm ApplicativeOptionLaws2}`some (· ∘ ·) <*> u <*> v <*> w = u <*> (v <*> w)`.
-If any of {anchorName ApplicativeOptionLaws2}`u`, {anchorName ApplicativeOptionLaws2}`v`, or {anchorName ApplicativeOptionLaws2}`w` is {anchorName ApplicativeOption}`none`, then both sides are {anchorName ApplicativeOption}`none`, so the property holds.
-Assuming that {anchorName ApplicativeOptionLaws2}`u` is {anchorTerm OptionHomomorphism1}`some f`, that {anchorName ApplicativeOptionLaws2}`v` is {anchorTerm OptionHomomorphism1}`some g`, and that {anchorName ApplicativeOptionLaws2}`w` is {anchorTerm OptionHomomorphism1}`some x`, then this is equivalent to saying that {anchorTerm OptionHomomorphism}`some (· ∘ ·) <*> some f <*> some g <*> some x = some f <*> (some g <*> some x)`.
-Evaluating the two sides yields the same result:
+二つ目の規則は{anchorTerm ApplicativeOptionLaws2}`some (· ∘ ·) <*> u <*> v <*> w = u <*> (v <*> w)`を述べている。
+{anchorName ApplicativeOptionLaws2}`u`、{anchorName ApplicativeOptionLaws2}`v`、{anchorName ApplicativeOptionLaws2}`w`のどれかが{anchorName ApplicativeOption}`none`なら、両辺とも{anchorName ApplicativeOption}`none`なので性質は成り立つ。
+{anchorName ApplicativeOptionLaws2}`u`が{anchorTerm OptionHomomorphism1}`some f`、{anchorName ApplicativeOptionLaws2}`v`が{anchorTerm OptionHomomorphism1}`some g`、{anchorName ApplicativeOptionLaws2}`w`が{anchorTerm OptionHomomorphism1}`some x`とすると、これは{anchorTerm OptionHomomorphism}`some (· ∘ ·) <*> some f <*> some g <*> some x = some f <*> (some g <*> some x)`と言うのと同じである。
+両辺を評価すると同じ結果になる。
 ```anchorEvalSteps OptionHomomorphism1
 some (· ∘ ·) <*> some f <*> some g <*> some x
 ===>
@@ -51,7 +51,7 @@ some f <*> (some (g x))
 some (f (g x))
 ```
 
-The third rule follows directly from the definition of {anchorName fakeSeq}`seq`:
+三つ目の規則は{anchorName fakeSeq}`seq`の定義から直接従う。
 ```anchorEvalSteps OptionPureSeq
 some f <*> some x
 ===>
@@ -60,30 +60,30 @@ f <$> some x
 some (f x)
 ```
 
-In the fourth case, assume that {anchorName ApplicativeLaws}`u` is {anchorTerm OptionPureSeq}`some f`, because if it's {anchorName AlternativeOption}`none`, both sides of the equation are {anchorName AlternativeOption}`none`.
-{anchorTerm OptionPureSeq}`some f <*> some x` evaluates directly to {anchorTerm OptionPureSeq}`some (f x)`, as does {anchorTerm OptionPureSeq2}`some (fun g => g x) <*> some f`.
+四つ目の場合は、{anchorName ApplicativeLaws}`u`を{anchorTerm OptionPureSeq}`some f`と仮定する。{anchorName AlternativeOption}`none`なら等式の両辺とも{anchorName AlternativeOption}`none`になるためである。
+{anchorTerm OptionPureSeq}`some f <*> some x`は直接{anchorTerm OptionPureSeq}`some (f x)`に評価され、{anchorTerm OptionPureSeq2}`some (fun g => g x) <*> some f`も同様である。
 
 
-# All Applicatives are Functors
+# すべてのアプリカティブはファンクタである
 %%%
 tag := "applicatives-are-functors"
 %%%
 
-The two operators for {anchorName ApplicativeMap}`Applicative` are enough to define {anchorName ApplicativeMap}`map`:
+{anchorName ApplicativeMap}`Applicative`の二つの演算子があれば{anchorName ApplicativeMap}`map`を定義できる。
 
 ```anchor ApplicativeMap
 def map [Applicative f] (g : α → β) (x : f α) : f β :=
   pure g <*> x
 ```
 
-This can only be used to implement {anchorName ApplicativeLaws}`Functor` if the contract for {anchorName ApplicativeLaws}`Applicative` guarantees the contract for {anchorName ApplicativeLaws}`Functor`, however.
-The first rule of {anchorName ApplicativeLaws}`Functor` is that {anchorTerm AppToFunTerms}`id <$> x = x`, which follows directly from the first rule for {anchorName ApplicativeLaws}`Applicative`.
-The second rule of {anchorName ApplicativeLaws}`Functor` is that {anchorTerm AppToFunTerms}`map (f ∘ g) x = map f (map g x)`.
-Unfolding the definition of {anchorName AppToFunTerms}`map` here results in {anchorTerm AppToFunTerms}`pure (f ∘ g) <*> x = pure f <*> (pure g <*> x)`.
-Using the rule that sequencing pure operations is a no-op, the left side can be rewritten to {anchorTerm AppToFunTerms}`pure (· ∘ ·) <*> pure f <*> pure g <*> x`.
-This is an instance of the rule that states that applicative functors respect function composition.
+ただし、これを{anchorName ApplicativeLaws}`Functor`の実装に使えるのは、{anchorName ApplicativeLaws}`Applicative`の契約が{anchorName ApplicativeLaws}`Functor`の契約を保証する場合だけである。
+{anchorName ApplicativeLaws}`Functor`の一つ目の規則は{anchorTerm AppToFunTerms}`id <$> x = x`であり、これは{anchorName ApplicativeLaws}`Applicative`の一つ目の規則から直接従う。
+{anchorName ApplicativeLaws}`Functor`の二つ目の規則は{anchorTerm AppToFunTerms}`map (f ∘ g) x = map f (map g x)`である。
+ここで{anchorName AppToFunTerms}`map`の定義を展開すると{anchorTerm AppToFunTerms}`pure (f ∘ g) <*> x = pure f <*> (pure g <*> x)`になる。
+純粋な操作をつなげても何も変わらないという規則を使うと、左辺は{anchorTerm AppToFunTerms}`pure (· ∘ ·) <*> pure f <*> pure g <*> x`に書き換えられる。
+これは、アプリカティブファンクタが関数の合成を尊重するという規則の一例である。
 
-This justifies a definition of {anchorName ApplicativeMap}`Applicative` that extends {anchorName ApplicativeLaws}`Functor`, with a default definition of {anchorTerm ApplicativeExtendsFunctorOne}`map` given in terms of {anchorName ApplicativeExtendsFunctorOne}`pure` and {anchorName ApplicativeExtendsFunctorOne}`seq`:
+これにより、{anchorName ApplicativeLaws}`Functor`を継承し、{anchorName ApplicativeExtendsFunctorOne}`pure`と{anchorName ApplicativeExtendsFunctorOne}`seq`を使った{anchorTerm ApplicativeExtendsFunctorOne}`map`の既定の定義を持つ{anchorName ApplicativeMap}`Applicative`の定義が正当化される。
 
 ```anchor ApplicativeExtendsFunctorOne
 class Applicative (f : Type → Type) extends Functor f where
@@ -92,13 +92,13 @@ class Applicative (f : Type → Type) extends Functor f where
   map g x := seq (pure g) (fun () => x)
 ```
 
-# All Monads are Applicative Functors
+# すべてのモナドはアプリカティブファンクタである
 %%%
 tag :="monads-are-applicative"
 %%%
 
-An instance of {anchorName MonadExtends}`Monad` already requires an implementation of {anchorName MonadSeq}`pure`.
-Together with {anchorName MonadExtends}`bind`, this is enough to define {anchorName MonadSeq}`seq`:
+{anchorName MonadExtends}`Monad`のインスタンスには、すでに{anchorName MonadSeq}`pure`の実装が要る。
+{anchorName MonadExtends}`bind`と合わせれば、{anchorName MonadSeq}`seq`を定義するのに十分である。
 
 ```anchor MonadSeq
 def seq [Monad m] (f : m (α → β)) (x : Unit → m α) : m β := do
@@ -106,13 +106,13 @@ def seq [Monad m] (f : m (α → β)) (x : Unit → m α) : m β := do
   let y ← x ()
   pure (g y)
 ```
-Once again, checking that the {anchorName MonadSeq}`Monad` contract implies the {anchorName MonadExtends}`Applicative` contract will allow this to be used as a default definition for {anchorTerm MonadExtends}`seq` if {anchorName MonadSeq}`Monad` extends {anchorName MonadExtends}`Applicative`.
+ここでもまた、{anchorName MonadSeq}`Monad`の契約が{anchorName MonadExtends}`Applicative`の契約を含むことを確かめれば、{anchorName MonadSeq}`Monad`が{anchorName MonadExtends}`Applicative`を継承するときの{anchorTerm MonadExtends}`seq`の既定の定義としてこれを使える。
 
-The rest of this section consists of an argument that this implementation of {anchorTerm MonadExtends}`seq` based on {anchorName MonadExtends}`bind` in fact satisfies the {anchorName MonadExtends}`Applicative` contract.
-One of the beautiful things about functional programming is that this kind of argument can be worked out on a piece of paper with a pencil, using the kinds of evaluation rules from {ref "evaluating"}[the initial section on evaluating expressions].
-Thinking about the meanings of the operations while reading these arguments can sometimes help with understanding.
+この節の残りは、{anchorName MonadExtends}`bind`に基づくこの{anchorTerm MonadExtends}`seq`の実装が実際に{anchorName MonadExtends}`Applicative`の契約を満たすという議論である。
+関数型プログラミングの美点の一つは、この種の議論を、{ref "evaluating"}[式の評価についての最初の節]のような評価の規則を使って、紙と鉛筆で組み立てられることである。
+これらの議論を読みながら操作の意味を考えると、理解の助けになることもある。
 
-Replacing {kw}`do`-notation with explicit uses of {lit}`>>=` makes it easier to apply the {anchorName MonadSeqDesugar}`Monad` rules:
+{kw}`do`記法を{lit}`>>=`の明示的な使用に置き換えると、{anchorName MonadSeqDesugar}`Monad`の規則を適用しやすくなる。
 
 ```anchor MonadSeqDesugar
 def seq [Monad m] (f : m (α → β)) (x : Unit → m α) : m β :=
@@ -122,35 +122,35 @@ def seq [Monad m] (f : m (α → β)) (x : Unit → m α) : m β :=
 ```
 
 
-To check that this definition respects identity, check that {anchorTerm mSeqRespIdInit}`seq (pure id) (fun () => v) = v`.
-The left hand side is equivalent to {anchorTerm mSeqRespIdInit}`pure id >>= fun g => (fun () => v) () >>= fun y => pure (g y)`.
-The unit function in the middle can be eliminated immediately, yielding {anchorTerm mSeqRespIdInit}`pure id >>= fun g => v >>= fun y => pure (g y)`.
-Using the fact that {anchorName mSeqRespIdInit}`pure` is a left identity of {anchorTerm mSeqRespIdInit}`>>=`, this is the same as {anchorTerm mSeqRespIdInit}`v >>= fun y => pure (id y)`, which is {anchorTerm mSeqRespIdInit}`v >>= fun y => pure y`.
-Because {anchorTerm mSeqRespIdInit}`fun x => f x` is the same as {anchorName mSeqRespIdInit}`f`, this is the same as {anchorTerm mSeqRespIdInit}`v >>= pure`, and the fact that {anchorName mSeqRespIdInit}`pure` is a right identity of {anchorTerm mSeqRespIdInit}`>>=` can be used to get {anchorName mSeqRespIdInit}`v`.
+この定義が恒等性を尊重することを確かめるには、{anchorTerm mSeqRespIdInit}`seq (pure id) (fun () => v) = v`を確かめる。
+左辺は{anchorTerm mSeqRespIdInit}`pure id >>= fun g => (fun () => v) () >>= fun y => pure (g y)`と等しい。
+真ん中にあるunitの関数はすぐに取り除け、{anchorTerm mSeqRespIdInit}`pure id >>= fun g => v >>= fun y => pure (g y)`になる。
+{anchorName mSeqRespIdInit}`pure`が{anchorTerm mSeqRespIdInit}`>>=`の左単位元であることを使うと、これは{anchorTerm mSeqRespIdInit}`v >>= fun y => pure (id y)`と同じであり、つまり{anchorTerm mSeqRespIdInit}`v >>= fun y => pure y`である。
+{anchorTerm mSeqRespIdInit}`fun x => f x`は{anchorName mSeqRespIdInit}`f`と同じなので、これは{anchorTerm mSeqRespIdInit}`v >>= pure`と同じであり、{anchorName mSeqRespIdInit}`pure`が{anchorTerm mSeqRespIdInit}`>>=`の右単位元であることを使うと{anchorName mSeqRespIdInit}`v`が得られる。
 
-This kind of informal reasoning can be made easier to read with a bit of reformatting.
-In the following chart, read “{lit}`EXPR1 ={ REASON }= EXPR2`” as “{lit}`EXPR1` is the same as {lit}`EXPR2` because {lit}`REASON`”:
+この種の非形式的な推論は、少し書き方を変えると読みやすくなる。
+次の図では、「{lit}`EXPR1 ={ REASON }= EXPR2`」を「{lit}`REASON`という理由で{lit}`EXPR1`は{lit}`EXPR2`と同じ」と読む。
 
 ```anchorEqSteps mSeqRespId
 pure id >>= fun g => v >>= fun y => pure (g y)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp [LawfulMonad.pure_bind]
 }=
 v >>= fun y => pure (id y)
 ={
-/-- Reduce the call to `id` -/
+/-- `id` の呼び出しを簡約する -/
 }=
 v >>= fun y => pure y
 ={
-/-- `fun x => f x` is the same as `f` -/
+/-- `fun x => f x` は `f` と同じ -/
 by
   have {α β } {f : α → β} : (fun x => f x) = (f) := rfl
   rfl
 }=
 v >>= pure
 ={
-/-- `pure` is a right identity of `>>=` -/
+/-- `pure` は `>>=` の右単位元 -/
 by simp
 }=
 v
@@ -158,15 +158,15 @@ v
 
 
 
-To check that it respects function composition, check that {anchorTerm ApplicativeLaws}`pure (· ∘ ·) <*> u <*> v <*> w = u <*> (v <*> w)`.
-The first step is to replace {lit}`<*>` with this definition of {anchorName MonadSeqDesugar}`seq`.
-After that, a (somewhat long) series of steps that use the identity and associativity rules from the {anchorName ApplicativeLaws}`Monad` contract is enough to get from one to the other:
+関数の合成を尊重することを確かめるには、{anchorTerm ApplicativeLaws}`pure (· ∘ ·) <*> u <*> v <*> w = u <*> (v <*> w)`を確かめる。
+まず、{lit}`<*>`をこの{anchorName MonadSeqDesugar}`seq`の定義で置き換える。
+そのあとは、{anchorName ApplicativeLaws}`Monad`の契約の単位元と結合性の規則を使う（やや長い）一連の段階を踏めば、一方から他方へ到達できる。
 ```anchorEqSteps mSeqRespComp
 seq (seq (seq (pure (· ∘ ·)) (fun _ => u))
       (fun _ => v))
   (fun _ => w)
 ={
-/-- Definition of `seq` -/
+/-- `seq` の定義 -/
 }=
 ((pure (· ∘ ·) >>= fun f =>
    u >>= fun x =>
@@ -176,7 +176,7 @@ seq (seq (seq (pure (· ∘ ·)) (fun _ => u))
  w >>= fun z =>
  pure (h z)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp only [LawfulMonad.pure_bind]
 }=
 ((u >>= fun x =>
@@ -186,7 +186,7 @@ by simp only [LawfulMonad.pure_bind]
  w >>= fun z =>
  pure (h z)
 ={
-/-- Insertion of parentheses for clarity -/
+/-- 分かりやすさのため括弧を挿入 -/
 }=
 ((u >>= fun x =>
    pure (x ∘ ·)) >>= (fun g =>
@@ -195,7 +195,7 @@ by simp only [LawfulMonad.pure_bind]
  w >>= fun z =>
  pure (h z)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp only [LawfulMonad.bind_assoc]
 }=
 (u >>= fun x =>
@@ -204,7 +204,7 @@ by simp only [LawfulMonad.bind_assoc]
  w >>= fun z =>
  pure (h z)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp only [LawfulMonad.pure_bind]
 }=
 (u >>= fun x =>
@@ -213,7 +213,7 @@ by simp only [LawfulMonad.pure_bind]
  w >>= fun z =>
  pure (h z)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp only [LawfulMonad.bind_assoc]
 }=
 u >>= fun x =>
@@ -222,7 +222,7 @@ pure (x ∘ y) >>= fun h =>
 w >>= fun z =>
 pure (h z)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp [bind_pure_comp]; rfl
 }=
 u >>= fun x =>
@@ -230,7 +230,7 @@ v >>= fun y =>
 w >>= fun z =>
 pure ((x ∘ y) z)
 ={
-/-- Definition of function composition -/
+/-- 関数の合成の定義 -/
 }=
 u >>= fun x =>
 v >>= fun y =>
@@ -238,8 +238,8 @@ w >>= fun z =>
 pure (x (y z))
 ={
 /--
-Time to start moving backwards!
-`pure` is a left identity of `>>=`
+ここから逆向きに進む。
+`pure` は `>>=` の左単位元
 -/
 by simp
 }=
@@ -249,7 +249,7 @@ w >>= fun z =>
 pure (y z) >>= fun q =>
 pure (x q)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp
 }=
 u >>= fun x =>
@@ -258,7 +258,7 @@ v >>= fun y =>
   pure (y p)) >>= fun q =>
  pure (x q)
 ={
-/-- Associativity of `>>=` -/
+/-- `>>=` の結合性 -/
 by simp
 }=
 u >>= fun x =>
@@ -267,76 +267,76 @@ u >>= fun x =>
   pure (y q)) >>= fun z =>
  pure (x z)
 ={
-/-- This includes the definition of `seq` -/
+/-- ここには `seq` の定義も含まれる -/
 }=
 u >>= fun x =>
 seq v (fun () => w) >>= fun q =>
 pure (x q)
 ={
-/-- This also includes the definition of `seq` -/
+/-- ここにも `seq` の定義が含まれる -/
 }=
 seq u (fun () => seq v (fun () => w))
 ```
 
 
-To check that sequencing pure operations is a no-op:
+純粋な操作をつなげても何も変わらないことを確かめるには、次のようにする。
 ```anchorEqSteps mSeqPureNoOp
 seq (pure f) (fun () => pure x)
 ={
-/-- Replacing `seq` with its definition -/
+/-- `seq` をその定義で置き換える -/
 }=
 pure f >>= fun g =>
 pure x >>= fun y =>
 pure (g y)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp
 }=
 pure f >>= fun g =>
 pure (g x)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp
 }=
 pure (f x)
 ```
 
 
-And finally, to check that the ordering of pure operations doesn't matter:
+最後に、純粋な操作の順序が問題にならないことを確かめる。
 ```anchorEqSteps mSeqPureNoOrder
 seq u (fun () => pure x)
 ={
-/-- Definition of `seq` -/
+/-- `seq` の定義 -/
 }=
 u >>= fun f =>
 pure x >>= fun y =>
 pure (f y)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp
 }=
 u >>= fun f =>
 pure (f x)
 ={
-/-- Clever replacement of one expression by an equivalent one that makes the rule match -/
+/-- 規則が当てはまるように、ある式を等価な式で巧みに置き換える -/
 }=
 u >>= fun f =>
 pure ((fun g => g x) f)
 ={
-/-- `pure` is a left identity of `>>=` -/
+/-- `pure` は `>>=` の左単位元 -/
 by simp [LawfulMonad.pure_bind]
 }=
 pure (fun g => g x) >>= fun h =>
 u >>= fun f =>
 pure (h f)
 ={
-/-- Definition of `seq` -/
+/-- `seq` の定義 -/
 }=
 seq (pure (fun f => f x)) (fun () => u)
 ```
 
 
-This justifies a definition of {anchorName ApplicativeLaws}`Monad` that extends {anchorName ApplicativeLaws}`Applicative`, with a default definition of {anchorTerm MonadExtends}`seq`:
+これにより、{anchorName ApplicativeLaws}`Applicative`を継承し、{anchorTerm MonadExtends}`seq`の既定の定義を持つ{anchorName ApplicativeLaws}`Monad`の定義が正当化される。
 
 ```anchor MonadExtends
 class Monad (m : Type → Type) extends Applicative m where
@@ -346,23 +346,23 @@ class Monad (m : Type → Type) extends Applicative m where
     bind (x ()) fun y =>
     pure (g y)
 ```
-{anchorName MonadExtends}`Applicative`'s own default definition of {anchorTerm ApplicativeExtendsFunctorOne}`map` means that every {anchorName MonadExtends}`Monad` instance automatically generates {anchorName MonadExtends}`Applicative` and {anchorName ApplicativeExtendsFunctorOne}`Functor` instances as well.
+{anchorName MonadExtends}`Applicative`自身の{anchorTerm ApplicativeExtendsFunctorOne}`map`の既定の定義により、どの{anchorName MonadExtends}`Monad`インスタンスも{anchorName MonadExtends}`Applicative`と{anchorName ApplicativeExtendsFunctorOne}`Functor`のインスタンスも自動で生成する。
 
-# Additional Stipulations
+# 追加の取り決め
 %%%
 tag := "additional-stipulations"
 %%%
 
-In addition to adhering to the individual contracts associated with each type class, combined implementations {anchorName ApplicativeLaws}`Functor`, {anchorName ApplicativeLaws}`Applicative` and {anchorName ApplicativeLaws}`Monad` should work equivalently to these default implementations.
-In other words, a type that provides both {anchorName ApplicativeLaws}`Applicative` and {anchorName ApplicativeLaws}`Monad` instances should not have an implementation of {anchorTerm MonadExtends}`seq` that works differently from the version that the {anchorName MonadSeq}`Monad` instance generates as a default implementation.
-This is important because polymorphic functions may be refactored to replace a use of {lit}`>>=` with an equivalent use of {lit}`<*>`, or a use of {lit}`<*>` with an equivalent use of {lit}`>>=`.
-This refactoring should not change the meaning of programs that use this code.
+各型クラスに付随する個々の契約を守ることに加えて、{anchorName ApplicativeLaws}`Functor`、{anchorName ApplicativeLaws}`Applicative`、{anchorName ApplicativeLaws}`Monad`を組み合わせた実装は、これらの既定の実装と同じように働くべきである。
+言い換えれば、{anchorName ApplicativeLaws}`Applicative`と{anchorName ApplicativeLaws}`Monad`の両方のインスタンスを提供する型は、{anchorName MonadSeq}`Monad`インスタンスが既定の実装として生成する版と違う働きをする{anchorTerm MonadExtends}`seq`の実装を持ってはならない。
+これは重要である。多相的な関数は、{lit}`>>=`の使用を等価な{lit}`<*>`の使用に置き換えたり、{lit}`<*>`の使用を等価な{lit}`>>=`の使用に置き換えたりするように書き換えられることがあるためである。
+この書き換えで、そのコードを使うプログラムの意味が変わってはならない。
 
-This rule explains why {anchorName ValidateAndThen}`Validate.andThen` should not be used to implement {anchorName MonadExtends}`bind` in a {anchorName ApplicativeLaws}`Monad` instance.
-On its own, it obeys the monad contract.
-However, when it is used to implement {anchorTerm MonadExtends}`seq`, the behavior is not equivalent to {anchorTerm MonadExtends}`seq` itself.
-To see where they differ, take the example of two computations, both of which return errors.
-Start with an example of a case where two errors should be returned, one from validating a function (which could have just as well resulted from a prior argument to the function), and one from validating an argument:
+この規則は、{anchorName ValidateAndThen}`Validate.andThen`を{anchorName ApplicativeLaws}`Monad`インスタンスの{anchorName MonadExtends}`bind`の実装に使うべきでない理由を説明する。
+それ自体はモナドの契約を満たす。
+しかし、これを{anchorTerm MonadExtends}`seq`の実装に使うと、その振る舞いは{anchorTerm MonadExtends}`seq`自体と等価でなくなる。
+どこが違うかを見るには、どちらもエラーを返す二つの計算の例を考えよう。
+まず、二つのエラーが返るべき場合の例から始める。一つは関数の検査によるもの（これはその関数の前の引数の検査によるものでもよかった）、もう一つは引数の検査によるものである。
 
 ```anchor counterexample
 def notFun : Validate String (Nat → String) :=
@@ -372,7 +372,7 @@ def notArg : Validate String Nat :=
   .errors { head := "Second error", tail := [] }
 ```
 
-Combining them with the version of {lit}`<*>` from {anchorName Validate}`Validate`'s {anchorName ApplicativeValidate}`Applicative` instance results in both errors being reported to the user:
+これらを{anchorName Validate}`Validate`の{anchorName ApplicativeValidate}`Applicative`インスタンスの{lit}`<*>`の版で組み合わせると、二つのエラーがどちらも利用者に報告される。
 ```anchorEvalSteps realSeq
 notFun <*> notArg
 ===>
@@ -399,7 +399,7 @@ match notArg with
 }
 ```
 
-Using the version of {anchorName MonadSeqDesugar}`seq` that was implemented with {lit}`>>=`, here rewritten to {anchorName fakeSeq}`andThen`, results in only the first error being available:
+{lit}`>>=`で実装した版の{anchorName MonadSeqDesugar}`seq`（ここでは{anchorName fakeSeq}`andThen`に書き換えている）を使うと、最初のエラーだけが得られる。
 ```anchorEvalSteps fakeSeq
 seq notFun (fun () => notArg)
 ===>
