@@ -15,35 +15,35 @@ set_option verso.exampleModule "Examples.ProgramsProofs.TCO"
 tag := "proving-tail-rec-equiv"
 %%%
 
-Programs that have been rewritten to use tail recursion and an accumulator can look quite different from the original program.
-The original recursive function is often much easier to understand, but it runs the risk of exhausting the stack at run time.
-After testing both versions of the program on examples to rule out simple bugs, proofs can be used to show once and for all that the programs are equivalent.
+末尾再帰とアキュムレータを使うように書き換えられたプログラムは、元のプログラムとかなり違って見えることがある。
+元の再帰関数はずっと理解しやすいことが多いが、実行時にスタックを使い果たす危険がある。
+単純な不具合を排除するために両方の版を例で試した後、証明を使えば、両者が等価であることを決定的に示せる。
 
-# Proving {lit}`sum` Equal
+# {lit}`sum`が等しいことの証明
 %%%
 tag := "proving-sum-equal"
 %%%
 
-To prove that both versions of {lit}`sum` are equal, begin by writing the theorem statement with a stub proof:
+{lit}`sum`の両方の版が等しいことを証明するには、まず定理の言明を仮の証明とともに書く。
 ```anchor sumEq0
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   skip
 ```
-As expected, Lean describes an unsolved goal:
+予想どおり、Leanは未解決のゴールを表示する。
 ```anchorError sumEq0
 unsolved goals
 ⊢ NonTail.sum = Tail.sum
 ```
 
-The {kw}`rfl` tactic cannot be applied here because {anchorName sumEq0}`NonTail.sum` and {anchorName sumEq0}`Tail.sum` are not definitionally equal.
-Functions can be equal in more ways than just definitional equality, however.
-It is also possible to prove that two functions are equal by proving that they produce equal outputs for the same input.
-In other words, $`f = g` can be proved by proving that $`f(x) = g(x)` for all possible inputs $`x`.
-This principle is called _function extensionality_.
-Function extensionality is exactly the reason why {anchorName sumEq0}`NonTail.sum` equals {anchorName sumEq0}`Tail.sum`: they both sum lists of numbers.
+{anchorName sumEq0}`NonTail.sum`と{anchorName sumEq0}`Tail.sum`は定義上等しくないので、ここでは{kw}`rfl`タクティクを適用できない。
+しかし、関数が等しくなる方法は定義上の等しさだけではない。
+二つの関数が同じ入力に対して等しい出力を返すことを証明して、それらが等しいことを証明することもできる。
+言い換えれば、ありとあらゆる入力$`x`について$`f(x) = g(x)`を証明すれば$`f = g`を証明できる。
+この原理を*関数の外延性*と呼ぶ。
+関数の外延性こそが、{anchorName sumEq0}`NonTail.sum`が{anchorName sumEq0}`Tail.sum`と等しい理由である。どちらも数のリストを足すからである。
 
-In Lean's tactic language, function extensionality is invoked using {anchorTerm sumEq1}`funext`, followed by a name to be used for the arbitrary argument.
-The arbitrary argument is added as an assumption to the context, and the goal changes to require a proof that the functions applied to this argument are equal:
+Leanのタクティク言語では、関数の外延性は{anchorTerm sumEq1}`funext`で呼び出し、その後に任意の引数に使う名前を書く。
+その任意の引数が文脈の前提として加えられ、ゴールは、その引数に関数を適用したものが等しいという証明を要求する形に変わる。
 ```anchor sumEq1
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -54,10 +54,10 @@ xs : List Nat
 ⊢ NonTail.sum xs = Tail.sum xs
 ```
 
-This goal can be proved by induction on the argument {anchorName sumEq1}`xs`.
-Both {lit}`sum` functions return {anchorTerm TailSum}`0` when applied to the empty list, which serves as a base case.
-Adding a number to the beginning of the input list causes both functions to add that number to the result, which serves as an induction step.
-Invoking the {anchorTerm sumEq2a}`induction` tactic results in two goals:
+このゴールは引数{anchorName sumEq1}`xs`についての帰納法で証明できる。
+どちらの{lit}`sum`関数も空のリストに適用すると{anchorTerm TailSum}`0`を返し、これが基底の場合になる。
+入力のリストの先頭に数を加えると、どちらの関数もその数を結果に加え、これが帰納法の段階になる。
+{anchorTerm sumEq2a}`induction`タクティクを呼び出すと、二つのゴールになる。
 ```anchor sumEq2a
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -79,7 +79,7 @@ ih : NonTail.sum ys = Tail.sum ys
 ⊢ NonTail.sum (y :: ys) = Tail.sum (y :: ys)
 ```
 
-The base case for {anchorName sumEq3}`nil` can be solved using {anchorTerm sumEq3}`rfl`, because both functions return {anchorTerm TailSum}`0` when passed the empty list:
+{anchorName sumEq3}`nil`の基底の場合は{anchorTerm sumEq3}`rfl`で解ける。どちらの関数も空のリストを渡すと{anchorTerm TailSum}`0`を返すためである。
 ```anchor sumEq3
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -88,7 +88,7 @@ theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   | cons y ys ih => skip
 ```
 
-The first step in solving the induction step is to simplify the goal, asking {anchorTerm sumEq4}`simp` to unfold {anchorName sumEq4}`NonTail.sum` and {anchorName sumEq4}`Tail.sum`:
+帰納法の段階を解く最初の段階は、ゴールを単純化し、{anchorTerm sumEq4}`simp`に{anchorName sumEq4}`NonTail.sum`と{anchorName sumEq4}`Tail.sum`を展開させることである。
 ```anchor sumEq4
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -105,7 +105,7 @@ ys : List Nat
 ih : NonTail.sum ys = Tail.sum ys
 ⊢ y + NonTail.sum ys = Tail.sumHelper 0 (y :: ys)
 ```
-Unfolding {anchorName sumEq5}`Tail.sum` revealed that it immediately delegates to {anchorName sumEq5}`Tail.sumHelper`, which should also be simplified:
+{anchorName sumEq5}`Tail.sum`を展開すると、それがすぐに{anchorName sumEq5}`Tail.sumHelper`に委ねていることが分かるので、これも単純化すべきである。
 ```anchor sumEq5
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -114,7 +114,7 @@ theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   | cons y ys ih =>
     simp [NonTail.sum, Tail.sum, Tail.sumHelper]
 ```
-In the resulting goal, {anchorName TailSum}`sumHelper` has taken a step of computation and added {anchorName sumEq5}`y` to the accumulator:
+その結果のゴールでは、{anchorName TailSum}`sumHelper`が計算を一段階進め、{anchorName sumEq5}`y`をアキュムレータに加えている。
 ```anchorError sumEq5
 unsolved goals
 case cons
@@ -123,7 +123,7 @@ ys : List Nat
 ih : NonTail.sum ys = Tail.sum ys
 ⊢ y + NonTail.sum ys = Tail.sumHelper y ys
 ```
-Rewriting with the induction hypothesis removes all mentions of {anchorName sumEq6}`NonTail.sum` from the goal:
+帰納法の仮定で書き換えると、ゴールから{anchorName sumEq6}`NonTail.sum`の記述がすべて消える。
 ```anchor sumEq6
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -141,8 +141,8 @@ ys : List Nat
 ih : NonTail.sum ys = Tail.sum ys
 ⊢ y + Tail.sum ys = Tail.sumHelper y ys
 ```
-This new goal states that adding some number to the sum of a list is the same as using that number as the initial accumulator in {anchorName TailSum}`sumHelper`.
-For the sake of clarity, this new goal can be proved as a separate theorem:
+この新しいゴールは、リストの和に数を加えることが、その数を{anchorName TailSum}`sumHelper`の初期のアキュムレータとして使うことと同じであることを述べている。
+分かりやすさのため、この新しいゴールは別の定理として証明できる。
 ```anchor sumEqHelperBad0
 theorem helper_add_sum_accum (xs : List Nat) (n : Nat) :
     n + Tail.sum xs = Tail.sumHelper n xs := by
@@ -154,7 +154,7 @@ xs : List Nat
 n : Nat
 ⊢ n + Tail.sum xs = Tail.sumHelper n xs
 ```
-Once again, this is a proof by induction where the base case uses {anchorTerm sumEqHelperBad1}`rfl`:
+ここでもまた、基底の場合に{anchorTerm sumEqHelperBad1}`rfl`を使う帰納法による証明である。
 ```anchor sumEqHelperBad1
 theorem helper_add_sum_accum (xs : List Nat) (n : Nat) :
     n + Tail.sum xs = Tail.sumHelper n xs := by
@@ -170,8 +170,8 @@ ys : List Nat
 ih : n + Tail.sum ys = Tail.sumHelper n ys
 ⊢ n + Tail.sum (y :: ys) = Tail.sumHelper n (y :: ys)
 ```
-Because this is an inductive step, the goal should be simplified until it matches the induction hypothesis {anchorName sumEqHelperBad2}`ih`.
-Simplifying, using the definitions of {anchorName sumEqHelperBad2}`Tail.sum` and {anchorName sumEqHelperBad2}`Tail.sumHelper`, results in the following:
+これは帰納法の段階なので、帰納法の仮定{anchorName sumEqHelperBad2}`ih`に一致するまでゴールを単純化すべきである。
+{anchorName sumEqHelperBad2}`Tail.sum`と{anchorName sumEqHelperBad2}`Tail.sumHelper`の定義を使って単純化すると次のようになる。
 ```anchor sumEqHelperBad2
 theorem helper_add_sum_accum (xs : List Nat) (n : Nat) :
     n + Tail.sum xs = Tail.sumHelper n xs := by
@@ -188,35 +188,35 @@ ys : List Nat
 ih : n + Tail.sum ys = Tail.sumHelper n ys
 ⊢ n + Tail.sumHelper y ys = Tail.sumHelper (y + n) ys
 ```
-Ideally, the induction hypothesis could be used to replace {lit}`Tail.sumHelper (y + n) ys`, but they don't match.
-The induction hypothesis can be used for {lit}`Tail.sumHelper n ys`, not {lit}`Tail.sumHelper (y + n) ys`.
-In other words, this proof is stuck.
+理想的には、帰納法の仮定を使って{lit}`Tail.sumHelper (y + n) ys`を置き換えたいところだが、一致しない。
+帰納法の仮定は{lit}`Tail.sumHelper n ys`には使えるが、{lit}`Tail.sumHelper (y + n) ys`には使えない。
+言い換えれば、この証明は行き詰まっている。
 
-# A Second Attempt
+# 二度目の試み
 %%%
 tag := "proving-sum-equal-again"
 %%%
 
-Rather than attempting to muddle through the proof, it's time to take a step back and think.
-Why is it that the tail-recursive version of the function is equal to the non-tail-recursive version?
-Fundamentally speaking, at each entry in the list, the accumulator grows by the same amount as would be added to the result of the recursion.
-This insight can be used to write an elegant proof.
-Crucially, the proof by induction must be set up such that the induction hypothesis can be applied to _any_ accumulator value.
+証明をでたらめに進めようとするより、一歩引いて考える時である。
+なぜ末尾再帰の版の関数が末尾再帰でない版と等しいのか。
+根本的に言えば、リストの各要素で、アキュムレータは再帰の結果に加えられるはずの量と同じだけ増える。
+この洞察を使えば、優雅な証明が書ける。
+決定的に重要なのは、帰納法の仮定を*どの*アキュムレータの値にも適用できるように、帰納法による証明を組み立てることである。
 
-Discarding the prior attempt, the insight can be encoded as the following statement:
+先ほどの試みを捨て、その洞察を次の言明として符号化できる。
 ```anchor nonTailEqHelper0
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
   skip
 ```
-In this statement, it's very important that {anchorName nonTailEqHelper0}`n` is part of the type that's after the colon.
-The resulting goal begins with {lit}`∀ (n : Nat)`, which is short for “For all {lit}`n`”:
+この言明では、{anchorName nonTailEqHelper0}`n`がコロンの後の型の一部であることが非常に重要である。
+得られるゴールは{lit}`∀ (n : Nat)`で始まり、これは「すべての{lit}`n`について」の略である。
 ```anchorError nonTailEqHelper0
 unsolved goals
 xs : List Nat
 ⊢ ∀ (n : Nat), n + NonTail.sum xs = Tail.sumHelper n xs
 ```
-Using the induction tactic results in goals that include this “for all” statement:
+帰納法のタクティクを使うと、この「すべての」という言明を含むゴールになる。
 ```anchor nonTailEqHelper1a
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -224,13 +224,13 @@ theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
   | nil => skip
   | cons y ys ih => skip
 ```
-In the {anchorName nonTailEqHelper1a}`nil` case, the goal is:
+{anchorName nonTailEqHelper1a}`nil`の場合、ゴールは次のとおりである。
 ```anchorError nonTailEqHelper1a
 unsolved goals
 case nil
 ⊢ ∀ (n : Nat), n + NonTail.sum [] = Tail.sumHelper n []
 ```
-For the induction step for {anchorName nonTailEqHelper1a}`cons`, both the induction hypothesis and the specific goal contain the “for all {lit}`n`”:
+{anchorName nonTailEqHelper1a}`cons`の帰納法の段階では、帰納法の仮定と個別のゴールの両方に「すべての{lit}`n`」が含まれる。
 ```anchorError nonTailEqHelper1b
 unsolved goals
 case cons
@@ -239,16 +239,16 @@ ys : List Nat
 ih : ∀ (n : Nat), n + NonTail.sum ys = Tail.sumHelper n ys
 ⊢ ∀ (n : Nat), n + NonTail.sum (y :: ys) = Tail.sumHelper n (y :: ys)
 ```
-In other words, the goal has become more challenging to prove, but the induction hypothesis is correspondingly more useful.
+言い換えれば、ゴールは証明するのがより難しくなったが、それに対応して帰納法の仮定がより役に立つものになっている。
 
-A mathematical proof for a statement that beings with “for all $`x`” should assume some arbitrary $`x`, and prove the statement.
-“Arbitrary” means that no additional properties of $`x` are assumed, so the resulting statement will work for _any_ $`x`.
-In Lean, a “for all” statement is a dependent function: no matter which specific value it is applied to, it will return evidence of the proposition.
-Similarly, the process of picking an arbitrary $`x` is the same as using {lit}`fun x => ...`.
-In the tactic language, this process of selecting an arbitrary $`x` is performed using the {kw}`intro` tactic, which produces the function behind the scenes when the tactic script has completed.
-The {kw}`intro` tactic should be provided with the name to be used for this arbitrary value.
+「すべての$`x`について」で始まる言明の数学的な証明では、任意の$`x`を仮定してその言明を証明すべきである。
+「任意」とは、$`x`について追加の性質を仮定しないということであり、得られる言明は*どの*$`x`でも成り立つ。
+Leanでは、「すべての」という言明は依存関数である。どの具体的な値に適用しても、その命題の証拠を返す。
+同様に、任意の$`x`を選ぶ過程は{lit}`fun x => ...`を使うのと同じである。
+タクティク言語では、この任意の$`x`を選ぶ過程は{kw}`intro`タクティクで行い、タクティクの筋書きが終わったときに裏でその関数を作る。
+{kw}`intro`タクティクには、この任意の値に使う名前を与えるべきである。
 
-Using the {kw}`intro` tactic in the {anchorName nonTailEqHelper2}`nil` case removes the {lit}`∀ (n : Nat),` from the goal, and adds an assumption {lit}`n : Nat`:
+{anchorName nonTailEqHelper2}`nil`の場合に{kw}`intro`タクティクを使うと、ゴールから{lit}`∀ (n : Nat),`が消え、前提{lit}`n : Nat`が加わる。
 ```anchor nonTailEqHelper2
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -262,7 +262,7 @@ case nil
 n : Nat
 ⊢ n + NonTail.sum [] = Tail.sumHelper n []
 ```
-Both sides of this propositional equality are definitionally equal to {anchorName nonTailEqHelper3}`n`, so {anchorTerm nonTailEqHelper3}`rfl` suffices:
+この命題としての等しさの両辺は{anchorName nonTailEqHelper3}`n`と定義上等しいので、{anchorTerm nonTailEqHelper3}`rfl`で足りる。
 ```anchor nonTailEqHelper3
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -272,7 +272,7 @@ theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     rfl
   | cons y ys ih => skip
 ```
-The {anchorName nonTailEqHelper3}`cons` goal also contains a “for all”:
+{anchorName nonTailEqHelper3}`cons`のゴールにも「すべての」が含まれる。
 ```anchorError nonTailEqHelper3
 unsolved goals
 case cons
@@ -281,7 +281,7 @@ ys : List Nat
 ih : ∀ (n : Nat), n + NonTail.sum ys = Tail.sumHelper n ys
 ⊢ ∀ (n : Nat), n + NonTail.sum (y :: ys) = Tail.sumHelper n (y :: ys)
 ```
-This suggests the use of {kw}`intro`.
+これは{kw}`intro`を使うことを示唆している。
 ```anchor nonTailEqHelper4
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -301,8 +301,8 @@ ih : ∀ (n : Nat), n + NonTail.sum ys = Tail.sumHelper n ys
 n : Nat
 ⊢ n + NonTail.sum (y :: ys) = Tail.sumHelper n (y :: ys)
 ```
-The proof goal now contains both {anchorName nonTailEqHelper5}`NonTail.sum` and {anchorName nonTailEqHelper5}`Tail.sumHelper` applied to {lit}`y :: ys`.
-The simplifier can make the next step more clear:
+証明のゴールには、{lit}`y :: ys`に適用された{anchorName nonTailEqHelper5}`NonTail.sum`と{anchorName nonTailEqHelper5}`Tail.sumHelper`の両方が含まれる。
+単純化器を使うと次の段階がより明確になる。
 ```anchor nonTailEqHelper5
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -323,18 +323,18 @@ ih : ∀ (n : Nat), n + NonTail.sum ys = Tail.sumHelper n ys
 n : Nat
 ⊢ n + (y + NonTail.sum ys) = Tail.sumHelper (y + n) ys
 ```
-This goal is very close to matching the induction hypothesis.
-There are two ways in which it does not match:
- * The left-hand side of the equation is {lit}`n + (y + NonTail.sum ys)`, but the induction hypothesis needs the left-hand side to be a number added to {lit}`NonTail.sum ys`.
-   In other words, this goal should be rewritten to {lit}`(n + y) + NonTail.sum ys`, which is valid because addition of natural numbers is associative.
- * When the left side has been rewritten to {lit}`(y + n) + NonTail.sum ys`, the accumulator argument on the right side should be {lit}`n + y` rather than {lit}`y + n` in order to match.
-   This rewrite is valid because addition is also commutative.
+このゴールは帰納法の仮定にほとんど一致している。
+一致しない点が二つある。
+ * 等式の左辺は{lit}`n + (y + NonTail.sum ys)`だが、帰納法の仮定は左辺が{lit}`NonTail.sum ys`に数を加えたものであることを要求する。
+   言い換えれば、このゴールは{lit}`(n + y) + NonTail.sum ys`に書き換えるべきであり、自然数の加法が結合的であるのでこれは妥当である。
+ * 左辺を{lit}`(y + n) + NonTail.sum ys`に書き換えたとき、一致させるには右辺のアキュムレータの引数が{lit}`y + n`ではなく{lit}`n + y`であるべきである。
+   加法は可換でもあるので、この書き換えは妥当である。
 
-The associativity and commutativity of addition have already been proved in Lean's standard library.
-The proof of associativity is named {anchorTerm NatAddAssoc}`Nat.add_assoc`, and its type is {anchorTerm NatAddAssoc}`(n m k : Nat) → (n + m) + k = n + (m + k)`, while the proof of commutativity is called {anchorTerm NatAddComm}`Nat.add_comm` and has type {anchorTerm NatAddComm}`(n m : Nat) → n + m = m + n`.
-Normally, the {kw}`rw` tactic is provided with an expression whose type is an equality.
-However, if the argument is instead a dependent function whose return type is an equality, it attempts to find arguments to the function that would allow the equality to match something in the goal.
-There is only one opportunity to apply associativity, though the direction of the rewrite must be reversed because the right side of the equality in {anchorTerm NatAddAssoc}`(n + m) + k = n + (m + k)` is the one that matches the proof goal:
+加法の結合性と可換性はすでにLeanの標準ライブラリで証明されている。
+結合性の証明は{anchorTerm NatAddAssoc}`Nat.add_assoc`という名前で、型は{anchorTerm NatAddAssoc}`(n m k : Nat) → (n + m) + k = n + (m + k)`であり、可換性の証明は{anchorTerm NatAddComm}`Nat.add_comm`と呼ばれ、型は{anchorTerm NatAddComm}`(n m : Nat) → n + m = m + n`である。
+通常、{kw}`rw`タクティクには型が等しさである式を与える。
+しかし、引数が代わりに戻り値の型が等しさである依存関数なら、その等しさがゴールの中の何かに一致するようにする関数の引数を見つけようとする。
+結合性を適用する機会は一つだけだが、{anchorTerm NatAddAssoc}`(n + m) + k = n + (m + k)`の等しさの右辺が証明のゴールに一致するので、書き換えの向きは逆にせねばならない。
 ```anchor nonTailEqHelper6
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -356,8 +356,8 @@ ih : ∀ (n : Nat), n + NonTail.sum ys = Tail.sumHelper n ys
 n : Nat
 ⊢ n + y + NonTail.sum ys = Tail.sumHelper (y + n) ys
 ```
-Rewriting directly with {anchorTerm nonTailEqHelper7}`rw [Nat.add_comm]`, however, leads to the wrong result.
-The {kw}`rw` tactic guesses the wrong location for the rewrite, leading to an unintended goal:
+しかし、{anchorTerm nonTailEqHelper7}`rw [Nat.add_comm]`で直接書き換えると、間違った結果になる。
+{kw}`rw`タクティクが書き換えの場所を間違って推測し、意図しないゴールになる。
 ```anchor nonTailEqHelper7
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -380,7 +380,7 @@ ih : ∀ (n : Nat), n + NonTail.sum ys = Tail.sumHelper n ys
 n : Nat
 ⊢ NonTail.sum ys + (n + y) = Tail.sumHelper (y + n) ys
 ```
-This can be fixed by explicitly providing {anchorName nonTailEqHelper8}`y` and {anchorName nonTailEqHelper8}`n` as arguments to {anchorName nonTailEqHelper8}`Nat.add_comm`:
+これは{anchorName nonTailEqHelper8}`Nat.add_comm`の引数として{anchorName nonTailEqHelper8}`y`と{anchorName nonTailEqHelper8}`n`を明示的に与えれば直せる。
 ```anchor nonTailEqHelper8
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     (n : Nat) → n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -403,10 +403,10 @@ ih : ∀ (n : Nat), n + NonTail.sum ys = Tail.sumHelper n ys
 n : Nat
 ⊢ n + y + NonTail.sum ys = Tail.sumHelper (n + y) ys
 ```
-The goal now matches the induction hypothesis.
-In particular, the induction hypothesis's type is a dependent function type.
-Applying {anchorName nonTailEqHelperDone}`ih` to {anchorTerm nonTailEqHelperDone}`n + y` results in exactly the desired type.
-The {kw}`exact` tactic completes a proof goal if its argument has exactly the desired type:
+これでゴールが帰納法の仮定に一致する。
+特に、帰納法の仮定の型は依存関数型である。
+{anchorName nonTailEqHelperDone}`ih`を{anchorTerm nonTailEqHelperDone}`n + y`に適用すると、まさに望む型になる。
+{kw}`exact`タクティクは、その引数がまさに望む型を持つときに証明のゴールを完成させる。
 
 ```anchor nonTailEqHelperDone
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
@@ -421,8 +421,8 @@ theorem non_tail_sum_eq_helper_accum (xs : List Nat) :
     exact ih (n + y)
 ```
 
-The actual proof requires only a little additional work to get the goal to match the helper's type.
-The first step is still to invoke function extensionality:
+実際の証明では、ゴールを補助関数の型に一致させるのに少し手間が増えるだけである。
+最初の段階はやはり関数の外延性を呼び出すことである。
 ```anchor nonTailEqReal0
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -432,7 +432,7 @@ unsolved goals
 xs : List Nat
 ⊢ NonTail.sum xs = Tail.sum xs
 ```
-The next step is unfold {anchorName nonTailEqReal1}`Tail.sum`, exposing {anchorName TailSum}`Tail.sumHelper`:
+次の段階は{anchorName nonTailEqReal1}`Tail.sum`を展開し、{anchorName TailSum}`Tail.sumHelper`を現すことである。
 ```anchor nonTailEqReal1
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -443,11 +443,11 @@ unsolved goals
 xs : List Nat
 ⊢ NonTail.sum xs = Tail.sumHelper 0 xs
 ```
-Having done this, the types almost match.
-However, the helper has an additional addend on the left side.
-In other words, the proof goal is {lit}`NonTail.sum xs = Tail.sumHelper 0 xs`, but applying {anchorName nonTailEqHelper0}`non_tail_sum_eq_helper_accum` to {anchorName nonTailEqReal2}`xs` and {anchorTerm NatZeroAdd}`0` yields the type {lit}`0 + NonTail.sum xs = Tail.sumHelper 0 xs`.
-Another standard library proof, {anchorTerm NatZeroAdd}`Nat.zero_add`, has type {anchorTerm NatZeroAdd}`(n : Nat) → 0 + n = n`.
-Applying this function to {anchorTerm nonTailEqReal2}`NonTail.sum xs` results in an expression with type {anchorTerm NatZeroAddApplied}`0 + NonTail.sum xs = NonTail.sum xs`, so rewriting from right to left results in the desired goal:
+これをすると、型はほとんど一致する。
+しかし、補助関数は左辺に加数が一つ余分にある。
+言い換えれば、証明のゴールは{lit}`NonTail.sum xs = Tail.sumHelper 0 xs`だが、{anchorName nonTailEqHelper0}`non_tail_sum_eq_helper_accum`を{anchorName nonTailEqReal2}`xs`と{anchorTerm NatZeroAdd}`0`に適用すると型{lit}`0 + NonTail.sum xs = Tail.sumHelper 0 xs`になる。
+もう一つの標準ライブラリの証明{anchorTerm NatZeroAdd}`Nat.zero_add`は型{anchorTerm NatZeroAdd}`(n : Nat) → 0 + n = n`を持つ。
+この関数を{anchorTerm nonTailEqReal2}`NonTail.sum xs`に適用すると、型{anchorTerm NatZeroAddApplied}`0 + NonTail.sum xs = NonTail.sum xs`の式になるので、右から左へ書き換えると望むゴールになる。
 ```anchor nonTailEqReal2
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   funext xs
@@ -459,7 +459,7 @@ unsolved goals
 xs : List Nat
 ⊢ 0 + NonTail.sum xs = Tail.sumHelper 0 xs
 ```
-Finally, the helper can be used to complete the proof:
+最後に、補助関数を使って証明を完成させられる。
 
 ```anchor nonTailEqRealDone
 theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
@@ -469,30 +469,30 @@ theorem non_tail_sum_eq_tail_sum : NonTail.sum = Tail.sum := by
   exact non_tail_sum_eq_helper_accum xs 0
 ```
 
-This proof demonstrates a general pattern that can be used when proving that an accumulator-passing tail-recursive function is equal to the non-tail-recursive version.
-The first step is to discover the relationship between the starting accumulator argument and the final result.
-For instance, beginning {anchorName TailSum}`Tail.sumHelper` with an accumulator of {anchorName accum_stmt}`n` results in the final sum being added to {anchorName accum_stmt}`n`, and beginning {anchorName accum_stmt}`Tail.reverseHelper` with an accumulator of {anchorName accum_stmt}`ys` results in the final reversed list being prepended to {anchorName accum_stmt}`ys`.
-The second step is to write down this relationship as a theorem statement and prove it by induction.
-While the accumulator is always initialized with some neutral value in practice, such as {anchorTerm TailSum}`0` or {anchorTerm accum_stmt}`[]`, this more general statement that allows the starting accumulator to be any value is what's needed to get a strong enough induction hypothesis.
-Finally, using this helper theorem with the actual initial accumulator value results in the desired proof.
-For example, in {anchorName nonTailEqRealDone}`non_tail_sum_eq_tail_sum`, the accumulator is specified to be {anchorTerm TailSum}`0`.
-This may require rewriting the goal to make the neutral initial accumulator values occur in the right place.
+この証明は、アキュムレータを渡す末尾再帰関数が末尾再帰でない版と等しいことを証明するときに使える一般的なパターンを示している。
+最初の段階は、開始時のアキュムレータの引数と最終的な結果の関係を見つけることである。
+たとえば、{anchorName TailSum}`Tail.sumHelper`をアキュムレータ{anchorName accum_stmt}`n`で始めると、最終的な和が{anchorName accum_stmt}`n`に加えられ、{anchorName accum_stmt}`Tail.reverseHelper`をアキュムレータ{anchorName accum_stmt}`ys`で始めると、最終的に反転したリストが{anchorName accum_stmt}`ys`の前に付けられる。
+第二の段階は、この関係を定理の言明として書き、帰納法で証明することである。
+実際にはアキュムレータは常に{anchorTerm TailSum}`0`や{anchorTerm accum_stmt}`[]`のような中立の値で初期化されるが、開始時のアキュムレータをどの値でもよいとするこのより一般的な言明こそが、十分に強い帰納法の仮定を得るのに必要なものである。
+最後に、この補助定理を実際の初期のアキュムレータの値とともに使うと、望む証明になる。
+たとえば{anchorName nonTailEqRealDone}`non_tail_sum_eq_tail_sum`では、アキュムレータは{anchorTerm TailSum}`0`と指定されている。
+これには、中立の初期のアキュムレータの値が正しい場所に現れるようにゴールを書き換える必要が生じることがある。
 
-# Functional Induction
+# 関数による帰納法
 %%%
 tag := "fun-induction"
 %%%
 
-The proof of {anchorName nonTailEqRealDone}`non_tail_sum_eq_helper_accum` follows the implementation of {anchorName TailSum}`Tail.sumHelper` closely.
-There is not, however, a perfect match between the implementation and the structure expected by mathematical induction, which makes it necessary to manage the assumption {anchorName nonTailEqHelperDone}`n` carefully.
-This is a small amount of work in the case of {anchorName nonTailEqHelperDone}`non_tail_sum_eq_helper_accum`, but proofs about functions whose definitions are further from the structure expected by {tactic}`induction` require more bookkeeping.
+{anchorName nonTailEqRealDone}`non_tail_sum_eq_helper_accum`の証明は{anchorName TailSum}`Tail.sumHelper`の実装をよく追っている。
+しかし、その実装と数学的帰納法が期待する構造は完全には一致せず、仮定{anchorName nonTailEqHelperDone}`n`を注意深く扱う必要がある。
+{anchorName nonTailEqHelperDone}`non_tail_sum_eq_helper_accum`の場合は手間は少しで済むが、定義が{tactic}`induction`の期待する構造から遠い関数についての証明では、より多くの帳尻合わせが要る。
 
-In addition to proving theorems about recursive functions by induction on one of the arguments, Lean supports proofs by induction on the recursive call structure of functions.
-This {deftech}_functional induction_ results in a base case for each branch of the function's control flow that does not include a recursive call, and inductive steps for each branch that does.
-A proof by functional induction should demonstrate that the theorem holds for the non-recursive branches, and that if the theorem holds for the result of each recursive call, then it also holds for the result of the recursive branch.
+再帰関数についての定理を引数の一つについての帰納法で証明するのに加えて、Leanは関数の再帰呼び出しの構造についての帰納法による証明を支える。
+この{deftech}*関数による帰納法*では、その関数の制御の流れのうち再帰呼び出しを含まない枝ごとに基底の場合が得られ、含む枝ごとに帰納法の段階が得られる。
+関数による帰納法による証明では、再帰でない枝について定理が成り立つことと、各再帰呼び出しの結果について定理が成り立つなら再帰の枝の結果についても成り立つことを示すべきである。
 
 :::paragraph
-Using functional induction simplifies {anchorName nonTailEqHelperFunInd1}`non_tail_sum_eq_helper_accum`:
+関数による帰納法を使うと{anchorName nonTailEqHelperFunInd1}`non_tail_sum_eq_helper_accum`が簡単になる。
 ```anchor nonTailEqHelperFunInd1
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) (n : Nat) :
     n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -500,20 +500,20 @@ theorem non_tail_sum_eq_helper_accum (xs : List Nat) (n : Nat) :
   | case1 n => skip
   | case2 n y ys ih => skip
 ```
-Each branch of the proof matches the corresponding branch of {anchorName TailSum}`Tail.sumHelper`:
+証明の各枝は{anchorName TailSum}`Tail.sumHelper`の対応する枝に一致する。
 ```anchorTerm TailSum
 def Tail.sumHelper (soFar : Nat) : List Nat → Nat
   | [] => soFar
   | x :: xs => sumHelper (x + soFar) xs
 ```
-In the first, {anchorTerm nonTailEqHelperFunInd1}`case1`, the right side of the equality is the accumulator value, called {anchorName nonTailEqHelperFunInd1}`n` in the proof:
+一つ目の{anchorTerm nonTailEqHelperFunInd1}`case1`では、等しさの右辺がアキュムレータの値であり、証明では{anchorName nonTailEqHelperFunInd1}`n`と呼ばれる。
 ```anchorError nonTailEqHelperFunInd1
 unsolved goals
 case case1
 n : Nat
 ⊢ n + NonTail.sum [] = n
 ```
-In the second, {anchorTerm nonTailEqHelperFunInd1}`case2`, the right side of the equality is the next step in the tail-recursive loop:
+二つ目の{anchorTerm nonTailEqHelperFunInd1}`case2`では、等しさの右辺が末尾再帰のループの次の段階である。
 ```anchorError nonTailEqHelperFunInd1
 unsolved goals
 case case2
@@ -525,9 +525,9 @@ ih : y + n + NonTail.sum ys = Tail.sumHelper (y + n) ys
 :::
 
 :::paragraph
-The resulting proof can be simpler.
-The fundamentals of the argument, including the properties of addition that are used, are the same; however, the bookkeeping has been removed.
-It is no longer necessary to manually juggle the accumulator value, and the induction hypothesis can be used directly instead of requiring instantiation:
+得られる証明はより簡単にできる。
+使う加法の性質を含め、議論の根本は同じであるが、帳尻合わせが取り除かれている。
+アキュムレータの値を手でやりくりする必要がなくなり、帰納法の仮定を具体化せずに直接使える。
 ```anchor nonTailEqHelperFunInd2
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) (n : Nat) :
     n + NonTail.sum xs = Tail.sumHelper n xs := by
@@ -542,55 +542,55 @@ theorem non_tail_sum_eq_helper_accum (xs : List Nat) (n : Nat) :
 :::
 
 :::paragraph
-The {tactic}`grind` tactic is very well suited to this kind of goal.
-Unlike {tactic}`simp` and {tactic}`rw`, it is not directional; internally, it accumulates a collection of facts until it either proves the goal completely or fails to do so.
-It is preconfigured to use basic facts about arithmetic, such as the associativity and commutativity of addition, and it automatically uses local assumptions such as the induction hypothesis.
-Using {tactic}`grind`, this proof becomes short and to-the-point:
+{tactic}`grind`タクティクはこの種のゴールによく合っている。
+{tactic}`simp`や{tactic}`rw`と違い、向きを持たない。内部的には、ゴールを完全に証明するか失敗するまで、事実の集まりを蓄積する。
+加法の結合性や可換性のような算術の基本的な事実を使うようあらかじめ設定されており、帰納法の仮定のような局所的な前提を自動で使う。
+{tactic}`grind`を使うと、この証明は短く要点を突いたものになる。
 ```anchor nonTailEqHelperFunInd3
 theorem non_tail_sum_eq_helper_accum (xs : List Nat) (n : Nat) :
     n + NonTail.sum xs = Tail.sumHelper n xs := by
   fun_induction Tail.sumHelper <;> grind [NonTail.sum]
 ```
-This proof also matches the way the proof might be explained to a skilled programmer: “Just check both branches of {anchorName nonTailEqHelperFunInd3}`Tail.sumHelper`!”
+この証明は、熟練したプログラマに証明を説明するときの言い方とも合っている。「{anchorName nonTailEqHelperFunInd3}`Tail.sumHelper`の両方の枝を調べればよいだけだ」と言えばよい。
 :::
 
-# Exercise
+# 練習問題
 %%%
 tag := "tail-recursion-proof-exercises"
 %%%
 
-## Warming Up
+## 肩慣らし
 %%%
 tag := none
 %%%
 
-Write your own proofs for {anchorName NatZeroAdd}`Nat.zero_add`, {anchorName NatAddAssoc}`Nat.add_assoc`, and {anchorName NatAddComm}`Nat.add_comm` using the {kw}`induction` tactic.
+{anchorName NatZeroAdd}`Nat.zero_add`、{anchorName NatAddAssoc}`Nat.add_assoc`、{anchorName NatAddComm}`Nat.add_comm`の証明を、{kw}`induction`タクティクを使って自分で書け。
 
-## More Accumulator Proofs
+## アキュムレータについてのさらなる証明
 %%%
 tag := none
 %%%
 
-### Reversing Lists
+### リストの反転
 %%%
 tag := none
 %%%
 
-Adapt the proof for {anchorName NonTailSum}`sum` into a proof for {anchorName NonTailReverse}`NonTail.reverse` and {anchorName TailReverse}`Tail.reverse`.
-The first step is to think about the relationship between the accumulator value being passed to {anchorName TailReverse}`Tail.reverseHelper` and the non-tail-recursive reverse.
-Just as adding a number to the accumulator in {anchorName TailSum}`Tail.sumHelper` is the same as adding it to the overall sum, using {anchorName names}`List.cons` to add a new entry to the accumulator in {anchorName TailReverse}`Tail.reverseHelper` is equivalent to some change to the overall result.
-Try three or four different accumulator values with pencil and paper until the relationship becomes clear.
-Use this relationship to prove a suitable helper theorem.
-Try proving this helper theorem both using induction on lists and via functional induction.
-Then, write down the overall theorem.
-Because {anchorName reverseEqStart}`NonTail.reverse` and {anchorName TailReverse}`Tail.reverse` are polymorphic, stating their equality requires the use of {lit}`@` to stop Lean from trying to figure out which type to use for {anchorName reverseEqStart}`α`.
-Once {anchorName reverseEqStart}`α` is treated as an ordinary argument, {kw}`funext` should be invoked with both {anchorName reverseEqStart}`α` and {anchorName reverseEqStart}`xs`:
+{anchorName NonTailSum}`sum`の証明を、{anchorName NonTailReverse}`NonTail.reverse`と{anchorName TailReverse}`Tail.reverse`の証明に合わせよ。
+まず、{anchorName TailReverse}`Tail.reverseHelper`に渡されるアキュムレータの値と、末尾再帰でない反転の関係を考える。
+{anchorName TailSum}`Tail.sumHelper`でアキュムレータに数を加えるのが全体の和にそれを加えるのと同じであるように、{anchorName TailReverse}`Tail.reverseHelper`で{anchorName names}`List.cons`を使ってアキュムレータに新しい要素を加えるのは、全体の結果への何らかの変更に相当する。
+紙と鉛筆で三つか四つの違うアキュムレータの値を試し、関係がはっきりするまで考えよ。
+この関係を使って、適切な補助定理を証明せよ。
+この補助定理を、リストについての帰納法と関数による帰納法の両方で証明してみよ。
+次に、全体の定理を書き下せ。
+{anchorName reverseEqStart}`NonTail.reverse`と{anchorName TailReverse}`Tail.reverse`は多相なので、それらの等しさを述べるには{lit}`@`を使って、{anchorName reverseEqStart}`α`にどの型を使うかをLeanが考えようとするのを止める必要がある。
+{anchorName reverseEqStart}`α`を普通の引数として扱えば、{kw}`funext`は{anchorName reverseEqStart}`α`と{anchorName reverseEqStart}`xs`の両方とともに呼び出すべきである。
 ```anchor reverseEqStart
 theorem non_tail_reverse_eq_tail_reverse :
     @NonTail.reverse = @Tail.reverse := by
   funext α xs
 ```
-This results in a suitable goal:
+これで適切なゴールになる。
 ```anchorError reverseEqStart
 unsolved goals
 α : Type u_1
@@ -599,10 +599,10 @@ xs : List α
 ```
 
 
-### Factorial
+### 階乗
 %%%
 tag := none
 %%%
 
 
-Prove that {anchorName NonTailFact}`NonTail.factorial` from the exercises in the previous section is equal to your tail-recursive solution by finding the relationship between the accumulator and the result and proving a suitable helper theorem.
+前の節の練習問題の{anchorName NonTailFact}`NonTail.factorial`が、自分の末尾再帰の解答と等しいことを、アキュムレータと結果の関係を見つけて適切な補助定理を証明することで証明せよ。
