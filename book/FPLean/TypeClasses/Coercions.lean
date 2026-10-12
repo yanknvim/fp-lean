@@ -509,7 +509,7 @@ partial def JSON.asString (val : JSON) : String :=
 ```
 
 
-# Messages You May Meet
+# 出会うかもしれないメッセージ
 %%%
 tag := "coercion-messages"
 %%%

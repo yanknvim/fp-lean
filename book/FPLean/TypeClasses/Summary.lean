@@ -18,88 +18,88 @@ set_option pp.rawOnError true
 tag :="type-classes-summary"
 %%%
 
-# Type Classes and Overloading
+# 型クラスとオーバーロード
 %%%
 tag := none
 %%%
 
-Type classes are Lean's mechanism for overloading functions and operators.
-A polymorphic function can be used with multiple types, but it behaves in the same manner no matter which type it is used with.
-For example, a polymorphic function that appends two lists can be used no matter the type of the entries in the list, but it is unable to have different behavior depending on which particular type is found.
-An operation that is overloaded with type classes, on the other hand, can also be used with multiple types.
-However, each type requires its own implementation of the overloaded operation.
-This means that the behavior can vary based on which type is provided.
+型クラスは、関数と演算子をオーバーロードするためのLeanの仕組みである。
+多相関数は複数の型で使えるが、どの型で使っても同じように振る舞う。
+たとえば、二つのリストを連結する多相関数は、リストの要素の型に関係なく使えるが、どの型かによって振る舞いを変えることはできない。
+一方、型クラスでオーバーロードされた操作も、複数の型で使える。
+ただし、型ごとにその操作の実装が必要である。
+つまり、どの型が与えられるかによって振る舞いを変えられる。
 
-A _type class_ has a name, parameters, and a body that consists of a number of names with types.
-The name is a way to refer to the overloaded operations, the parameters determine which aspects of the definitions can be overloaded, and the body provides the names and type signatures of the overloadable operations.
-Each overloadable operation is called a {deftech}_method_ of the type class.
-Type classes may provide default implementations of some methods in terms of the others, freeing implementors from defining each overload by hand when it is not needed.
+*型クラス*は、名前、引数、そして型の付いた名前をいくつか並べた本体から成る。
+名前はオーバーロードされた操作を指す手段であり、引数は定義のどの部分をオーバーロードできるかを決め、本体はオーバーロードできる操作の名前と型シグネチャを与える。
+オーバーロードできる操作をそれぞれ、その型クラスの{deftech}*メソッド*と呼ぶ。
+型クラスは、一部のメソッドについて他のメソッドを使った既定の実装を用意できる。そうすれば、必要のないときに実装者が手で各オーバーロードを定義せずに済む。
 
-An {deftech}_instance_ of a type class provides implementations of the methods for given parameters.
-Instances may be polymorphic, in which case they can work for a variety of parameters, and they may optionally provide more specific implementations of default methods in cases where a more efficient version exists for some particular type.
+型クラスの{deftech}*インスタンス*は、与えられた引数に対するメソッドの実装を提供する。
+インスタンスは多相でもよく、その場合はさまざまな引数に対して働く。また、特定の型により効率のよい版がある場合には、既定のメソッドのより具体的な実装を任意で提供できる。
 
-Type class parameters are either {deftech}_input parameters_ (the default), or {deftech}_output parameters_ (indicated by an {moduleName}`outParam` modifier).
-Lean will not begin searching for an instance until all input parameters are no longer metavariables, while output parameters may be solved while searching for instances.
-Parameters to a type class need not be types—they may also be ordinary values.
-The {moduleName}`OfNat` type class, used to overload natural number literals, takes the overloaded {moduleName}`Nat` itself as a parameter, which allows instances to restrict the allowed numbers.
+型クラスの引数は、{deftech}*入力パラメータ*（既定）か、{deftech}*出力パラメータ*（{moduleName}`outParam`修飾子で示す）のどちらかである。
+Leanは、入力パラメータがすべてメタ変数でなくなるまでインスタンスの探索を始めない。出力パラメータは探索の途中で解決されてよい。
+型クラスの引数は型である必要はない。普通の値でもよい。
+自然数のリテラルをオーバーロードするのに使う{moduleName}`OfNat`型クラスは、オーバーロードする{moduleName}`Nat`自体を引数に取り、これによりインスタンスが許す数を制限できる。
 
-Instances may be marked with a {anchorTerm defaultAdd}`@[default_instance]` attribute.
-When an instance is a default instance, then it will be chosen as a fallback when Lean would otherwise fail to find an instance due to the presence of metavariables in the type.
+インスタンスには{anchorTerm defaultAdd}`@[default_instance]`属性を付けられる。
+インスタンスが既定のインスタンスである場合、型にメタ変数があるためにLeanがインスタンスを見つけられないときに、代わりの候補として選ばれる。
 
-# Type Classes for Common Syntax
+# よく使う構文のための型クラス
 %%%
 tag := none
 %%%
 
-Most infix operators in Lean are overridden with a type class.
-For instance, the addition operator corresponds to a type class called {moduleName}`Add`.
-Most of these operators have a corresponding heterogeneous version, in which the two arguments need not have the same type.
-These heterogeneous operators are overloaded using a version of the class whose name starts with {lit}`H`, such as {moduleName}`HAdd`.
+Leanの中置演算子のほとんどは型クラスでオーバーロードされている。
+たとえば加算演算子は{moduleName}`Add`という型クラスに対応する。
+これらの演算子のほとんどには対応する異種の版があり、二つの引数の型が同じでなくてもよい。
+これらの異種の演算子は、名前が{lit}`H`で始まる版のクラス（{moduleName}`HAdd`など）でオーバーロードされている。
 
-Indexing syntax is overloaded using a type class called {moduleName}`GetElem`, which involves proofs.
-{moduleName}`GetElem` has two output parameters, which are the type of elements to be extracted from the collection and a function that can be used to determine what counts as evidence that the index value is in bounds for the collection.
-This evidence is described by a proposition, and Lean attempts to prove this proposition when array indexing is used.
-When Lean is unable to check that list or array access operations are in bounds at compile time, the check can be deferred to run time by appending a {lit}`?` to the indexing syntax.
+参照の記法は{moduleName}`GetElem`という型クラスでオーバーロードされており、証明が関わる。
+{moduleName}`GetElem`は二つの出力パラメータを持つ。コレクションから取り出す要素の型と、添字の値がそのコレクションで範囲内にある証拠として何が認められるかを決める関数である。
+この証拠は命題で記述され、配列の参照を使うときにLeanはその命題を証明しようとする。
+リストや配列の参照が範囲内にあることをLeanがコンパイル時に調べられない場合、参照の記法に{lit}`?`を付けると、その検査を実行時まで先延ばしできる。
 
-# Functors
-%%%
-tag := none
-%%%
-
-
-A functor is a polymorphic type that supports a mapping operation.
-This mapping operation transforms all elements “in place”, changing no other structure.
-For instance, lists are functors and the mapping operation may neither drop, duplicate, nor mix up entries in the list.
-
-While functors are defined by having {anchorName FunctorDef}`map`, the {anchorName FunctorDef}`Functor` type class in Lean contains an additional default method that is responsible for mapping the constant function over a value, replacing all values whose type are given by polymorphic type variable with the same new value.
-For some functors, this can be done more efficiently than traversing the entire structure.
-
-# Deriving Instances
+# ファンクタ
 %%%
 tag := none
 %%%
 
 
-Many type classes have very standard implementations.
-For instance, the Boolean equality class {moduleName}`BEq` is usually implemented by first checking whether both arguments are built with the same constructor, and then checking whether all their arguments are equal.
-Instances for these classes can be created _automatically_.
+ファンクタは、マップの操作に対応した多相型である。
+このマップの操作は、他の構造を変えずに、すべての要素を「その場で」変換する。
+たとえばリストはファンクタであり、マップの操作はリストの要素を落としたり、複製したり、混ぜたりしてはならない。
 
-When defining an inductive type or a structure, a {kw}`deriving` clause at the end of the declaration will cause instances to be created automatically.
-Additionally, the {kw}`deriving instance`﻿{lit}` ... `﻿{kw}`for`﻿{lit}` ...` command can be used outside of the definition of a datatype to cause an instance to be generated.
-Because each class for which instances can be derived requires special handling, not all classes are derivable.
+ファンクタは{anchorName FunctorDef}`map`を持つことで定義されるが、Leanの{anchorName FunctorDef}`Functor`型クラスには既定のメソッドがもう一つあり、定数関数を値にマップして、多相型変数で与えられる型の値をすべて同じ新しい値に置き換える役割を担う。
+ファンクタによっては、構造全体をたどるより効率よく行える。
 
-# Coercions
+# インスタンスの導出
 %%%
 tag := none
 %%%
 
 
-Coercions allow Lean to recover from what would normally be a compile-time error by inserting a call to a function that transforms data from one type to another.
-For example, the coercion from any type {anchorName CoeOption}`α` to the type {anchorTerm CoeOption}`Option α` allows values to be written directly, rather than with the {anchorName CoeOption}`some` constructor, making {anchorName CoeOption}`Option` work more like nullable types from object-oriented languages.
+多くの型クラスには、ごく標準的な実装がある。
+たとえば、ブール値の等価性のクラス{moduleName}`BEq`は通常、二つの引数が同じコンストラクタで作られているかを調べ、次にそれらの引数がすべて等しいかを調べる形で実装する。
+これらのクラスのインスタンスは*自動で*作れる。
 
-There are multiple kinds of coercion.
-They can recover from different kinds of errors, and they are represented by their own type classes.
-The {anchorName CoeOption}`Coe` class is used to recover from type errors.
-When Lean has an expression of type {anchorName Coe}`α` in a context that expects something with type {anchorName Coe}`β`, Lean first attempts to string together a chain of coercions that can transform {anchorName Coe}`α`s into {anchorName Coe}`β`s, and only displays the error when this cannot be done.
-The {moduleName}`CoeDep` class takes the specific value being coerced as an extra parameter, allowing either further type class search to be done on the value or allowing constructors to be used in the instance to limit the scope of the conversion.
-The {moduleName}`CoeFun` class intercepts what would otherwise be a “not a function” error when compiling a function application, and allows the value in the function position to be transformed into an actual function if possible.
+帰納型や構造体を定義するとき、宣言の末尾に{kw}`deriving`の句を書くと、インスタンスが自動で作られる。
+さらに、{kw}`deriving instance`{lit}` ... `{kw}`for`{lit}` ...`コマンドをデータ型の定義の外で使うことでも、インスタンスを生成できる。
+インスタンスを導出できるクラスはそれぞれ特別な扱いが必要なので、すべてのクラスを導出できるわけではない。
+
+# 型強制
+%%%
+tag := none
+%%%
+
+
+型強制により、Leanは、本来ならコンパイル時のエラーになるところを、ある型のデータを別の型に変換する関数の呼び出しを挿入して乗り切れる。
+たとえば、任意の型{anchorName CoeOption}`α`から型{anchorTerm CoeOption}`Option α`への型強制により、{anchorName CoeOption}`some`コンストラクタを使わずに値を直接書けるので、{anchorName CoeOption}`Option`はオブジェクト指向言語のnull許容型に近い働きをする。
+
+型強制にはいくつかの種類がある。
+それぞれ別の種類のエラーを乗り切り、それぞれ独自の型クラスで表される。
+{anchorName CoeOption}`Coe`クラスは型エラーを乗り切るのに使う。
+型{anchorName Coe}`β`を期待する文脈で、型{anchorName Coe}`α`の式があるとき、Leanはまず{anchorName Coe}`α`を{anchorName Coe}`β`に変換できる型強制の連鎖をつなげようとし、それができないときにだけエラーを表示する。
+{moduleName}`CoeDep`クラスは、型強制する具体的な値を追加の引数として取り、その値についてさらに型クラス探索を行うことも、インスタンスでコンストラクタを使って変換の範囲を限定することもできる。
+{moduleName}`CoeFun`クラスは、関数適用をコンパイルするときに本来なら「関数ではない」というエラーになるところを引き受け、可能なら関数の位置にある値を実際の関数に変換できる。
