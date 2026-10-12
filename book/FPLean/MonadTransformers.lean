@@ -21,21 +21,21 @@ set_option verso.exampleModule "Examples.Monads"
 
 #doc (Manual) "Monad Transformers" =>
 
-A monad is a way to encode some collection of side effects in a pure language.
-Different monads provide different effects, such as state and error handling.
-Many monads even provide useful effects that aren't available in most languages, such as nondeterministic searches, readers, and even continuations.
+モナドは、何らかの副作用の集まりを純粋な言語で符号化する手段である。
+モナドによって提供する副作用が異なり、状態やエラー処理などがある。
+多くのモナドは、非決定的な探索、リーダー、さらには継続のように、ほとんどの言語では使えない役に立つ副作用まで提供する。
 
-A typical application has a core set of easily testable functions written without monads paired with an outer wrapper that uses a monad to encode the necessary application logic.
-These monads are constructed from well-known components.
-For example:
- * Mutable state is encoded with a function parameter and a return value that have the same type
- * Error handling is encoded by having a return type that is similar to {moduleName}`Except`, with constructors for success and failure
- * Logging is encoded by pairing the return value with the log
+典型的なアプリケーションは、モナドを使わずに書かれた試験しやすい関数の核と、必要なアプリケーションの論理を符号化するのにモナドを使う外側の包みから成る。
+これらのモナドはよく知られた部品から組み立てられる。
+たとえば、
+ * 可変状態は、同じ型を持つ関数の引数と戻り値で符号化する。
+ * エラー処理は、成功と失敗のコンストラクタを持つ{moduleName}`Except`に似た戻り値の型で符号化する。
+ * ログは、戻り値をログと組にすることで符号化する。
 
-Writing each monad by hand is tedious, however, involving boilerplate definitions of the various type classes.
-Each of these components can also be extracted to a definition that modifies some other monad to add an additional effect.
-Such a definition is called a _monad transformer_.
-A concrete monad can be build from a collection of monad transformers, which enables much more code re-use.
+しかし、各モナドを手で書くのは面倒で、各種の型クラスの定型の定義が必要になる。
+これらの部品はそれぞれ、別のモナドを変更して副作用を一つ加える定義としてくくり出せる。
+そのような定義を*モナド変換子*と呼ぶ。
+具体的なモナドはモナド変換子の集まりから組み立てられ、これによりコードの再利用がずっと進む。
 
 {include 1 FPLean.MonadTransformers.ReaderIO}
 
