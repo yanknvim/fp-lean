@@ -15,20 +15,20 @@ set_option verso.exampleModule "Examples.DependentTypes.DB"
 tag := "typed-queries"
 %%%
 
-Indexed families are very useful when building an API that is supposed to resemble some other language.
-They can be used to write a library of HTML constructors that don't permit generating invalid HTML, to encode the specific rules of a configuration file format, or to model complicated business constraints.
-This section describes an encoding of a subset of relational algebra in Lean using indexed families, as a simpler demonstration of techniques that can be used to build a more powerful database query language.
+添字付き族は、他の言語に似せたAPIを作るときに非常に役に立つ。
+不正なHTMLを生成できないHTMLコンストラクタのライブラリを書いたり、設定ファイルの形式の細かな規則を符号化したり、複雑な業務上の制約をモデル化したりするのに使える。
+この節では、より強力なデータベース問い合わせ言語を作るのに使える技法の、より単純な実演として、関係代数の部分集合を添字付き族を使ってLeanで符号化する方法を述べる。
 
-This subset uses the type system to enforce requirements such as disjointness of field names, and it uses type-level computation to reflect the schema into the types of values that are returned from a query.
-It is not a realistic system, however—databases are represented as linked lists of linked lists, the type system is much simpler than that of SQL, and the operators of relational algebra don't really match those of SQL.
-However, it is large enough to demonstrate useful principles and techniques.
+この部分集合は、フィールド名が重ならないことなどの要件を型システムで強制し、型の段階の計算を使ってスキーマを問い合わせが返す値の型に反映する。
+しかし現実的な仕組みではない。データベースは連結リストの連結リストで表され、型システムはSQLのものよりずっと単純であり、関係代数の演算子はSQLのものとはあまり一致しない。
+しかし、役に立つ原理と技法を示すには十分な大きさである。
 
-# A Universe of Data
+# データの宇宙
 %%%
 tag := "typed-query-data-universe"
 %%%
 
-In this relational algebra, the base data that can be held in columns can have types {anchorName DBType}`Int`, {anchorName DBType}`String`, and {anchorName DBType}`Bool` and are described by the universe {anchorName DBType}`DBType`:
+この関係代数では、列に入れられる基本のデータは{anchorName DBType}`Int`、{anchorName DBType}`String`、{anchorName DBType}`Bool`の型を持ち、宇宙{anchorName DBType}`DBType`で記述される。
 
 ```anchor DBType
 inductive DBType where
@@ -40,8 +40,8 @@ abbrev DBType.asType : DBType → Type
   | .bool => Bool
 ```
 
-Using {anchorName DBType}`DBType.asType` allows these codes to be used for types.
-For example:
+{anchorName DBType}`DBType.asType`を使うと、これらのコードを型として使える。
+たとえば、
 ```anchor mountHoodEval
 #eval ("Mount Hood" : DBType.string.asType)
 ```
@@ -49,9 +49,9 @@ For example:
 "Mount Hood"
 ```
 
-It is possible to compare the values described by any of the three database types for equality.
-Explaining this to Lean, however, requires a bit of work.
-Simply using {anchorName BEqDBType}`BEq` directly fails:
+三つのデータベースの型が記述する値は、どれも等しさを比べられる。
+しかし、これをLeanに説明するには少し手間が要る。
+単に{anchorName BEqDBType}`BEq`を直接使うとうまくいかない。
 ```anchor dbEqNoSplit
 def DBType.beq (t : DBType) (x y : t.asType) : Bool :=
   x == y
@@ -62,8 +62,8 @@ failed to synthesize instance of type class
 
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
-Just as in the nested pairs universe, type class search doesn't automatically check each possibility for {anchorName dbEqNoSplit}`t`'s value
-The solution is to use pattern matching to refine the types of {anchorTerm dbEq}`x` and {anchorName dbEq}`y`:
+入れ子の組の宇宙と同じく、型クラスの探索は{anchorName dbEqNoSplit}`t`の値の起こりうる場合を自動で調べない。
+解決策は、パターンマッチングで{anchorTerm dbEq}`x`と{anchorName dbEq}`y`の型を洗練することである。
 
 ```anchor dbEq
 def DBType.beq (t : DBType) (x y : t.asType) : Bool :=
@@ -72,14 +72,14 @@ def DBType.beq (t : DBType) (x y : t.asType) : Bool :=
   | .string => x == y
   | .bool => x == y
 ```
-In this version of the function, {anchorName dbEq}`x` and {anchorName dbEq}`y` have types {anchorName DBType}`Int`, {anchorName DBType}`String`, and {anchorName DBType}`Bool` in the three respective cases, and these types all have {anchorName BEqDBType}`BEq` instances.
-The definition of {anchorName dbEq}`DBType.beq` can be used to define a {anchorName BEqDBType}`BEq` instance for the types that are coded for by {anchorName DBType}`DBType`:
+この版の関数では、三つの場合でそれぞれ{anchorName dbEq}`x`と{anchorName dbEq}`y`の型が{anchorName DBType}`Int`、{anchorName DBType}`String`、{anchorName DBType}`Bool`になり、これらの型にはすべて{anchorName BEqDBType}`BEq`インスタンスがある。
+{anchorName dbEq}`DBType.beq`の定義を使うと、{anchorName DBType}`DBType`がコード化する型の{anchorName BEqDBType}`BEq`インスタンスを定義できる。
 
 ```anchor BEqDBType
 instance {t : DBType} : BEq t.asType where
   beq := t.beq
 ```
-This is not the same as an instance for the codes:
+これはコード自体のインスタンスとは同じではない。
 
 ```anchor BEqDBTypeCodes
 instance : BEq DBType where
@@ -89,11 +89,11 @@ instance : BEq DBType where
     | .bool, .bool => true
     | _, _ => false
 ```
-The former instance allows comparison of values drawn from the types described by the codes, while the latter allows comparison of the codes themselves.
+前者のインスタンスはコードが記述する型から取り出した値を比べられ、後者はコード自体を比べられる。
 
-A {anchorName ReprAsType}`Repr` instance can be written using the same technique.
-The method of the {anchorName ReprAsType}`Repr` class is called {anchorName ReprAsType}`reprPrec` because it is designed to take things like operator precedence into account when displaying values.
-Refining the type through dependent pattern matching allows the {anchorName ReprAsType}`reprPrec` methods from the {anchorName ReprAsType}`Repr` instances for {anchorName DBType}`Int`, {anchorName DBType}`String`, and {anchorName DBType}`Bool` to be used:
+{anchorName ReprAsType}`Repr`インスタンスも同じ技法で書ける。
+{anchorName ReprAsType}`Repr`クラスのメソッドが{anchorName ReprAsType}`reprPrec`と呼ばれるのは、値を表示するときに演算子の優先度のようなものを考慮するようにできているためである。
+依存パターンマッチングで型を洗練すると、{anchorName DBType}`Int`、{anchorName DBType}`String`、{anchorName DBType}`Bool`の{anchorName ReprAsType}`Repr`インスタンスの{anchorName ReprAsType}`reprPrec`メソッドを使える。
 
 ```anchor ReprAsType
 instance {t : DBType} : Repr t.asType where
@@ -104,12 +104,12 @@ instance {t : DBType} : Repr t.asType where
     | .bool => reprPrec
 ```
 
-# Schemas and Tables
+# スキーマと表
 %%%
 tag := "schemas"
 %%%
 
-A schema describes the name and type of each column in a database:
+スキーマはデータベースの各列の名前と型を記述する。
 
 ```anchor Schema
 structure Column where
@@ -118,8 +118,8 @@ structure Column where
 
 abbrev Schema := List Column
 ```
-In fact, a schema can be seen as a universe that describes rows in a table.
-The empty schema describes the unit type, a schema with a single column describes that value on its own, and a schema with at least two columns is represented by a tuple:
+実際、スキーマは表の行を記述する宇宙と見なせる。
+空のスキーマはunit型を記述し、列が一つのスキーマはその値そのものを記述し、列が二つ以上あるスキーマはタプルで表す。
 
 ```anchor Row
 abbrev Row : Schema → Type
@@ -128,15 +128,15 @@ abbrev Row : Schema → Type
   | col1 :: col2 :: cols => col1.contains.asType × Row (col2::cols)
 ```
 
-As described in {ref "prod"}[the initial section on product types], Lean's product type and tuples are right-associative.
-This means that nested pairs are equivalent to ordinary flat tuples.
+{ref "prod"}[直積型についての最初の節]で述べたように、Leanの直積型とタプルは右結合である。
+つまり、入れ子になった組は普通の平坦なタプルと等価である。
 
-A table is a list of rows that share a schema:
+表は、スキーマを共有する行のリストである。
 
 ```anchor Table
 abbrev Table (s : Schema) := List (Row s)
 ```
-For example, a diary of visits to mountain peaks can be represented with the schema {anchorName peak}`peak`:
+たとえば、山の頂を訪れた記録はスキーマ{anchorName peak}`peak`で表せる。
 
 ```anchor peak
 abbrev peak : Schema := [
@@ -146,7 +146,7 @@ abbrev peak : Schema := [
   ⟨"lastVisited", .int⟩
 ]
 ```
-A selection of peaks visited by the author of this book appears as an ordinary list of tuples:
+この本の著者が訪れた山の頂の抜粋は、普通のタプルのリストとして現れる。
 
 ```anchor mountainDiary
 def mountainDiary : Table peak := [
@@ -156,7 +156,7 @@ def mountainDiary : Table peak := [
   ("Mount St. Helens", "USA",     2549, 2010)
 ]
 ```
-Another example consists of waterfalls and a diary of visits to them:
+もう一つの例は滝と、それを訪れた記録から成る。
 
 ```anchor waterfall
 abbrev waterfall : Schema := [
@@ -178,9 +178,9 @@ def waterfallDiary : Table waterfall := [
 tag := "recursion-universes-revisited"
 %%%
 
-The convenient structuring of rows as tuples comes at a cost: the fact that {anchorName Row}`Row` treats its two base cases separately means that functions that use {anchorName Row}`Row` in their types and are defined recursively over the codes (that, is the schema) need to make the same distinctions.
-One example of a case where this matters is an equality check that uses recursion over the schema to define a function that checks rows for equality.
-This example does not pass Lean's type checker:
+行をタプルとして便利に構造化することには代償がある。{anchorName Row}`Row`が二つの基底の場合を別々に扱うということは、{anchorName Row}`Row`を型に使い、コード（つまりスキーマ）について再帰的に定義される関数も、同じ区別をせねばならないということである。
+これが問題になる例の一つは、スキーマについての再帰を使って行の等しさを調べる関数を定義する等価性の検査である。
+この例はLeanの型検査器を通らない。
 ```anchor RowBEqRecursion
 def Row.bEq (r1 r2 : Row s) : Bool :=
   match s with
@@ -198,9 +198,9 @@ has type
 but is expected to have type
   Row (col :: cols)
 ```
-The problem is that the pattern {anchorTerm RowBEqRecursion}`col :: cols` does not sufficiently refine the type of the rows.
-This is because Lean cannot yet tell whether the singleton pattern {anchorTerm Row}`[col]` or the {anchorTerm Row}`col1 :: col2 :: cols` pattern in the definition of {anchorName Row}`Row` was matched, so the call to {anchorName Row}`Row` does not compute down to a pair type.
-The solution is to mirror the structure of {anchorName Row}`Row` in the definition of {anchorName RowBEq}`Row.bEq`:
+問題は、パターン{anchorTerm RowBEqRecursion}`col :: cols`が行の型を十分に洗練しないことである。
+{anchorName Row}`Row`の定義で、単一要素のパターン{anchorTerm Row}`[col]`と{anchorTerm Row}`col1 :: col2 :: cols`のどちらにマッチしたかをLeanがまだ判断できず、{anchorName Row}`Row`の呼び出しが組の型まで計算されないためである。
+解決策は、{anchorName RowBEq}`Row.bEq`の定義で{anchorName Row}`Row`の構造を写すことである。
 
 ```anchor RowBEq
 def Row.bEq (r1 r2 : Row s) : Bool :=
@@ -216,40 +216,40 @@ instance : BEq (Row s) where
   beq := Row.bEq
 ```
 
-Unlike in other contexts, functions that occur in types cannot be considered only in terms of their input/output behavior.
-Programs that use these types will find themselves forced to mirror the algorithm used in the type-level function so that their structure matches the pattern-matching and recursive behavior of the type.
-A big part of the skill of programming with dependent types is the selection of appropriate type-level functions with the right computational behavior.
+他の文脈と違い、型に現れる関数は、その入力と出力の振る舞いだけで考えることはできない。
+これらの型を使うプログラムは、その構造が型のパターンマッチングと再帰の振る舞いに一致するように、型の段階の関数で使った算法を写すことを強いられる。
+依存型を使ったプログラミングの技能の大きな部分は、正しい計算の振る舞いを持つ適切な型の段階の関数を選ぶことである。
 
-## Column Pointers
+## 列へのポインタ
 %%%
 tag := "column-pointers"
 %%%
 
-Some queries only make sense if a schema contains a particular column.
-For example, a query that returns mountains with an elevation greater than 1000 meters only makes sense in the context of a schema with an {anchorTerm peak}`"elevation"` column that contains integers.
-One way to indicate that a column is contained in a schema is to provide a pointer directly to it, and defining the pointer as an indexed family makes it possible to rule out invalid pointers.
+スキーマがある列を含むときにだけ意味をなす問い合わせもある。
+たとえば、標高が1000メートルより高い山を返す問い合わせは、整数を入れる{anchorTerm peak}`"elevation"`列を持つスキーマの文脈でだけ意味をなす。
+ある列がスキーマに含まれることを示す一つの方法は、その列へのポインタを直接与えることであり、そのポインタを添字付き族として定義すれば、不正なポインタを排除できる。
 
-There are two ways that a column can be present in a schema: either it is at the beginning of the schema, or it is somewhere later in the schema.
-Eventually, if a column is later in a schema, then it will be the beginning of some tail of the schema.
+列がスキーマにある方法は二通りある。スキーマの先頭にあるか、スキーマのもっと後にあるかである。
+列がスキーマの後ろにあるなら、結局はスキーマのある残りの先頭になる。
 
-The indexed family {anchorName HasCol}`HasCol` is a translation of the specification into Lean code:
+添字付き族{anchorName HasCol}`HasCol`は、その仕様をLeanのコードに移したものである。
 
 ```anchor HasCol
 inductive HasCol : Schema → String → DBType → Type where
   | here : HasCol (⟨name, t⟩ :: _) name t
   | there : HasCol s name t → HasCol (_ :: s) name t
 ```
-The family's three arguments are the schema, the column name, and its type.
-All three are indices, but re-ordering the arguments to place the schema after the column name and type would allow the name and type to be parameters.
-The constructor {anchorName HasCol}`here` can be used when the schema begins with the column {anchorTerm HasCol}`⟨name, t⟩`; it is thus a pointer to the first column in the schema that can only be used when the first column has the desired name and type.
-The constructor {anchorName HasCol}`there` transforms a pointer into a smaller schema into a pointer into a schema with one more column on it.
+この族の三つの引数は、スキーマ、列の名前、その型である。
+三つとも添字だが、引数の順序を変えてスキーマを列の名前と型の後に置けば、名前と型をパラメータにできる。
+コンストラクタ{anchorName HasCol}`here`は、スキーマが列{anchorTerm HasCol}`⟨name, t⟩`で始まるときに使える。つまりこれは、最初の列が求める名前と型を持つときにだけ使える、スキーマの最初の列へのポインタである。
+コンストラクタ{anchorName HasCol}`there`は、より小さなスキーマへのポインタを、列が一つ増えたスキーマへのポインタに変換する。
 
-Because {anchorTerm peak}`"elevation"` is the third column in {anchorName peak}`peak`, it can be found by looking past the first two columns with {anchorName HasCol}`there`, after which it is the first column.
-In other words, to satisfy the type {anchorTerm peakElevationInt}`HasCol peak "elevation" .int`, use the expression {anchorTerm peakElevationInt}`.there (.there .here)`.
-One way to think about {anchorName HasCol}`HasCol` is as a kind of decorated {anchorName Naturals}`Nat`—{anchorName Naturals}`zero` corresponds to {anchorName HasCol}`here`, and {anchorName Naturals}`succ` corresponds to {anchorName HasCol}`there`.
-The extra type information makes it impossible to have off-by-one errors.
+{anchorTerm peak}`"elevation"`は{anchorName peak}`peak`の三番目の列なので、{anchorName HasCol}`there`で最初の二つの列を見送れば見つかり、そのあとは最初の列である。
+言い換えれば、型{anchorTerm peakElevationInt}`HasCol peak "elevation" .int`を満たすには、式{anchorTerm peakElevationInt}`.there (.there .here)`を使う。
+{anchorName HasCol}`HasCol`は一種の装飾された{anchorName Naturals}`Nat`と考えることもできる。{anchorName Naturals}`zero`が{anchorName HasCol}`here`に、{anchorName Naturals}`succ`が{anchorName HasCol}`there`に対応する。
+余分な型の情報により、一つずれの誤りは起こりえない。
 
-A pointer to a particular column in a schema can be used to extract that column's value from a row:
+スキーマの特定の列へのポインタを使うと、行からその列の値を取り出せる。
 
 ```anchor Rowget
 def Row.get (row : Row s) (col : HasCol s n t) : t.asType :=
@@ -258,38 +258,38 @@ def Row.get (row : Row s) (col : HasCol s n t) : t.asType :=
   | _::_::_, .here, (v, _) => v
   | _::_::_, .there next, (_, r) => get r next
 ```
-The first step is to pattern match on the schema, because this determines whether the row is a tuple or a single value.
-No case is needed for the empty schema because there is a {anchorName HasCol}`HasCol` available, and both constructors of {anchorName HasCol}`HasCol` specify non-empty schemas.
-If the schema has just a single column, then the pointer must point to it, so only the {anchorName HasCol}`here` constructor of {anchorName HasCol}`HasCol` need be matched.
-If the schema has two or more columns, then there must be a case for {anchorName HasCol}`here`, in which case the value is the first one in the row, and one for {anchorName HasCol}`there`, in which case a recursive call is used.
-Because the {anchorName HasCol}`HasCol` type guarantees that the column exists in the row, {anchorName Rowget}`Row.get` does not need to return an {anchorName nullable}`Option`.
+まずスキーマでパターンマッチングする。これで行がタプルか単一の値かが決まるためである。
+空のスキーマの場合を書く必要はない。{anchorName HasCol}`HasCol`があるということ自体が、そのどちらのコンストラクタも空でないスキーマを指定していることを意味するためである。
+スキーマの列が一つだけなら、ポインタはそれを指さねばならないので、{anchorName HasCol}`HasCol`の{anchorName HasCol}`here`コンストラクタだけをマッチさせればよい。
+スキーマの列が二つ以上なら、{anchorName HasCol}`here`の場合（そのとき値は行の最初のもの）と、{anchorName HasCol}`there`の場合（そのとき再帰呼び出しを使う）が必要である。
+{anchorName HasCol}`HasCol`型がその列が行に存在することを保証するので、{anchorName Rowget}`Row.get`は{anchorName nullable}`Option`を返す必要がない。
 
-{anchorName HasCol}`HasCol` plays two roles:
- 1. It serves as _evidence_ that a column with a particular name and type exists in a schema.
+{anchorName HasCol}`HasCol`は二つの役割を果たす。
+ 1. 特定の名前と型を持つ列がスキーマに存在するという*証拠*として働く。
 
- 2. It serves as _data_ that can be used to find the value associated with the column in a row.
+ 2. 行の中でその列に対応する値を見つけるのに使える*データ*として働く。
 
-The first role, that of evidence, is similar to way that propositions are used.
-The definition of the indexed family {anchorName HasCol}`HasCol` can be read as a specification of what counts as evidence that a given column exists.
-Unlike propositions, however, it matters which constructor of {anchorName HasCol}`HasCol` was used.
-In the second role, the constructors are used like {anchorName Naturals}`Nat`s to find data in a collection.
-Programming with indexed families often requires the ability to switch fluently between both perspectives.
+一つ目の役割、つまり証拠としての役割は、命題の使われ方に似ている。
+添字付き族{anchorName HasCol}`HasCol`の定義は、ある列が存在することの証拠として何が認められるかの仕様として読める。
+しかし命題と違い、{anchorName HasCol}`HasCol`のどのコンストラクタを使ったかが問題になる。
+二つ目の役割では、コンストラクタが{anchorName Naturals}`Nat`のように使われ、集まりの中のデータを見つける。
+添字付き族を使ったプログラミングでは、両方の観点を自在に行き来できることがしばしば必要である。
 
-## Subschemas
+## 部分スキーマ
 %%%
 tag := "subschemas"
 %%%
 
-One important operation in relational algebra is to _project_ a table or row into a smaller schema.
-Every column not present in the smaller schema is forgotten.
-In order for projection to make sense, the smaller schema must be a subschema of the larger schema, which means that every column in the smaller schema must be present in the larger schema.
-Just as {anchorName HasCol}`HasCol` makes it possible to write a single-column lookup in a row that cannot fail, a representation of the subschema relationship as an indexed family makes it possible to write a projection function that cannot fail.
+関係代数の重要な操作の一つは、表や行をより小さなスキーマへ*射影*することである。
+小さなスキーマにない列はすべて忘れられる。
+射影が意味をなすには、小さなスキーマが大きなスキーマの部分スキーマでなければならない。つまり、小さなスキーマのどの列も大きなスキーマに存在しなければならない。
+{anchorName HasCol}`HasCol`が失敗しえない一行の一列の参照を書けるようにするのと同じく、部分スキーマの関係を添字付き族として表せば、失敗しえない射影の関数を書ける。
 
-The ways in which one schema can be a subschema of another can be defined as an indexed family.
-The basic idea is that a smaller schema is a subschema of a bigger schema if every column in the smaller schema occurs in the bigger schema.
-If the smaller schema is empty, then it's certainly a subschema of the bigger schema, represented by the constructor {anchorName Subschema}`nil`.
-If the smaller schema has a column, then that column must be in the bigger schema, and all the rest of the columns in the subschema must also be a subschema of the bigger schema.
-This is represented by the constructor {anchorName Subschema}`cons`.
+あるスキーマが別のスキーマの部分スキーマになりうる方法は、添字付き族として定義できる。
+基本的な考え方は、小さなスキーマのどの列も大きなスキーマに現れるなら、その小さなスキーマは大きなスキーマの部分スキーマである、というものである。
+小さなスキーマが空なら、それは確かに大きなスキーマの部分スキーマであり、コンストラクタ{anchorName Subschema}`nil`で表す。
+小さなスキーマに列があれば、その列は大きなスキーマになければならず、部分スキーマの残りの列もすべて大きなスキーマの部分スキーマでなければならない。
+これはコンストラクタ{anchorName Subschema}`cons`で表す。
 
 ```anchor Subschema
 inductive Subschema : Schema → Schema → Type where
@@ -299,15 +299,15 @@ inductive Subschema : Schema → Schema → Type where
       Subschema smaller bigger →
       Subschema (⟨n, t⟩ :: smaller) bigger
 ```
-In other words, {anchorName Subschema}`Subschema` assigns each column of the smaller schema a {anchorName HasCol}`HasCol` that points to its location in the larger schema.
+言い換えれば、{anchorName Subschema}`Subschema`は小さなスキーマの各列に、大きなスキーマでの位置を指す{anchorName HasCol}`HasCol`を割り当てる。
 
-The schema {anchorName travelDiary}`travelDiary` represents the fields that are common to both {anchorName peak}`peak` and {anchorName waterfall}`waterfall`:
+スキーマ{anchorName travelDiary}`travelDiary`は、{anchorName peak}`peak`と{anchorName waterfall}`waterfall`の両方に共通するフィールドを表す。
 
 ```anchor travelDiary
 abbrev travelDiary : Schema :=
   [⟨"name", .string⟩, ⟨"location", .string⟩, ⟨"lastVisited", .int⟩]
 ```
-It is certainly a subschema of {anchorName peak}`peak`, as shown by this example:
+次の例が示すように、これは確かに{anchorName peak}`peak`の部分スキーマである。
 
 ```anchor peakDiarySub
 example : Subschema travelDiary peak :=
@@ -315,21 +315,21 @@ example : Subschema travelDiary peak :=
     (.cons (.there .here)
       (.cons (.there (.there (.there .here))) .nil))
 ```
-However, code like this is difficult to read and difficult to maintain.
-One way to improve it is to instruct Lean to write the {anchorName Subschema}`Subschema` and {anchorName HasCol}`HasCol` constructors automatically.
-This can be done using the tactic feature that was introduced in {ref "props-proofs-indexing"}[the Interlude on propositions and proofs].
-That interlude uses {kw}`by decide` and {kw}`by simp` to provide evidence of various propositions.
+しかし、このようなコードは読みにくく、保守しにくい。
+これをよくする一つの方法は、{anchorName Subschema}`Subschema`と{anchorName HasCol}`HasCol`のコンストラクタを自動で書くようLeanに指示することである。
+これは{ref "props-proofs-indexing"}[命題と証明についての幕間]で紹介したタクティクの機能を使って行える。
+その幕間では、{kw}`by decide`と{kw}`by simp`を使ってさまざまな命題の証拠を与えた。
 
-In this context, two tactics are useful:
- * The {kw}`constructor` tactic instructs Lean to solve the problem using the constructor of a datatype.
- * The {kw}`repeat` tactic instructs Lean to repeat a tactic over and over until it either fails or the proof is finished.
+この文脈では、二つのタクティクが役に立つ。
+ * {kw}`constructor`タクティクは、データ型のコンストラクタを使って問題を解くようLeanに指示する。
+ * {kw}`repeat`タクティクは、失敗するか証明が終わるまでタクティクを繰り返すようLeanに指示する。
 
-In the next example, {kw}`by constructor` has the same effect as just writing {anchorName peakDiarySub}`.nil` would have:
+次の例では、{kw}`by constructor`は単に{anchorName peakDiarySub}`.nil`と書くのと同じ効果がある。
 
 ```anchor emptySub
 example : Subschema [] peak := by constructor
 ```
-However, attempting that same tactic with a slightly more complicated type fails:
+しかし、もう少し複雑な型で同じタクティクを試すと失敗する。
 ```anchor notDone
 example : Subschema [⟨"location", .string⟩] peak := by constructor
 ```
@@ -341,10 +341,10 @@ case a
 case a
 ⊢ Subschema [] peak
 ```
-Errors that begin with {lit}`unsolved goals` describe tactics that failed to completely build the expressions that they were supposed to.
-In Lean's tactic language, a _goal_ is a type that a tactic is to fulfill by constructing an appropriate expression behind the scenes.
-In this case, {kw}`constructor` caused {anchorName SubschemaNames}`Subschema.cons` to be applied, and the two goals represent the two arguments expected by {anchorName Subschema}`cons`.
-Adding another instance of {kw}`constructor` causes the first goal ({anchorTerm SubschemaNames}`HasCol peak "location" DBType.string`) to be addressed with {anchorName SubschemaNames}`HasCol.there`, because {anchorName peak}`peak`'s first column is not {anchorTerm SubschemaNames}`"location"`:
+{lit}`unsolved goals`で始まるエラーは、本来組み立てるべき式を完全には組み立てられなかったタクティクを表す。
+Leanのタクティク言語で、*ゴール*とは、タクティクが裏で適切な式を組み立てることで満たすべき型である。
+この場合、{kw}`constructor`が{anchorName SubschemaNames}`Subschema.cons`を適用させ、二つのゴールが{anchorName Subschema}`cons`の期待する二つの引数を表している。
+{kw}`constructor`をもう一つ加えると、{anchorName peak}`peak`の最初の列が{anchorTerm SubschemaNames}`"location"`ではないので、一つ目のゴール（{anchorTerm SubschemaNames}`HasCol peak "location" DBType.string`）が{anchorName SubschemaNames}`HasCol.there`で扱われる。
 ```anchor notDone2
 example : Subschema [⟨"location", .string⟩] peak := by
   constructor
@@ -361,7 +361,7 @@ case a
 case a
 ⊢ Subschema [] peak
 ```
-However, adding a third {kw}`constructor` results in the first goal being solved, because {anchorName SubschemaNames}`HasCol.here` is applicable:
+しかし、{kw}`constructor`を三つ目に加えると、{anchorName SubschemaNames}`HasCol.here`が適用できるので、一つ目のゴールが解決される。
 ```anchor notDone3
 example : Subschema [⟨"location", .string⟩] peak := by
   constructor
@@ -373,7 +373,7 @@ unsolved goals
 case a
 ⊢ Subschema [] peak
 ```
-A fourth instance of {kw}`constructor` solves the {anchorTerm SubschemaNames}`Subschema peak []` goal:
+{kw}`constructor`の四つ目で、{anchorTerm SubschemaNames}`Subschema peak []`のゴールが解決する。
 
 ```anchor notDone4
 example : Subschema [⟨"location", .string⟩] peak := by
@@ -382,19 +382,19 @@ example : Subschema [⟨"location", .string⟩] peak := by
   constructor
   constructor
 ```
-Indeed, a version written without the use of tactics has four constructors:
+実際、タクティクを使わずに書いた版ではコンストラクタが四つある。
 
 ```anchor notDone5
 example : Subschema [⟨"location", .string⟩] peak :=
   .cons (.there .here) .nil
 ```
 
-Instead of experimenting to find the right number of times to write {kw}`constructor`, the {kw}`repeat` tactic can be used to ask Lean to just keep trying {kw}`constructor` as long as it keeps making progress:
+{kw}`constructor`を何回書けばよいか試行錯誤する代わりに、{kw}`repeat`タクティクを使って、進展がある限り{kw}`constructor`を試し続けるようLeanに頼める。
 
 ```anchor notDone6
 example : Subschema [⟨"location", .string⟩] peak := by repeat constructor
 ```
-This more flexible version also works for more interesting {anchorName Subschema}`Subschema` problems:
+このより柔軟な版は、より興味深い{anchorName Subschema}`Subschema`の問題でも働く。
 
 ```anchor subschemata
 example : Subschema travelDiary peak := by repeat constructor
@@ -402,13 +402,13 @@ example : Subschema travelDiary peak := by repeat constructor
 example : Subschema travelDiary waterfall := by repeat constructor
 ```
 
-The approach of blindly trying constructors until something works is not very useful for types like {anchorName Naturals}`Nat` or {anchorTerm misc}`List Bool`.
-Just because an expression has type {anchorName Naturals}`Nat` doesn't mean that it's the _correct_ {anchorName Naturals}`Nat`, after all.
-But types like {anchorName HasCol}`HasCol` and {anchorName Subschema}`Subschema` are sufficiently constrained by their indices that only one constructor will ever be applicable, which means that the contents of the program itself are less interesting, and a computer can pick the correct one.
+何かが通るまでやみくもにコンストラクタを試すやり方は、{anchorName Naturals}`Nat`や{anchorTerm misc}`List Bool`のような型にはあまり役に立たない。
+何しろ、式が{anchorName Naturals}`Nat`型を持つからといって、それが*正しい*{anchorName Naturals}`Nat`であるとは限らない。
+しかし{anchorName HasCol}`HasCol`や{anchorName Subschema}`Subschema`のような型は、添字によって十分に制約されているので、適用できるコンストラクタは常に一つだけであり、つまりプログラムの中身自体の面白みは薄く、コンピュータが正しいものを選べる。
 
-If one schema is a subschema of another, then it is also a subschema of the larger schema extended with an additional column.
-This fact can be captured as a function definition.
-{anchorName SubschemaAdd}`Subschema.addColumn` takes evidence that {anchorName SubschemaAdd}`smaller` is a subschema of {anchorName SubschemaAdd}`bigger`, and then returns evidence that {anchorName SubschemaAdd}`smaller` is a subschema of {anchorTerm SubschemaAdd}`c :: bigger`, that is, {anchorName SubschemaAdd}`bigger` with one additional column:
+あるスキーマが別のスキーマの部分スキーマなら、列を一つ加えて拡張した大きなスキーマの部分スキーマでもある。
+この事実は関数の定義としてとらえられる。
+{anchorName SubschemaAdd}`Subschema.addColumn`は、{anchorName SubschemaAdd}`smaller`が{anchorName SubschemaAdd}`bigger`の部分スキーマである証拠を取り、{anchorName SubschemaAdd}`smaller`が{anchorTerm SubschemaAdd}`c :: bigger`、つまり列を一つ加えた{anchorName SubschemaAdd}`bigger`の部分スキーマである証拠を返す。
 
 ```anchor SubschemaAdd
 def Subschema.addColumn :
@@ -417,13 +417,13 @@ def Subschema.addColumn :
   | .nil  => .nil
   | .cons col sub' => .cons (.there col) sub'.addColumn
 ```
-A subschema describes where to find each column from the smaller schema in the larger schema.
-{anchorName SubschemaAdd}`Subschema.addColumn` must translate these descriptions from the original larger schema into the extended larger schema.
-In the {anchorName Subschema}`nil` case, the smaller schema is {lit}`[]`, and {anchorName Subschema}`nil` is also evidence that {lit}`[]` is a subschema of {anchorTerm SubschemaAdd}`c :: bigger`.
-In the {anchorName Subschema}`cons` case, which describes how to place one column from {anchorName SubschemaAdd}`smaller` into {anchorName SubschemaAdd}`bigger`, the placement of the column needs to be adjusted with {anchorName HasCol}`there` to account for the new column {anchorName SubschemaAdd}`c`, and a recursive call adjusts the rest of the columns.
+部分スキーマは、小さなスキーマの各列を大きなスキーマのどこに見つけるかを記述する。
+{anchorName SubschemaAdd}`Subschema.addColumn`は、これらの記述を元の大きなスキーマから拡張した大きなスキーマへ移さねばならない。
+{anchorName Subschema}`nil`の場合は、小さなスキーマは{lit}`[]`であり、{anchorName Subschema}`nil`は{lit}`[]`が{anchorTerm SubschemaAdd}`c :: bigger`の部分スキーマである証拠でもある。
+{anchorName Subschema}`cons`の場合は、{anchorName SubschemaAdd}`smaller`の一つの列を{anchorName SubschemaAdd}`bigger`にどう置くかを記述しており、新しい列{anchorName SubschemaAdd}`c`を考慮してその列の位置を{anchorName HasCol}`there`で調整する必要があり、再帰呼び出しが残りの列を調整する。
 
-Another way to think about {anchorName Subschema}`Subschema` is that it defines a _relation_ between two schemas—the existence of an expression  with type {anchorTerm misc}`Subschema smaller bigger` means that {anchorTerm misc}`(smaller, bigger)` is in the relation.
-This relation is reflexive, meaning that every schema is a subschema of itself:
+{anchorName Subschema}`Subschema`のもう一つの見方は、二つのスキーマの間の*関係*を定義しているというものである。型{anchorTerm misc}`Subschema smaller bigger`の式が存在することは、{anchorTerm misc}`(smaller, bigger)`がその関係にあることを意味する。
+この関係は反射的であり、つまりどのスキーマもそれ自身の部分スキーマである。
 
 ```anchor SubschemaSame
 def Subschema.reflexive : (s : Schema) → Subschema s s
@@ -432,17 +432,17 @@ def Subschema.reflexive : (s : Schema) → Subschema s s
 ```
 
 
-## Projecting Rows
+## 行の射影
 %%%
 tag := "projecting-rows"
 %%%
 
-Given evidence that {anchorName RowProj}`s'` is a subschema of {anchorName RowProj}`s`, a row in {anchorName RowProj}`s` can be projected into a row in {anchorName RowProj}`s'`.
-This is done using the evidence that {anchorName RowProj}`s'` is a subschema of {anchorName RowProj}`s`, which explains where each column of {anchorName RowProj}`s'` is found in {anchorName RowProj}`s`.
-The new row in {anchorName RowProj}`s'` is built up one column at a time by retrieving the value from the appropriate place in the old row.
+{anchorName RowProj}`s'`が{anchorName RowProj}`s`の部分スキーマである証拠があれば、{anchorName RowProj}`s`の行を{anchorName RowProj}`s'`の行へ射影できる。
+これは、{anchorName RowProj}`s'`が{anchorName RowProj}`s`の部分スキーマである証拠を使って行う。その証拠が、{anchorName RowProj}`s'`の各列を{anchorName RowProj}`s`のどこに見つけるかを説明する。
+{anchorName RowProj}`s'`の新しい行は、古い行の適切な場所から値を取り出して一列ずつ組み立てられる。
 
-The function that performs this projection, {anchorName RowProj}`Row.project`, has three cases, one for each case of {anchorName RowProj}`Row` itself.
-It uses {anchorName Rowget}`Row.get` together with each {anchorName HasCol}`HasCol` in the {anchorName RowProj}`Subschema` argument to construct the projected row:
+この射影を行う{anchorName RowProj}`Row.project`関数には三つの場合があり、{anchorName RowProj}`Row`自体の各場合に対応する。
+射影した行を組み立てるのに、{anchorName Rowget}`Row.get`を{anchorName RowProj}`Subschema`引数の各{anchorName HasCol}`HasCol`とともに使う。
 
 ```anchor RowProj
 def Row.project (row : Row s) : (s' : Schema) → Subschema s' s → Row s'
@@ -452,19 +452,19 @@ def Row.project (row : Row s) : (s' : Schema) → Subschema s' s → Row s'
 ```
 
 
-# Conditions and Selection
+# 条件と選択
 %%%
 tag := "conditions-and-selection"
 %%%
 
-Projection removes unwanted columns from a table, but queries must also be able to remove unwanted rows.
-This operation is called _selection_.
-Selection relies on having a means of expressing which rows are desired.
+射影は表から不要な列を取り除くが、問い合わせは不要な行も取り除けねばならない。
+この操作を*選択*と呼ぶ。
+選択は、どの行が望ましいかを表す手段があって初めて成り立つ。
 
-The example query language contains expressions, which are analogous to what can be written in a {lit}`WHERE` clause in SQL.
-Expressions are represented by the indexed family {anchorName DBExpr}`DBExpr`.
-Because expressions can refer to columns from the database, but different sub-expressions all have the same schema, {anchorName DBExpr}`DBExpr` takes the database schema as a parameter.
-Additionally, each expression has a type, and these vary, making it an index:
+この例の問い合わせ言語には式があり、SQLの{lit}`WHERE`句に書けるものに相当する。
+式は添字付き族{anchorName DBExpr}`DBExpr`で表す。
+式はデータベースの列を参照できるが、異なる部分式はすべて同じスキーマを持つので、{anchorName DBExpr}`DBExpr`はデータベースのスキーマをパラメータに取る。
+さらに、各式には型があり、それは変化するので添字になる。
 
 ```anchor DBExpr
 inductive DBExpr (s : Schema) : DBType → Type where
@@ -474,29 +474,29 @@ inductive DBExpr (s : Schema) : DBType → Type where
   | and (e1 e2 : DBExpr s .bool) : DBExpr s .bool
   | const : t.asType → DBExpr s t
 ```
-The {anchorName DBExpr}`col` constructor represents a reference to a column in the database.
-The {anchorName DBExpr}`eq` constructor compares two expressions for equality, {anchorName DBExpr}`lt` checks whether one is less than the other, {anchorName DBExpr}`and` is Boolean conjunction, and {anchorName DBExpr}`const` is a constant value of some type.
+{anchorName DBExpr}`col`コンストラクタは、データベースの列への参照を表す。
+{anchorName DBExpr}`eq`コンストラクタは二つの式の等しさを比べ、{anchorName DBExpr}`lt`は一方が他方より小さいかを調べ、{anchorName DBExpr}`and`は真偽値の連言、{anchorName DBExpr}`const`はある型の定数値である。
 
-For example, an expression in {anchorName peak}`peak` that checks whether the {lit}`elevation` column is greater than 1000 and the location is {anchorTerm mountainDiary}`"Denmark"` can be written:
+たとえば、{anchorName peak}`peak`において、{lit}`elevation`列が1000より大きく、場所が{anchorTerm mountainDiary}`"Denmark"`かを調べる式は次のように書ける。
 
 ```anchor tallDk
 def tallInDenmark : DBExpr peak .bool :=
   .and (.lt (.const 1000) (.col "elevation" (by repeat constructor)))
        (.eq (.col "location" (by repeat constructor)) (.const "Denmark"))
 ```
-This is somewhat noisy.
-In particular, references to columns contain boilerplate calls to {anchorTerm tallDk}`by repeat constructor`.
-A Lean feature called _macros_ can help make expressions easier to read by eliminating this boilerplate:
+これは少し煩わしい。
+特に、列への参照に{anchorTerm tallDk}`by repeat constructor`の定型の呼び出しが含まれる。
+*マクロ*と呼ばれるLeanの機能を使うと、この定型を取り除いて式を読みやすくできる。
 
 ```anchor cBang
 macro "c!" n:term : term => `(DBExpr.col $n (by repeat constructor))
 ```
-This declaration adds the {kw}`c!` keyword to Lean, and instructs Lean to replace any instance of {kw}`c!` followed by an expression with the corresponding {anchorTerm cBang}`DBExpr.col` construction.
-Here, {anchorName cBang}`term` stands for Lean expressions, rather than commands, tactics, or some other part of the language.
-Lean macros are a bit like C preprocessor macros, except they are better integrated into the language and they automatically avoid some of the pitfalls of CPP.
-In fact, they are very closely related to macros in Scheme and Racket.
+この宣言は{kw}`c!`キーワードをLeanに加え、{kw}`c!`の後に式が続く箇所を、対応する{anchorTerm cBang}`DBExpr.col`の構成に置き換えるようLeanに指示する。
+ここで{anchorName cBang}`term`は、コマンドやタクティク、その他の言語の部分ではなく、Leanの式を表す。
+LeanのマクロはCのプリプロセッサのマクロに少し似ているが、言語によりよく統合されており、CPPの落とし穴のいくつかを自動で避ける。
+実際、SchemeやRacketのマクロと非常に密接に関係している。
 
-With this macro, the expression can be much easier to read:
+このマクロを使うと、式はずっと読みやすくなる。
 
 ```anchor tallDkBetter
 def tallInDenmark : DBExpr peak .bool :=
@@ -504,7 +504,7 @@ def tallInDenmark : DBExpr peak .bool :=
        (.eq (c! "location") (.const "Denmark"))
 ```
 
-Finding the value of an expression with respect to a given row uses {anchorName Rowget}`Row.get` to extract column references, and it delegates to Lean's operations on values for every other expression:
+与えられた行について式の値を求めるには、列への参照を取り出すのに{anchorName Rowget}`Row.get`を使い、それ以外の式については値に対するLeanの操作に委ねる。
 
 ```anchor DBExprEval
 def DBExpr.evaluate (row : Row s) : DBExpr s t → t.asType
@@ -515,21 +515,21 @@ def DBExpr.evaluate (row : Row s) : DBExpr s t → t.asType
   | .const v => v
 ```
 
-Evaluating the expression for Valby Bakke, the tallest hill in the Copenhagen area, yields {anchorName misc}`false` because Valby Bakke is much less than 1 km over sea level:
+コペンハーゲン周辺で最も高い丘であるヴァルビュ・バッケについてこの式を評価すると{anchorName misc}`false`になる。ヴァルビュ・バッケは海面から1kmよりずっと低いためである。
 ```anchor valbybakke
 #eval tallInDenmark.evaluate ("Valby Bakke", "Denmark", 31, 2023)
 ```
 ```anchorInfo valbybakke
 false
 ```
-Evaluating it for a fictional mountain of 1230m elevation yields {anchorName misc}`true`:
+標高1230mの架空の山について評価すると{anchorName misc}`true`になる。
 ```anchor fakeDkBjerg
 #eval tallInDenmark.evaluate ("Fictional mountain", "Denmark", 1230, 2023)
 ```
 ```anchorInfo fakeDkBjerg
 true
 ```
-Evaluating it for the highest peak in the US state of Idaho yields {anchorName misc}`false`, as Idaho is not part of Denmark:
+アメリカのアイダホ州で最も高い山について評価すると{anchorName misc}`false`になる。アイダホはデンマークの一部ではないためである。
 ```anchor borah
 #eval tallInDenmark.evaluate ("Mount Borah", "USA", 3859, 1996)
 ```
@@ -537,24 +537,24 @@ Evaluating it for the highest peak in the US state of Idaho yields {anchorName m
 false
 ```
 
-# Queries
+# 問い合わせ
 %%%
 tag := "typed-query-language"
 %%%
 
-The query language is based on relational algebra.
-In addition to tables, it includes the following operators:
- 1. The union of two expressions that have the same schema combines the rows that result from two queries
- 2. The difference of two expressions that have the same schema removes rows found in the second result from the rows in the first result
- 3. Selection by some criterion filters the result of a query according to an expression
- 4. Projection into a subschema, removing columns from the result of a query
- 5. Cartesian product, combining every row from one query with every row from another
- 6. Renaming a column in the result of a query, which modifies its schema
- 7. Prefixing all columns in a query with a name
+この問い合わせ言語は関係代数に基づいている。
+表に加えて、次の演算子がある。
+ 1. 同じスキーマを持つ二つの式の和は、二つの問い合わせから生じる行を合わせる。
+ 2. 同じスキーマを持つ二つの式の差は、一つ目の結果の行から、二つ目の結果にある行を取り除く。
+ 3. ある基準による選択は、式に従って問い合わせの結果を絞り込む。
+ 4. 部分スキーマへの射影は、問い合わせの結果から列を取り除く。
+ 5. 直積は、一方の問い合わせのどの行も他方の問い合わせのどの行とも組み合わせる。
+ 6. 問い合わせの結果の列の名前を変える。これはスキーマを変更する。
+ 7. 問い合わせのすべての列の名前に接頭辞を付ける。
 
-The last operator is not strictly necessary, but it makes the language more convenient to use.
+最後の演算子は必ずしも必要ではないが、言語を使いやすくする。
 
-Once again, queries are represented by an indexed family:
+ここでもまた、問い合わせは添字付き族で表す。
 
 ```anchor Query
 inductive Query : Schema → Type where
@@ -578,18 +578,18 @@ inductive Query : Schema → Type where
     (n : String) → Query s →
     Query (s.map fun c => {c with name := n ++ "." ++ c.name})
 ```
-The {anchorName Query}`select` constructor requires that the expression used for selection return a Boolean.
-The {anchorName Query}`product` constructor's type contains a call to {anchorName Query}`disjoint`, which ensures that the two schemas don't share any names:
+{anchorName Query}`select`コンストラクタは、選択に使う式が真偽値を返すことを要求する。
+{anchorName Query}`product`コンストラクタの型には{anchorName Query}`disjoint`の呼び出しが含まれ、二つのスキーマが名前を共有しないことを保証する。
 
 ```anchor disjoint
 def disjoint [BEq α] (xs ys : List α) : Bool :=
   not (xs.any ys.contains || ys.any xs.contains)
 ```
-The use of an expression of type {anchorName misc}`Bool` where a type is expected triggers a coercion from {anchorName misc}`Bool` to {anchorTerm misc}`Prop`.
-Just as decidable propositions can be considered to be Booleans, where evidence for the proposition is coerced to {anchorName misc}`true` and refutations of the proposition are coerced to {anchorName misc}`false`, Booleans are coerced into the proposition that states that the expression is equal to {anchorName misc}`true`.
-Because all uses of the library are expected to occur in contexts where the schemas are known ahead of time, this proposition can be proved with {kw}`by simp`.
-Similarly, the {anchorName renameColumn}`renameColumn` constructor checks that the new name does not already exist in the schema.
-It uses the helper {anchorName renameColumn}`Schema.renameColumn` to change the name of the column pointed to by {anchorName HasCol}`HasCol`:
+型が期待される場所で{anchorName misc}`Bool`型の式を使うと、{anchorName misc}`Bool`から{anchorTerm misc}`Prop`への型強制が働く。
+決定可能な命題を真偽値と見なし、その命題の証拠が{anchorName misc}`true`に、その命題の反証が{anchorName misc}`false`に型強制できるのと同じように、真偽値は、その式が{anchorName misc}`true`に等しいという命題に型強制される。
+このライブラリの使用はすべて、スキーマが事前に分かっている文脈で起きることが想定されているので、この命題は{kw}`by simp`で証明できる。
+同様に、{anchorName renameColumn}`renameColumn`コンストラクタは、新しい名前がスキーマにすでに存在しないことを調べる。
+{anchorName HasCol}`HasCol`が指す列の名前を変えるのに、補助関数{anchorName renameColumn}`Schema.renameColumn`を使う。
 
 ```anchor renameColumn
 def Schema.renameColumn : (s : Schema) → HasCol s n t → String → Schema
@@ -597,22 +597,22 @@ def Schema.renameColumn : (s : Schema) → HasCol s n t → String → Schema
   | c :: cs, .there next, n' => c :: renameColumn cs next n'
 ```
 
-# Executing Queries
+# 問い合わせの実行
 %%%
 tag := "executing-queries"
 %%%
 
-Executing queries requires a number of helper functions.
-The result of a query is a table; this means that each operation in the query language requires a corresponding implementation that works with tables.
+問い合わせの実行にはいくつかの補助関数が要る。
+問い合わせの結果は表である。つまり、問い合わせ言語の各操作には、表を扱う対応する実装が必要である。
 
-## Cartesian Product
+## 直積
 %%%
 tag := "executing-cartesian-product"
 %%%
 
-Taking the Cartesian product of two tables is done by appending each row from the first table to each row from the second.
-First off, due to the structure of {anchorName Row}`Row`, adding a single column to a row requires pattern matching on its schema in order to determine whether the result will be a bare value or a tuple.
-Because this is a common operation, factoring the pattern matching out into a helper is convenient:
+二つの表の直積は、一つ目の表の各行を二つ目の表の各行に付けることで取る。
+まず、{anchorName Row}`Row`の構造のため、行に列を一つ加えるには、結果が裸の値になるかタプルになるかを決めるのにそのスキーマでパターンマッチングする必要がある。
+これはよくある操作なので、パターンマッチングを補助関数としてくくり出すと便利である。
 
 ```anchor addVal
 def addVal (v : c.contains.asType) (row : Row s) : Row (c :: s) :=
@@ -620,10 +620,10 @@ def addVal (v : c.contains.asType) (row : Row s) : Row (c :: s) :=
   | [], () => v
   | c' :: cs, v' => (v, v')
 ```
-Appending two rows is recursive on the structure of both the first schema and the first row, because the structure of the row proceeds in lock-step with the structure of the schema.
-When the first row is empty, appending returns the second row.
-When the first row is a singleton, the value is added to the second row.
-When the first row contains multiple columns, the first column's value is added to the result of recursion on the remainder of the row.
+二つの行を付けるのは、一つ目のスキーマと一つ目の行の両方の構造について再帰的である。行の構造はスキーマの構造と歩調を合わせて進むためである。
+一つ目の行が空なら、付け足しは二つ目の行を返す。
+一つ目の行が単一の値なら、その値が二つ目の行に加えられる。
+一つ目の行が複数の列を含むなら、最初の列の値が、その行の残りについての再帰の結果に加えられる。
 
 ```anchor RowAppend
 def Row.append (r1 : Row s1) (r2 : Row s2) : Row (s1 ++ s2) :=
@@ -633,19 +633,19 @@ def Row.append (r1 : Row s1) (r2 : Row s2) : Row (s1 ++ s2) :=
   | _::_::_, (v, r') => (v, r'.append r2)
 ```
 
-{anchorName ListFlatMap}`List.flatMap`, found in the standard library, applies a function that itself returns a list to every entry in an input list, returning the result of appending the resulting lists in order:
+標準ライブラリにある{anchorName ListFlatMap}`List.flatMap`は、それ自体がリストを返す関数を入力のリストの各要素に適用し、得られたリストを順に付けた結果を返す。
 
 ```anchor ListFlatMap
 def List.flatMap (f : α → List β) : (xs : List α) → List β
   | [] => []
   | x :: xs => f x ++ xs.flatMap f
 ```
-The type signature suggests that {anchorName ListFlatMap}`List.flatMap` could be used to implement a {anchorTerm ListMonad}`Monad List` instance.
-Indeed, together with {anchorTerm ListMonad}`pure x := [x]`, {anchorName ListFlatMap}`List.flatMap` does implement a monad.
-However, it's not a very useful {anchorName ListMonad}`Monad` instance.
-The {anchorName ListMonad}`List` monad is basically a version of {anchorName Many (module:=Examples.Monads.Many)}`Many` that explores _every_ possible path through the search space in advance, before users have the chance to request some number of values.
-Because of this performance trap, it's usually not a good idea to define a {anchorName ListMonad}`Monad` instance for {anchorName ListMonad}`List`.
-Here, however, the query language has no operator for restricting the number of results to be returned, so combining all possibilities is exactly what is desired:
+この型シグネチャは、{anchorName ListFlatMap}`List.flatMap`が{anchorTerm ListMonad}`Monad List`インスタンスの実装に使えることを示唆している。
+実際、{anchorTerm ListMonad}`pure x := [x]`と合わせれば、{anchorName ListFlatMap}`List.flatMap`はモナドを実装する。
+しかし、あまり役に立つ{anchorName ListMonad}`Monad`インスタンスではない。
+{anchorName ListMonad}`List`モナドは基本的に、利用者がいくつかの値を要求する機会を得る前に、探索空間の*あらゆる*可能な道筋を前もってたどる{anchorName Many (module:=Examples.Monads.Many)}`Many`の版である。
+この性能のわなのため、{anchorName ListMonad}`List`の{anchorName ListMonad}`Monad`インスタンスを定義するのは普通はよくない。
+しかしここでは、この問い合わせ言語には返す結果の数を制限する演算子がないので、すべての可能性を組み合わせることがまさに望ましい。
 
 ```anchor TableCartProd
 def Table.cartesianProduct (table1 : Table s1) (table2 : Table s2) :
@@ -653,7 +653,7 @@ def Table.cartesianProduct (table1 : Table s1) (table2 : Table s2) :
   table1.flatMap fun r1 => table2.map r1.append
 ```
 
-Just as with {anchorName ListProduct (module:=Examples.DependentTypes.Finite)}`List.product`, a loop with mutation in the identity monad can be used as an alternative implementation technique:
+{anchorName ListProduct (module:=Examples.DependentTypes.Finite)}`List.product`と同じく、恒等モナドでの変更を伴うループを別の実装技法として使える。
 
 ```anchor TableCartProdOther
 def Table.cartesianProduct (table1 : Table s1) (table2 : Table s2) :
@@ -666,35 +666,35 @@ def Table.cartesianProduct (table1 : Table s1) (table2 : Table s2) :
 ```
 
 
-## Difference
+## 差
 %%%
 tag := "executing-difference"
 %%%
 
-Removing undesired rows from a table can be done using {anchorName misc}`List.filter`, which takes a list and a function that returns a {anchorName misc}`Bool`.
-A new list is returned that contains only the entries for which the function returns {anchorName misc}`true`.
-For instance,
+表から不要な行を取り除くには{anchorName misc}`List.filter`を使える。これはリストと、{anchorName misc}`Bool`を返す関数を取る。
+その関数が{anchorName misc}`true`を返す要素だけを含む新しいリストが返る。
+たとえば、
 ```anchorTerm filterA
 ["Willamette", "Columbia", "Sandy", "Deschutes"].filter (·.length > 8)
 ```
-evaluates to
+は次のように評価される。
 ```anchorTerm filterA
 ["Willamette", "Deschutes"]
 ```
-because {anchorTerm filterA}`"Columbia"` and {anchorTerm filterA}`"Sandy"` have lengths less than or equal to {anchorTerm filterA}`8`.
-Removing the entries of a table can be done using the helper {anchorName ListWithout}`List.without`:
+{anchorTerm filterA}`"Columbia"`と{anchorTerm filterA}`"Sandy"`の長さが{anchorTerm filterA}`8`以下だからである。
+表の要素を取り除くには、補助関数{anchorName ListWithout}`List.without`を使える。
 
 ```anchor ListWithout
 def List.without [BEq α] (source banned : List α) : List α :=
   source.filter fun r => !(banned.contains r)
 ```
-This will be used with the {anchorName BEqDBType}`BEq` instance for {anchorName Row}`Row` when interpreting queries.
+これは問い合わせを解釈するときに、{anchorName Row}`Row`の{anchorName BEqDBType}`BEq`インスタンスとともに使う。
 
-## Renaming Columns
+## 列の名前の変更
 %%%
 tag := "executing-renaming-columns"
 %%%
-Renaming a column in a row is done with a recursive function that traverses the row until the column in question is found, at which point the column with the new name gets the same value as the column with the old name:
+行の列の名前を変えるには、問題の列が見つかるまで行をたどる再帰関数を使う。見つかったところで、新しい名前の列が古い名前の列と同じ値を得る。
 
 ```anchor renameRow
 def Row.rename (c : HasCol s n t) (row : Row s) :
@@ -704,18 +704,18 @@ def Row.rename (c : HasCol s n t) (row : Row s) :
   | _::_::_, (v, r), .here => (v, r)
   | _::_::_, (v, r), .there next => addVal v (r.rename next)
 ```
-While this function changes the _type_ of its argument, the actual return value contains precisely the same data as the original argument.
-From a run-time perspective, {anchorName renameRow}`Row.rename` is nothing but a slow identity function.
-One difficulty in programming with indexed families is that when performance matters, this kind of operation can get in the way.
-It takes a very careful, often brittle, design to eliminate these kinds of “re-indexing” functions.
+この関数は引数の*型*を変えるが、実際に返る値は元の引数とまったく同じデータを含む。
+実行時の観点では、{anchorName renameRow}`Row.rename`は遅い恒等関数にすぎない。
+添字付き族を使ったプログラミングの難しさの一つは、性能が問題になるときに、この種の操作が妨げになることである。
+この種の「添字の付け替え」関数をなくすには、非常に注意深く、しばしば壊れやすい設計が要る。
 
-## Prefixing Column Names
+## 列の名前への接頭辞の付加
 %%%
 tag := "executing-prefixing-column-names"
 %%%
 
-Adding a prefix to column names is very similar to renaming a column.
-Instead of proceeding to a desired column and then returning, {anchorName prefixRow}`prefixRow` must process all columns:
+列の名前に接頭辞を加えるのは、列の名前を変えるのとよく似ている。
+目的の列まで進んでから返るのではなく、{anchorName prefixRow}`prefixRow`はすべての列を処理せねばならない。
 
 ```anchor prefixRow
 def prefixRow (row : Row s) :
@@ -725,15 +725,15 @@ def prefixRow (row : Row s) :
   | [_], v => v
   | _::_::_, (v, r) => (v, prefixRow r)
 ```
-This can be used with {anchorName misc}`List.map` in order to add a prefix to all rows in a table.
-Once again, this function only exists to change the type of a value.
+これは、表のすべての行に接頭辞を加えるのに{anchorName misc}`List.map`とともに使える。
+ここでもまた、この関数は値の型を変えるためだけに存在する。
 
-## Putting the Pieces Together
+## 部品を組み合わせる
 %%%
 tag := "query-exec-runner"
 %%%
 
-With all of these helpers defined, executing a query requires only a short recursive function:
+これらの補助関数をすべて定義すれば、問い合わせの実行には短い再帰関数だけで足りる。
 
 ```anchor QueryExec
 def Query.exec : Query s → Table s
@@ -746,21 +746,21 @@ def Query.exec : Query s → Table s
   | .renameColumn q c _ _ => exec q |>.map (·.rename c)
   | .prefixWith _ q => exec q |>.map prefixRow
 ```
-Some arguments to the constructors are not used during execution.
-In particular, both the constructor {anchorName Query}`project` and the function {anchorName RowProj}`Row.project` take the smaller schema as explicit arguments, but the type of the _evidence_ that this schema is a subschema of the larger schema contains enough information for Lean to fill out the argument automatically.
-Similarly, the fact that the two tables have disjoint column names that is required by the {anchorName Query}`product` constructor is not needed by {anchorName TableCartProd}`Table.cartesianProduct`.
-Generally speaking, dependent types provide many opportunities to have Lean fill out arguments on behalf of the programmer.
+コンストラクタのいくつかの引数は実行中に使われない。
+特に、コンストラクタ{anchorName Query}`project`と関数{anchorName RowProj}`Row.project`はどちらも小さなスキーマを明示的な引数に取るが、そのスキーマが大きなスキーマの部分スキーマであるという*証拠*の型に、Leanが引数を自動で埋めるのに十分な情報が含まれている。
+同様に、{anchorName Query}`product`コンストラクタが要求する、二つの表の列の名前が重ならないという事実は、{anchorName TableCartProd}`Table.cartesianProduct`には要らない。
+一般に、依存型はLeanにプログラマの代わりに引数を埋めてもらう機会を多く与える。
 
-Dot notation is used with the results of queries to call functions defined both in the {lit}`Table` and {lit}`List` namespaces, such {anchorName misc}`List.map`, {anchorName misc}`List.filter`, and {anchorName TableCartProd}`Table.cartesianProduct`.
-This works because {anchorName Table}`Table` is defined using {kw}`abbrev`.
-Just like type class search, dot notation can see through definitions created with {kw}`abbrev`.
+問い合わせの結果に対してドット記法を使い、{lit}`Table`と{lit}`List`の両方の名前空間で定義された関数、たとえば{anchorName misc}`List.map`、{anchorName misc}`List.filter`、{anchorName TableCartProd}`Table.cartesianProduct`を呼び出している。
+これが働くのは、{anchorName Table}`Table`が{kw}`abbrev`で定義されているためである。
+型クラスの探索と同じく、ドット記法は{kw}`abbrev`で作られた定義を見通せる。
 
-The implementation of {anchorName Query}`select` is also quite concise.
-After executing the query {anchorName selectCase}`q`, {anchorName misc}`List.filter` is used to remove the rows that do not satisfy the expression.
-{anchorName misc}`List.filter` expects a function from {anchorTerm Table}`Row s` to {anchorName misc}`Bool`, but {anchorName DBExprEval}`DBExpr.evaluate` has type {anchorTerm DBExprEvalType}`Row s → DBExpr s t → t.asType`.
-Because the type of the {anchorName Query}`select` constructor requires that the expression have type {anchorTerm Query}`DBExpr s .bool`, {anchorTerm DBExprEvalType}`t.asType` is actually {anchorName misc}`Bool` in this context.
+{anchorName Query}`select`の実装もかなり簡潔である。
+問い合わせ{anchorName selectCase}`q`を実行した後、式を満たさない行を取り除くのに{anchorName misc}`List.filter`を使う。
+{anchorName misc}`List.filter`は{anchorTerm Table}`Row s`から{anchorName misc}`Bool`への関数を期待するが、{anchorName DBExprEval}`DBExpr.evaluate`の型は{anchorTerm DBExprEvalType}`Row s → DBExpr s t → t.asType`である。
+{anchorName Query}`select`コンストラクタの型が、その式が型{anchorTerm Query}`DBExpr s .bool`を持つことを要求するので、この文脈では{anchorTerm DBExprEvalType}`t.asType`は実際には{anchorName misc}`Bool`である。
 
-A query that finds the heights of all mountain peaks with an elevation greater than 500 meters can be written:
+標高が500メートルより高いすべての山の頂の高さを見つける問い合わせは次のように書ける。
 
 ```anchor Query1
 open Query in
@@ -770,7 +770,7 @@ def example1 :=
   [⟨"elevation", .int⟩] (by repeat constructor)
 ```
 
-Executing it returns the expected list of integers:
+実行すると期待どおりの整数のリストが返る。
 ```anchor Query1Exec
 #eval example1.exec
 ```
@@ -778,8 +778,8 @@ Executing it returns the expected list of integers:
 [3637, 1519, 2549]
 ```
 
-To plan a sightseeing tour, it may be relevant to match all pairs mountains and waterfalls in the same location.
-This can be done by taking the Cartesian product of both tables, selecting only the rows in which they are equal, and then projecting out the names:
+観光の計画には、同じ場所にある山と滝の組をすべて対応させると役に立つかもしれない。
+これは、両方の表の直積を取り、それらが等しい行だけを選び、次に名前を射影して取り出すことで行える。
 
 ```anchor Query2
 open Query in
@@ -791,7 +791,7 @@ def example2 :=
     |>.project [⟨"mountain.name", .string⟩, ⟨"waterfall.name", .string⟩]
       (by repeat constructor)
 ```
-Because the example data includes only waterfalls in the USA, executing the query returns pairs of mountains and waterfalls in the US:
+例のデータにはアメリカの滝しか含まれないので、この問い合わせを実行するとアメリカにある山と滝の組が返る。
 ```anchor Query2Exec
 #eval example2.exec
 ```
@@ -801,14 +801,14 @@ Because the example data includes only waterfalls in the USA, executing the quer
   ("Mount St. Helens", "Shoshone Falls")]
 ```
 
-## Errors You May Meet
+## 出会うかもしれないエラー
 %%%
 tag := "typed-queries-error-messages"
 %%%
 
 
-Many potential errors are ruled out by the definition of {anchorName Query}`Query`.
-For instance, forgetting the added qualifier in {anchorTerm Query2}`"mountain.location"` yields a compile-time error that highlights the column reference {anchorTerm QueryOops1}`c! "location"`:
+起こりうるエラーの多くは{anchorName Query}`Query`の定義によって排除される。
+たとえば、{anchorTerm Query2}`"mountain.location"`に加えた修飾を忘れると、列への参照{anchorTerm QueryOops1}`c! "location"`を指し示すコンパイル時のエラーになる。
 ```anchor QueryOops1
 open Query in
 def example2 :=
@@ -819,8 +819,8 @@ def example2 :=
     |>.project [⟨"mountain.name", .string⟩, ⟨"waterfall.name", .string⟩]
       (by repeat constructor)
 ```
-This is excellent feedback!
-On the other hand, the text of the error message is quite difficult to act on:
+これは優れた手がかりである。
+一方、エラーメッセージの文面は、それに基づいて行動するのがかなり難しい。
 ```anchorError QueryOops1
 unsolved goals
 mountains : Query (List.map (fun c => { name := "mountain" ++ "." ++ c.name, contains := c.contains }) peak) := ⋯
@@ -828,7 +828,7 @@ waterfalls : Query (List.map (fun c => { name := "waterfall" ++ "." ++ c.name, c
 ⊢ HasCol (List.map (fun c => { name := "waterfall" ++ "." ++ c.name, contains := c.contains }) []) "location" ?m.31
 ```
 
-Similarly, forgetting to add prefixes to the names of the two tables results in an error on {kw}`by decide`, which should provide evidence that the schemas are in fact disjoint:
+同様に、二つの表の名前に接頭辞を加えるのを忘れると、スキーマが実際に重ならない証拠を与えるはずの{kw}`by decide`でエラーになる。
 ```anchor QueryOops2
 open Query in
 def example2 :=
@@ -839,35 +839,35 @@ def example2 :=
     |>.project [⟨"mountain.name", .string⟩, ⟨"waterfall.name", .string⟩]
       (by repeat constructor)
 ```
-This error message is more helpful:
+こちらのエラーメッセージはもっと役に立つ。
 ```anchorError QueryOops2
 Tactic `decide` proved that the proposition
   disjoint (List.map Column.name peak) (List.map Column.name waterfall) = true
 is false
 ```
 
-Lean's macro system contains everything needed not only to provide a convenient syntax for queries, but also to arrange for the error messages to be helpful.
-Unfortunately, it is beyond the scope of this book to provide a description of implementing languages with Lean macros.
-An indexed family such as {anchorName Query}`Query` is probably best as the core of a typed database interaction library, rather than its user interface.
+Leanのマクロの仕組みには、問い合わせの便利な構文を与えるだけでなく、エラーメッセージを役に立つものにするために必要なものもすべてそろっている。
+残念ながら、Leanのマクロで言語を実装する方法を述べるのはこの本の範囲を超えている。
+{anchorName Query}`Query`のような添字付き族は、型付きのデータベース操作ライブラリの利用者向けの画面というより、その核とするのがおそらく最もよい。
 
-# Exercises
+# 練習問題
 %%%
 tag := "typed-query-exercises"
 %%%
 
-## Dates
+## 日付
 %%%
 tag := none
 %%%
 
-Define a structure to represent dates. Add it to the {anchorName DBExpr}`DBType` universe and update the rest of the code accordingly. Provide the extra {anchorName DBExpr}`DBExpr` constructors that seem to be necessary.
+日付を表す構造体を定義せよ。それを{anchorName DBExpr}`DBType`宇宙に加え、残りのコードもそれに合わせて直せ。必要と思われる{anchorName DBExpr}`DBExpr`の追加のコンストラクタを用意せよ。
 
-## Nullable Types
+## null許容型
 %%%
 tag := none
 %%%
 
-Add support for nullable columns to the query language by representing database types with the following structure:
+データベースの型を次の構造体で表すことで、null許容の列への対応を問い合わせ言語に加えよ。
 ```anchor nullable
 structure NDBType where
   underlying : DBType
@@ -880,15 +880,15 @@ abbrev NDBType.asType (t : NDBType) : Type :=
     t.underlying.asType
 ```
 
-Use this type in place of {anchorName DBExpr}`DBType` in {anchorName Schema}`Column` and {anchorName DBExpr}`DBExpr`, and look up SQL's rules for {lit}`NULL` and comparison operators to determine the types of {anchorName DBExpr}`DBExpr`'s constructors.
+{anchorName Schema}`Column`と{anchorName DBExpr}`DBExpr`で{anchorName DBExpr}`DBType`の代わりにこの型を使い、SQLの{lit}`NULL`と比較演算子の規則を調べて{anchorName DBExpr}`DBExpr`のコンストラクタの型を決めよ。
 
-## Experimenting with Tactics
+## タクティクを試す
 %%%
 tag := none
 %%%
 
 
-What is the result of asking Lean to find values of the following types using {kw}`by repeat constructor`? Explain why each gives the result that it does.
+次の型の値を{kw}`by repeat constructor`で見つけるようLeanに頼むとどうなるか。それぞれがその結果になる理由を説明せよ。
  * {anchorName Naturals}`Nat`
  * {anchorTerm misc}`List Nat`
  * {anchorTerm misc}`Vect Nat 4`
