@@ -444,15 +444,15 @@ tag := "Functor"
 {anchorName optionFMeta}`Option`に関数{anchorName optionFMeta}`f`をマップすると、{anchorName optionFMeta}`none`はそのままで、{anchorTerm optionFMeta}`some x`は{anchorTerm optionFMeta}`some (f x)`に置き換わる。
 
 ファンクタの例と、その{anchorName FunctorDef}`Functor`インスタンスが{anchorName FunctorDef}`map`をどうオーバーロードするかを示す。
- * {anchorTerm mapList}`Functor.map (· + 5) [1, 2, 3]` evaluates to {anchorTerm mapList}`[6, 7, 8]`
- * {anchorTerm mapOption}`Functor.map toString (some (List.cons 5 List.nil))` evaluates to {anchorTerm mapOption}`some "[5]"`
- * {anchorTerm mapListList}`Functor.map List.reverse [[1, 2, 3], [4, 5, 6]]` evaluates to {anchorTerm mapListList}`[[3, 2, 1], [6, 5, 4]]`
+ * {anchorTerm mapList}`Functor.map (· + 5) [1, 2, 3]`は{anchorTerm mapList}`[6, 7, 8]`と評価される。
+ * {anchorTerm mapOption}`Functor.map toString (some (List.cons 5 List.nil))`は{anchorTerm mapOption}`some "[5]"`と評価される。
+ * {anchorTerm mapListList}`Functor.map List.reverse [[1, 2, 3], [4, 5, 6]]`は{anchorTerm mapListList}`[[3, 2, 1], [6, 5, 4]]`と評価される。
 
 {anchorName mapList}`Functor.map`はこのよく使う操作には少し長い名前なので、Leanには関数をマップするための中置演算子{lit}`<$>`もある。
 先ほどの例は次のように書き直せる。
- * {anchorTerm mapInfixList}`(· + 5) <$> [1, 2, 3]` evaluates to {anchorTerm mapInfixList}`[6, 7, 8]`
- * {anchorTerm mapInfixOption}`toString <$> (some (List.cons 5 List.nil))` evaluates to {anchorTerm mapInfixOption}`some "[5]"`
- * {anchorTerm mapInfixListList}`List.reverse <$> [[1, 2, 3], [4, 5, 6]]` evaluates to {anchorTerm mapInfixListList}`[[3, 2, 1], [6, 5, 4]]`
+ * {anchorTerm mapInfixList}`(· + 5) <$> [1, 2, 3]`は{anchorTerm mapInfixList}`[6, 7, 8]`と評価される。
+ * {anchorTerm mapInfixOption}`toString <$> (some (List.cons 5 List.nil))`は{anchorTerm mapInfixOption}`some "[5]"`と評価される。
+ * {anchorTerm mapInfixListList}`List.reverse <$> [[1, 2, 3], [4, 5, 6]]`は{anchorTerm mapInfixListList}`[[3, 2, 1], [6, 5, 4]]`と評価される。
 
 {anchorTerm FunctorNonEmptyList}`NonEmptyList`に対する{anchorTerm FunctorNonEmptyList}`Functor`のインスタンスでは、{anchorName FunctorNonEmptyList}`map`関数を指定する必要がある。
 
