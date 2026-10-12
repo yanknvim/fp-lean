@@ -366,7 +366,7 @@ none
 :::
 
 
-# Messages You May Meet
+# 出会うかもしれないメッセージ
 %%%
 tag := "props-proofs-indexing-messages"
 %%%
