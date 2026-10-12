@@ -18,20 +18,20 @@ set_option verso.exampleModule "Examples.Intro"
 tag := "polymorphism"
 %%%
 
-Just as in most languages, types in Lean can take arguments.
-For instance, the type {anchorTerm fragments}`List Nat` describes lists of natural numbers, {anchorTerm fragments}`List String` describes lists of strings, and {anchorTerm fragments}`List (List Point)` describes lists of lists of points.
-This is very similar to {CSharp}`List<Nat>`, {CSharp}`List<String>`, or {CSharp}`List<List<Point>>` in a language like C# or Java.
-Just as Lean uses a space to pass an argument to a function, it uses a space to pass an argument to a type.
+ほとんどの言語と同じく、Leanの型も引数を取れる。
+たとえば{anchorTerm fragments}`List Nat`は自然数のリストを、{anchorTerm fragments}`List String`は文字列のリストを、{anchorTerm fragments}`List (List Point)`は点のリストのリストを表す。
+これは、C#やJavaのような言語の{CSharp}`List<Nat>`、{CSharp}`List<String>`、{CSharp}`List<List<Point>>`とよく似ている。
+Leanが関数に引数を渡すのに空白を使うのと同じように、型に引数を渡すのにも空白を使う。
 
-In functional programming, the term _polymorphism_ typically refers to datatypes and definitions that take types as arguments.
-This is different from the object-oriented programming community, where the term typically refers to subclasses that may override some behavior of their superclass.
-In this book, “polymorphism” always refers to the first sense of the word.
-These type arguments can be used in the datatype or definition, which allows the same datatype or definition to be used with any type that results from replacing the arguments' names with some other types.
+関数型プログラミングでは、*多相性*という語は通常、型を引数に取るデータ型や定義を指す。
+オブジェクト指向プログラミングの世界では、この語は通常、スーパークラスの振る舞いを上書きできるサブクラスを指すので、意味が異なる。
+本書では、「多相性」は常に前者の意味で使う。
+型引数はデータ型や定義の中で使える。引数の名前を別の型で置き換えて得られるどの型に対しても、同じデータ型や定義を使えるようになる。
 
 :::paragraph
-The {anchorName Point}`Point` structure requires that both the {anchorName Point}`x` and {anchorName Point}`y` fields are {anchorName Point}`Float`s.
-There is, however, nothing about points that require a specific representation for each coordinate.
-A polymorphic version of {anchorName Point}`Point`, called {anchorName PPoint}`PPoint`, can take a type as an argument, and then use that type for both fields:
+{anchorName Point}`Point`構造体は、{anchorName Point}`x`と{anchorName Point}`y`の両方のフィールドが{anchorName Point}`Float`であることを要求する。
+しかし、点だからといって各座標の表現を特定しなければならない理由はない。
+{anchorName Point}`Point`を多相にした{anchorName PPoint}`PPoint`は、型を引数に取り、その型を両方のフィールドに使える。
 
 ```anchor PPoint
 structure PPoint (α : Type) where
@@ -41,41 +41,41 @@ structure PPoint (α : Type) where
 
 :::
 
-Just as a function definition's arguments are written immediately after the name being defined, a structure's arguments are written immediately after the structure's name.
-It is customary to use Greek letters to name type arguments in Lean when no more specific name suggests itself.
-{anchorTerm PPoint}`Type` is a type that describes other types, so {anchorName Nat}`Nat`, {anchorTerm fragments}`List String`, and {anchorTerm fragments}`PPoint Int` all have type {anchorTerm PPoint}`Type`.
+関数定義の引数が定義する名前の直後に書かれるのと同じように、構造体の引数は構造体の名前の直後に書く。
+Leanでは、これといった名前が思いつかないときは、型引数にギリシャ文字を使うのが慣例である。
+{anchorTerm PPoint}`Type`は他の型を記述する型なので、{anchorName Nat}`Nat`、{anchorTerm fragments}`List String`、{anchorTerm fragments}`PPoint Int`はいずれも{anchorTerm PPoint}`Type`という型を持つ。
 
 :::paragraph
-Just like {anchorName fragments}`List`, {anchorName PPoint}`PPoint` can be used by providing a specific type as its argument:
+{anchorName fragments}`List`と同じく、{anchorName PPoint}`PPoint`は具体的な型を引数として渡して使える。
 
 ```anchor natPoint
 def natOrigin : PPoint Nat :=
   { x := Nat.zero, y := Nat.zero }
 ```
 
-In this example, both fields are expected to be {anchorName natPoint}`Nat`s.
-Just as a function is called by replacing its argument variables with its argument values, providing {anchorName PPoint}`PPoint` with the type {anchorName fragments}`Nat` as an argument yields a structure in which the fields {anchorName PPoint}`x` and {anchorName PPoint}`y` have the type {anchorName fragments}`Nat`, because the argument name {anchorName PPoint}`α` has been replaced by the argument type {anchorName fragments}`Nat`.
-Types are ordinary expressions in Lean, so passing arguments to polymorphic types (like {anchorName PPoint}`PPoint`) doesn't require any special syntax.
+この例では、両方のフィールドが{anchorName natPoint}`Nat`であることが期待される。
+関数が引数の変数を引数の値で置き換えて呼び出されるのと同じように、{anchorName PPoint}`PPoint`に{anchorName fragments}`Nat`という型を引数として渡すと、フィールド{anchorName PPoint}`x`と{anchorName PPoint}`y`が{anchorName fragments}`Nat`型の構造体が得られる。引数の名前{anchorName PPoint}`α`が引数の型{anchorName fragments}`Nat`で置き換えられるためである。
+Leanでは型も普通の式なので、{anchorName PPoint}`PPoint`のような多相型に引数を渡すのに特別な記法は要らない。
 :::
 
 :::paragraph
-Definitions may also take types as arguments, which makes them polymorphic.
-The function {anchorName replaceX}`replaceX` replaces the {anchorName replaceX}`x` field of a {anchorName replaceX}`PPoint` with a new value.
-In order to allow {anchorName replaceX}`replaceX` to work with _any_ polymorphic point, it must be polymorphic itself.
-This is achieved by having its first argument be the type of the point's fields, with later arguments referring back to the first argument's name.
+定義も型を引数に取ることができ、そうすると多相になる。
+関数{anchorName replaceX}`replaceX`は、{anchorName replaceX}`PPoint`の{anchorName replaceX}`x`フィールドを新しい値に置き換える。
+{anchorName replaceX}`replaceX`を*任意の*多相的な点に対して使えるようにするには、この関数自身も多相でなければならない。
+そのためには、最初の引数を点のフィールドの型にし、後ろの引数がその引数の名前を参照する形にすればよい。
 
 ```anchor replaceX
 def replaceX (α : Type) (point : PPoint α) (newX : α) : PPoint α :=
   { point with x := newX }
 ```
 
-In other words, when the types of the arguments {anchorName replaceX}`point` and {anchorName replaceX}`newX` mention {anchorName replaceX}`α`, they are referring to _whichever type was provided as the first argument_.
-This is similar to the way that function argument names refer to the values that were provided when they occur in the function's body.
+言い換えれば、引数{anchorName replaceX}`point`と{anchorName replaceX}`newX`の型に{anchorName replaceX}`α`が現れるとき、それは*最初の引数として渡された型*を指している。
+これは、関数の本体に現れる引数の名前が、渡された値を指すのと似ている。
 :::
 
 :::paragraph
 
-This can be seen by asking Lean to check the type of {anchorName replaceX}`replaceX`, and then asking it to check the type of {anchorTerm replaceXNatOriginFiveT}`replaceX Nat`.
+Leanに{anchorName replaceX}`replaceX`の型を調べさせ、次に{anchorTerm replaceXNatOriginFiveT}`replaceX Nat`の型を調べさせると、これが分かる。
 
 ```anchorTerm replaceXT
 #check (replaceX)
@@ -85,9 +85,9 @@ This can be seen by asking Lean to check the type of {anchorName replaceX}`repla
 replaceX : (α : Type) → PPoint α → α → PPoint α
 ```
 
-This function type includes the _name_ of the first argument, and later arguments in the type refer back to this name.
-Just as the value of a function application is found by replacing the argument name with the provided argument value in the function's body, the type of a function application is found by replacing the argument's name with the provided value in the function's return type.
-Providing the first argument, {anchorName replaceXNatT}`Nat`, causes all occurrences of {anchorName replaceX}`α` in the remainder of the type to be replaced with {anchorName replaceXNatT}`Nat`:
+この関数の型には最初の引数の*名前*が含まれており、型の中の後ろの引数がその名前を参照している。
+関数適用の値が、関数の本体で引数の名前を渡された値で置き換えて求められるのと同じように、関数適用の型は、戻り値の型で引数の名前を渡された値で置き換えて求められる。
+最初の引数として{anchorName replaceXNatT}`Nat`を渡すと、型の残りの部分にある{anchorName replaceX}`α`がすべて{anchorName replaceXNatT}`Nat`で置き換わる。
 
 ```anchorTerm replaceXNatT
 #check replaceX Nat
@@ -97,7 +97,7 @@ Providing the first argument, {anchorName replaceXNatT}`Nat`, causes all occurre
 replaceX Nat : PPoint Nat → Nat → PPoint Nat
 ```
 
-Because the remaining arguments are not explicitly named, no further substitution occurs as more arguments are provided:
+残りの引数には名前が付いていないので、引数をさらに渡しても置き換えは起こらない。
 
 ```anchorTerm replaceXNatOriginT
 #check replaceX Nat natOrigin
@@ -118,7 +118,7 @@ replaceX Nat natOrigin 5 : PPoint Nat
 :::
 
 :::paragraph
-The fact that the type of the whole function application expression was determined by passing a type as an argument has no bearing on the ability to evaluate it.
+型を引数として渡すことで式全体の型が決まるからといって、その式を評価できるかどうかには関係がない。
 
 ```anchorTerm replaceXNatOriginFiveV
 #eval replaceX Nat natOrigin 5
@@ -131,9 +131,9 @@ The fact that the type of the whole function application expression was determin
 :::
 
 :::paragraph
-Polymorphic functions work by taking a named type argument and having later types refer to the argument's name.
-However, there's nothing special about type arguments that allows them to be named.
-Given a datatype that represents positive or negative signs:
+多相関数は、名前付きの型引数を取り、後ろの型がその引数の名前を参照する形で成り立っている。
+ただし、名前を付けられるのは型引数に限った話ではない。
+正負の符号を表すデータ型を考える。
 
 ```anchor Sign
 inductive Sign where
@@ -144,8 +144,8 @@ inductive Sign where
 :::
 
 :::paragraph
-it is possible to write a function whose argument is a sign.
-If the argument is positive, the function returns a {anchorName posOrNegThree}`Nat`, while if it's negative, it returns an {anchorName posOrNegThree}`Int`:
+符号を引数に取る関数を書くことができる。
+引数が正なら{anchorName posOrNegThree}`Nat`を、負なら{anchorName posOrNegThree}`Int`を返すようにできる。
 
 ```anchor posOrNegThree
 def posOrNegThree (s : Sign) :
@@ -155,14 +155,14 @@ def posOrNegThree (s : Sign) :
   | Sign.neg => (-3 : Int)
 ```
 
-Because types are first class and can be computed using the ordinary rules of the Lean language, they can be computed by pattern-matching against a datatype.
-When Lean is checking this function, it uses the fact that the {kw}`match`-expression in the function's body corresponds to the {kw}`match`-expression in the type to make {anchorName posOrNegThree}`Nat` be the expected type for the {anchorName Sign}`pos` case and to make {anchorName posOrNegThree}`Int` be the expected type for the {anchorName Sign}`neg` case.
+型は第一級であり、Leanの言語の普通の規則で計算できるので、データ型に対するパターンマッチングで型を計算できる。
+Leanがこの関数を検査するとき、関数の本体の{kw}`match`式と型の{kw}`match`式が対応していることを利用して、{anchorName Sign}`pos`の場合の期待される型を{anchorName posOrNegThree}`Nat`に、{anchorName Sign}`neg`の場合の期待される型を{anchorName posOrNegThree}`Int`にする。
 
 :::
 
 :::paragraph
-Applying {anchorName posOrNegThree}`posOrNegThree` to {anchorName Sign}`pos` results in the argument name {anchorName posOrNegThree}`s` in both the body of the function and its return type being replaced by {anchorName Sign}`pos`.
-Evaluation can occur both in the expression and its type:
+{anchorName posOrNegThree}`posOrNegThree`を{anchorName Sign}`pos`に適用すると、関数の本体と戻り値の型の両方で、引数名{anchorName posOrNegThree}`s`が{anchorName Sign}`pos`で置き換えられる。
+評価は式でもその型でも起こる。
 
 ```anchorEvalSteps posOrNegThreePos
 (posOrNegThree Sign.pos :
@@ -180,15 +180,15 @@ Evaluation can occur both in the expression and its type:
 
 :::
 
-# Linked Lists
+# 連結リスト
 %%%
 tag := "linked-lists"
 %%%
 
 :::paragraph
-Lean's standard library includes a canonical linked list datatype, called {anchorName fragments}`List`, and special syntax that makes it more convenient to use.
-Lists are written in square brackets.
-For instance, a list that contains the prime numbers less than 10 can be written:
+Leanの標準ライブラリには{anchorName fragments}`List`という標準的な連結リストのデータ型と、それを使いやすくする特別な記法がある。
+リストは角括弧で書く。
+たとえば、10未満の素数を入れたリストは次のように書ける。
 
 ```anchor primesUnder10
 def primesUnder10 : List Nat := [2, 3, 5, 7]
@@ -197,7 +197,7 @@ def primesUnder10 : List Nat := [2, 3, 5, 7]
 :::
 
 :::paragraph
-Behind the scenes, {anchorName List}`List` is an inductive datatype, defined like this:
+舞台裏では、{anchorName List}`List`は次のように定義された帰納的データ型である。
 
 ```anchor List
 inductive List (α : Type) where
@@ -205,34 +205,34 @@ inductive List (α : Type) where
   | cons : α → List α → List α
 ```
 
-The actual definition in the standard library is slightly different, because it uses features that have not yet been presented, but it is substantially similar.
-This definition says that {anchorName List}`List` takes a single type as its argument, just as {anchorName PPoint}`PPoint` did.
-This type is the type of the entries stored in the list.
-According to the constructors, a {anchorTerm List}`List α` can be built with either {anchorName List}`nil` or {anchorName List}`cons`.
-The constructor {anchorName List}`nil` represents empty lists and the constructor {anchorName List}`cons` is used for non-empty lists.
-The first argument to {anchorName List}`cons` is the head of the list, and the second argument is its tail.
-A list that contains $`n` entries contains $`n` {anchorName List}`cons` constructors, the last of which has {anchorName List}`nil` as its tail.
+標準ライブラリでの実際の定義は、まだ説明していない機能を使っているため少し異なるが、ほぼ同じである。
+この定義は、{anchorName PPoint}`PPoint`と同じく、{anchorName List}`List`が型を一つ引数に取ることを示している。
+この型が、リストに入れる要素の型である。
+コンストラクタによれば、{anchorTerm List}`List α`は{anchorName List}`nil`か{anchorName List}`cons`で作れる。
+コンストラクタ{anchorName List}`nil`は空のリストを表し、{anchorName List}`cons`は空でないリストに使う。
+{anchorName List}`cons`の最初の引数がリストの先頭、二番目の引数が残りである。
+$`n`個の要素を持つリストには$`n`個の{anchorName List}`cons`コンストラクタが入り、最後のものの残りは{anchorName List}`nil`である。
 
 :::
 
 :::paragraph
-The {anchorName primesUnder10}`primesUnder10` example can be written more explicitly by using {anchorName List}`List`'s constructors directly:
+{anchorName primesUnder10}`primesUnder10`の例は、{anchorName List}`List`のコンストラクタを直接使ってより明示的に書ける。
 
 ```anchor explicitPrimesUnder10
 def explicitPrimesUnder10 : List Nat :=
   List.cons 2 (List.cons 3 (List.cons 5 (List.cons 7 List.nil)))
 ```
 
-These two definitions are completely equivalent, but {anchorName primesUnder10}`primesUnder10` is much easier to read than {anchorName explicitPrimesUnder10}`explicitPrimesUnder10`.
+この二つの定義は完全に同等だが、{anchorName primesUnder10}`primesUnder10`の方が{anchorName explicitPrimesUnder10}`explicitPrimesUnder10`よりずっと読みやすい。
 :::
 
 :::paragraph
-Functions that consume {anchorName List}`List`s can be defined in much the same way as functions that consume {anchorName Nat}`Nat`s.
-Indeed, one way to think of a linked list is as a {anchorName Nat}`Nat` that has an extra data field dangling off each {anchorName Nat}`succ` constructor.
-From this point of view, computing the length of a list is the process of replacing each {anchorName List}`cons` with a {anchorName Nat}`succ` and the final {anchorName List}`nil` with a {anchorName Nat}`zero`.
-Just as {anchorName replaceX}`replaceX` took the type of the fields of the point as an argument, {anchorName length1EvalSummary}`length` takes the type of the list's entries.
-For example, if the list contains strings, then the first argument is {anchorName length1EvalSummary}`String`: {anchorEvalStep length1EvalSummary 0}`length String ["Sourdough", "bread"]`.
-It should compute like this:
+{anchorName List}`List`を消費する関数は、{anchorName Nat}`Nat`を消費する関数とほぼ同じように定義できる。
+実際、連結リストは、各{anchorName Nat}`succ`コンストラクタにデータのフィールドがぶら下がった{anchorName Nat}`Nat`だと考えることもできる。
+この見方では、リストの長さを求めるのは、各{anchorName List}`cons`を{anchorName Nat}`succ`に、最後の{anchorName List}`nil`を{anchorName Nat}`zero`に置き換えていく作業である。
+{anchorName replaceX}`replaceX`が点のフィールドの型を引数に取ったのと同じように、{anchorName length1EvalSummary}`length`はリストの要素の型を引数に取る。
+たとえば、リストが文字列を入れるものなら、最初の引数は{anchorName length1EvalSummary}`String`であり、{anchorEvalStep length1EvalSummary 0}`length String ["Sourdough", "bread"]`となる。
+これは次のように計算されるはずである。
 
 ```anchorEvalSteps length1EvalSummary
 length String ["Sourdough", "bread"]
@@ -252,8 +252,8 @@ Nat.succ (Nat.succ Nat.zero)
 
 :::paragraph
 
-The definition of {anchorName length1}`length` is both polymorphic (because it takes the list entry type as an argument) and recursive (because it refers to itself).
-Generally, functions follow the shape of the data: recursive datatypes lead to recursive functions, and polymorphic datatypes lead to polymorphic functions.
+{anchorName length1}`length`の定義は、多相であり（リストの要素の型を引数に取るため）、かつ再帰的である（自分自身を参照するため）。
+一般に、関数はデータの形に沿う。再帰的なデータ型からは再帰関数が、多相的なデータ型からは多相関数が生まれる。
 
 ```anchor length1
 def length (α : Type) (xs : List α) : Nat :=
@@ -264,11 +264,11 @@ def length (α : Type) (xs : List α) : Nat :=
 
 :::
 
-Names such as {lit}`xs` and {lit}`ys` are conventionally used to stand for lists of unknown values.
-The {lit}`s` in the name indicates that they are plural, so they are pronounced “exes” and “whys” rather than “x s” and “y s”.
+{lit}`xs`や{lit}`ys`のような名前は、値が不明なリストを表すのに慣例的に使う。
+名前の{lit}`s`は複数であることを示すので、「エックス」ではなく「エックシズ」、「ワイ」ではなく「ワイズ」と読む。
 
 :::paragraph
-To make it easier to read functions on lists, the bracket notation {anchorTerm length2}`[]` can be used to pattern-match against {anchorName List}`nil`, and an infix {anchorTerm length2}`::` can be used in place of {anchorName List}`cons`:
+リストを扱う関数を読みやすくするため、{anchorName List}`nil`に対するパターンマッチングには角括弧の記法{anchorTerm length2}`[]`を、{anchorName List}`cons`の代わりには中置の{anchorTerm length2}`::`を使える。
 
 ```anchor length2
 def length (α : Type) (xs : List α) : Nat :=
@@ -279,24 +279,24 @@ def length (α : Type) (xs : List α) : Nat :=
 
 :::
 
-# Implicit Arguments
+# 暗瞑の引数
 %%%
 tag := "implicit-parameters"
 %%%
 
 :::paragraph
-Both {anchorName replaceX}`replaceX` and {anchorName length1}`length` are somewhat bureaucratic to use, because the type argument is typically uniquely determined by the later values.
-Indeed, in most languages, the compiler is perfectly capable of determining type arguments on its own, and only occasionally needs help from users.
-This is also the case in Lean.
-Arguments can be declared _implicit_ by wrapping them in curly braces instead of parentheses when defining a function.
-For example, a version of {anchorName replaceXImp}`replaceX` with an implicit type argument looks like this:
+{anchorName replaceX}`replaceX`と{anchorName length1}`length`はどちらも、使うときに引数が煩わしい。型引数は通常、後ろの値から一意に決まるためである。
+実際、ほとんどの言語では、コンパイラが型引数を自分で決められ、利用者の助けが必要になるのはごくたまである。
+Leanでも同じである。
+関数を定義するとき、引数を括弧ではなく淡括弧で囲むと、その引数を*暗瞑*にできる。
+たとえば、型引数を暗瞑にした{anchorName replaceXImp}`replaceX`は次のようになる。
 
 ```anchor replaceXImp
 def replaceX {α : Type} (point : PPoint α) (newX : α) : PPoint α :=
   { point with x := newX }
 ```
 
-It can be used with {anchorName replaceXImpNat}`natOrigin` without providing {anchorName NatDoubleFour}`Nat` explicitly, because Lean can _infer_ the value of {anchorName replaceXImp}`α` from the later arguments:
+{anchorName replaceXImpNat}`natOrigin`に対しては、{anchorName NatDoubleFour}`Nat`を明示しなくても使える。Leanが後ろの引数から{anchorName replaceXImp}`α`の値を*推論*できるためである。
 
 ```anchor replaceXImpNat
 #eval replaceX natOrigin 5
@@ -310,7 +310,7 @@ It can be used with {anchorName replaceXImpNat}`natOrigin` without providing {an
 
 :::paragraph
 
-Similarly, {anchorName lengthImp}`length` can be redefined to take the entry type implicitly:
+同様に、{anchorName lengthImp}`length`も要素の型を暗瞑に取るように定義し直せる。
 
 ```anchor lengthImp
 def length {α : Type} (xs : List α) : Nat :=
@@ -319,7 +319,7 @@ def length {α : Type} (xs : List α) : Nat :=
   | y :: ys => Nat.succ (length ys)
 ```
 
-This {anchorName lengthImp}`length` function can be applied directly to {anchorName lengthImpPrimes}`primesUnder10`:
+この{anchorName lengthImp}`length`は{anchorName lengthImpPrimes}`primesUnder10`に直接適用できる。
 
 ```anchor lengthImpPrimes
 #eval length primesUnder10
@@ -332,7 +332,7 @@ This {anchorName lengthImp}`length` function can be applied directly to {anchorN
 :::
 
 :::paragraph
-In the standard library, Lean calls this function {anchorName lengthExpNat}`List.length`, which means that the dot syntax that is used for structure field access can also be used to find the length of a list:
+標準ライブラリでは、この関数は{anchorName lengthExpNat}`List.length`という名前である。そのため、構造体のフィールドにアクセスするドット記法を、リストの長さを求めるのにも使える。
 
 ```anchor lengthDotPrimes
 #eval primesUnder10.length
@@ -345,9 +345,9 @@ In the standard library, Lean calls this function {anchorName lengthExpNat}`List
 :::
 
 :::paragraph
-Just as C# and Java require type arguments to be provided explicitly from time to time, Lean is not always capable of finding implicit arguments.
-In these cases, they can be provided using their names.
-For example, a version of {anchorName lengthExpNat}`List.length` that only works for lists of integers can be specified by setting {anchorTerm lengthExpNat}`α` to {anchorName lengthExpNat}`Int`:
+C#やJavaでも型引数を明示しなければならないことがあるように、Leanも常に暗瞑の引数を見つけられるわけではない。
+そのような場合は、名前を使って指定できる。
+たとえば、整数のリストにだけ使える{anchorName lengthExpNat}`List.length`は、{anchorTerm lengthExpNat}`α`を{anchorName lengthExpNat}`Int`に設定して指定できる。
 
 ```anchor lengthExpNat
 #check List.length (α := Int)
@@ -359,30 +359,30 @@ List.length : List Int → Nat
 
 :::
 
-# More Built-In Datatypes
+# その他の組み込みデータ型
 %%%
 tag := "more-built-in-types"
 %%%
 
-In addition to lists, Lean's standard library contains a number of other structures and inductive datatypes that can be used in a variety of contexts.
+リストのほかにも、Leanの標準ライブラリには、さまざまな場面で使える構造体と帰納的データ型が多数ある。
 
 ## {lit}`Option`
 %%%
 tag := "Option"
 %%%
-Not every list has a first entry—some lists are empty.
-Many operations on collections may fail to find what they are looking for.
-For instance, a function that finds the first entry in a list may not find any such entry.
-It must therefore have a way to signal that there was no first entry.
+すべてのリストに先頭の要素があるわけではない。空のリストもある。
+コレクションに対する操作の多くは、探しているものが見つからないことがある。
+たとえば、リストの先頭の要素を求める関数は、そのような要素が見つからないことがある。
+そのため、先頭の要素がなかったことを伝える手段が必要になる。
 
-Many languages have a {CSharp}`null` value that represents the absence of a value.
-Instead of equipping existing types with a special {CSharp}`null` value, Lean provides a datatype called {anchorName Option}`Option` that equips some other type with an indicator for missing values.
-For instance, a nullable {anchorName fragments}`Int` is represented by {anchorTerm nullOne}`Option Int`, and a nullable list of strings is represented by the type {anchorTerm fragments}`Option (List String)`.
-Introducing a new type to represent nullability means that the type system ensures that checks for {CSharp}`null` cannot be forgotten, because an {anchorTerm nullOne}`Option Int` can't be used in a context where an {anchorName nullOne}`Int` is expected.
+多くの言語には、値が存在しないことを表す{CSharp}`null`という値がある。
+Leanは、既存の型に特別な{CSharp}`null`値を付けるのではなく、別の型に値の欠如を示す印を付ける{anchorName Option}`Option`というデータ型を用意している。
+たとえば、nullになりうる{anchorName fragments}`Int`は{anchorTerm nullOne}`Option Int`で、nullになりうる文字列のリストは{anchorTerm fragments}`Option (List String)`で表す。
+nullになりうることを表すのに新しい型を導入すると、{CSharp}`null`の確認を忘れられなくなることを型システムが保証する。{anchorName nullOne}`Int`が期待される場所では{anchorTerm nullOne}`Option Int`を使えないためである。
 
 :::paragraph
-{anchorName Option}`Option` has two constructors, called {anchorName Option}`some` and {anchorName Option}`none`, that respectively represent the non-null and null versions of the underlying type.
-The non-null constructor, {anchorName Option}`some`, contains the underlying value, while {anchorName Option}`none` takes no arguments:
+{anchorName Option}`Option`には{anchorName Option}`some`と{anchorName Option}`none`の二つのコンストラクタがあり、それぞれ元の型の値がある場合とない場合を表す。
+値がある場合のコンストラクタ{anchorName Option}`some`は元の値を入れ、{anchorName Option}`none`は引数を取らない。
 
 ```anchor Option
 inductive Option (α : Type) : Type where
@@ -392,20 +392,20 @@ inductive Option (α : Type) : Type where
 
 :::
 
-The {anchorName Option}`Option` type is very similar to nullable types in languages like C# and Kotlin, but it is not identical.
-In these languages, if a type (say, {CSharp}`Boolean`) always refers to actual values of the type ({CSharp}`true` and {CSharp}`false`), the type {CSharp}`Boolean?` or {CSharp}`Nullable<Boolean>` additionally admits the {CSharp}`null` value.
-Tracking this in the type system is very useful: the type checker and other tooling can help programmers remember to check for {CSharp}`null`, and APIs that explicitly describe nullability through type signatures are more informative than ones that don't.
-However, these nullable types differ from Lean's {anchorName Option}`Option` in one very important way, which is that they don't allow multiple layers of optionality.
-{anchorTerm nullThree}`Option (Option Int)` can be constructed with {anchorTerm nullOne}`none`, {anchorTerm nullTwo}`some none`, or {anchorTerm nullThree}`some (some 360)`.
-Kotlin, on the other hand, treats {Kotlin}`T??` as being equivalent to {Kotlin}`T?`.
-This subtle difference is rarely relevant in practice, but it can matter from time to time.
+{anchorName Option}`Option`型は、C#やKotlinのような言語のnull許容型とよく似ているが、同じではない。
+これらの言語では、ある型（たとえば{CSharp}`Boolean`）が常にその型の実際の値（{CSharp}`true`と{CSharp}`false`）を指すのに対し、{CSharp}`Boolean?`や{CSharp}`Nullable<Boolean>`という型は{CSharp}`null`値も許す。
+これを型システムで追跡できるのは非常に役に立つ。型チェッカや他のツールが{CSharp}`null`の確認を忘れないよう助けてくれるし、型シグネチャでnullになりうることを明示したAPIは、そうでないAPIより情報量が多い。
+ただし、こうしたnull許容型は、Leanの{anchorName Option}`Option`と決定的に異なる点が一つある。値がないかもしれないという状態を何層にも重ねられないのである。
+{anchorTerm nullThree}`Option (Option Int)`は、{anchorTerm nullOne}`none`、{anchorTerm nullTwo}`some none`、{anchorTerm nullThree}`some (some 360)`のいずれでも作れる。
+一方Kotlinでは、{Kotlin}`T??`は{Kotlin}`T?`と同じものとして扱われる。
+この微妙な違いが実際に問題になることはめったにないが、時には重要になる。
 
 :::paragraph
-To find the first entry in a list, if it exists, use {anchorName headHuh}`List.head?`.
-The question mark is part of the name, and is not related to the use of question marks to indicate nullable types in C# or Kotlin.
-In the definition of {anchorName headHuh}`List.head?`, an underscore is used to represent the tail of the list.
-In patterns, underscores match anything at all, but do not introduce variables to refer to the matched data.
-Using underscores instead of names is a way to clearly communicate to readers that part of the input is ignored.
+リストの先頭の要素があるならそれを求めるには、{anchorName headHuh}`List.head?`を使う。
+疑問符は名前の一部であり、C#やKotlinでnull許容型を表す疑問符とは関係がない。
+{anchorName headHuh}`List.head?`の定義では、リストの残りをアンダースコアで表している。
+パターンにおいて、アンダースコアは何にでも一致するが、一致したデータを指す変数は導入しない。
+名前の代わりにアンダースコアを使うのは、入力の一部を無視していることを読み手にはっきり伝える方法である。
 
 ```anchor headHuh
 def List.head? {α : Type} (xs : List α) : Option α :=
@@ -416,13 +416,13 @@ def List.head? {α : Type} (xs : List α) : Option α :=
 
 :::
 
-A Lean naming convention is to define operations that might fail in groups using the suffixes {lit}`?` for a version that returns an {anchorName Option}`Option`, {lit}`!` for a version that crashes when provided with invalid input, and {lit}`D` for a version that returns a default value when the operation would otherwise fail.
-Following this pattern, {anchorName fragments}`List.head` requires the caller to provide mathematical evidence that the list is not empty, {anchorName fragments}`List.head?` returns an {anchorName Option}`Option`, {anchorName fragments}`List.head!` crashes the program when passed an empty list, and {anchorName fragments}`List.headD` takes a default value to return in case the list is empty.
-The question mark and exclamation mark are part of the name, not special syntax, as Lean's naming rules are more liberal than many languages.
+Leanの命名の慣例では、失敗しうる操作をまとめて定義するとき、{anchorName Option}`Option`を返す版には{lit}`?`、不正な入力でクラッシュする版には{lit}`!`、失敗する代わりに既定値を返す版には{lit}`D`という接尾辞を付ける。
+この慣例に従うと、{anchorName fragments}`List.head`はリストが空でないという数学的な証拠を呼び出し側に要求し、{anchorName fragments}`List.head?`は{anchorName Option}`Option`を返し、{anchorName fragments}`List.head!`は空のリストを渡されるとプログラムをクラッシュさせ、{anchorName fragments}`List.headD`はリストが空の場合に返す既定値を受け取る。
+疑問符と感嘆符は特別な構文ではなく名前の一部である。Leanの命名規則は多くの言語より自由だからである。
 
 :::paragraph
 
-Because {anchorName fragments}`head?` is defined in the {lit}`List` namespace, it can be used with accessor notation:
+{anchorName fragments}`head?`は{lit}`List`名前空間で定義されているので、アクセサ記法で使える。
 
 ```anchor headSome
 #eval primesUnder10.head?
@@ -432,7 +432,7 @@ Because {anchorName fragments}`head?` is defined in the {lit}`List` namespace, i
 some 2
 ```
 
-However, attempting to test it on the empty list leads to two errors:
+ただし、空のリストに対して試すと二つのエラーになる。
 
 ```anchor headNoneBad
 #eval [].head?
@@ -455,12 +455,12 @@ context:
 :::
 
 :::paragraph
-This is because Lean was unable to fully determine the expression's type.
-In particular, it could neither find the implicit type argument to {anchorName fragments}`List.head?`, nor the implicit type argument to {anchorName fragments}`List.nil`.
-In Lean's output, {lit}`?m.XYZ` represents a part of a program that could not be inferred.
-These unknown parts are called _metavariables_, and they occur in some error messages.
-In order to evaluate an expression, Lean needs to be able to find its type, and the type was unavailable because the empty list does not have any entries from which the type can be found.
-Explicitly providing a type allows Lean to proceed:
+これは、Leanが式の型を完全には決められなかったためである。
+とくに、{anchorName fragments}`List.head?`の暗瞑の型引数も、{anchorName fragments}`List.nil`の暗瞑の型引数も見つけられなかった。
+Leanの出力で{lit}`?m.XYZ`は、推論できなかった部分を表す。
+このような未知の部分を*メタ変数*と呼び、いくつかのエラーメッセージに現れる。
+式を評価するにはLeanがその型を求められる必要があるが、空のリストには型を決める手がかりになる要素がないため、型が分からなかった。
+型を明示すれば、Leanは先に進める。
 
 ```anchor headNone
 #eval [].head? (α := Int)
@@ -470,7 +470,7 @@ Explicitly providing a type allows Lean to proceed:
 none
 ```
 
-The type can also be provided with a type annotation:
+型は型注釈でも指定できる。
 
 ```anchor headNoneTwo
 #eval ([] : List Int).head?
@@ -480,8 +480,8 @@ The type can also be provided with a type annotation:
 none
 ```
 
-The error messages provide a useful clue.
-Both messages use the _same_ metavariable to describe the missing implicit argument, which means that Lean has determined that the two missing pieces will share a solution, even though it was unable to determine the actual value of the solution.
+このエラーメッセージには役に立つ手がかりがある。
+どちらのメッセージも、欠けている暗瞑の引数を*同じ*メタ変数で表している。つまりLeanは、足りない二つの部分が同じ答えを共有することは突き止めたが、その答えの実際の値までは決められなかったのである。
 
 :::
 
@@ -490,19 +490,19 @@ Both messages use the _same_ metavariable to describe the missing implicit argum
 tag := "prod"
 %%%
 
-The {anchorName Prod}`Prod` structure, short for “Product”, is a generic way of joining two values together.
-For instance, a {anchorTerm fragments}`Prod Nat String` contains a {anchorName fragments}`Nat` and a {anchorName fragments}`String`.
-In other words, {anchorTerm natPoint}`PPoint Nat` could be replaced by {anchorTerm fragments}`Prod Nat Nat`.
-{anchorName fragments}`Prod` is very much like C#'s tuples, the {Kotlin}`Pair` and {Kotlin}`Triple` types in Kotlin, and {cpp}`tuple` in C++.
-Many applications are best served by defining their own structures, even for simple cases like {anchorName Point}`Point`, because using domain terminology can make it easier to read the code.
-Additionally, defining structure types helps catch more errors by assigning different types to different domain concepts, preventing them from being mixed up.
+{anchorName Prod}`Prod`構造体は「Product」の略で、二つの値を一組にする一般的な方法である。
+たとえば{anchorTerm fragments}`Prod Nat String`は{anchorName fragments}`Nat`と{anchorName fragments}`String`を入れる。
+言い換えれば、{anchorTerm natPoint}`PPoint Nat`は{anchorTerm fragments}`Prod Nat Nat`で置き換えられる。
+{anchorName fragments}`Prod`は、C#のタプル、Kotlinの{Kotlin}`Pair`と{Kotlin}`Triple`、C++の{cpp}`tuple`とよく似ている。
+アプリケーションの多くは、{anchorName Point}`Point`のような簡単な場合でも独自の構造体を定義する方がよい。その分野の用語を使うとコードが読みやすくなるためである。
+さらに、構造体型を定義すると、分野の概念ごとに異なる型を割り当てて取り違えを防げるので、誤りを見つけやすくなる。
 
-On the other hand, there are some cases where it is not worth the overhead of defining a new type.
-Additionally, some libraries are sufficiently generic that there is no more specific concept than “pair”.
-Finally, the standard library contains a variety of convenience functions that make it easier to work with the built-in pair type.
+一方で、新しい型を定義する手間に見合わない場合もある。
+また、ライブラリによっては十分に一般的で、「組」より具体的な概念が存在しないこともある。
+さらに、標準ライブラリには、組み込みの組の型を扱いやすくする便利な関数がいろいろある。
 
 :::paragraph
-The structure {anchorName Prod}`Prod` is defined with two type arguments:
+構造体{anchorName Prod}`Prod`は二つの型引数を持って定義されている。
 
 ```anchor Prod
 structure Prod (α : Type) (β : Type) : Type where
@@ -513,17 +513,17 @@ structure Prod (α : Type) (β : Type) : Type where
 :::
 
 :::paragraph
-Lists are used so frequently that there is special syntax to make them more readable.
-For the same reason, both the product type and its constructor have special syntax.
-The type {anchorTerm ProdSugar}`Prod α β` is typically written {anchorTerm ProdSugar}`α × β`, mirroring the usual notation for a Cartesian product of sets.
-Similarly, the usual mathematical notation for pairs is available for {anchorName ProdSugar}`Prod`.
-In other words, instead of writing:
+リストは非常によく使うので、読みやすくするための特別な記法がある。
+同じ理由で、直積型とそのコンストラクタにも特別な記法がある。
+型{anchorTerm ProdSugar}`Prod α β`は通常{anchorTerm ProdSugar}`α × β`と書く。集合の直積の普通の記法にならったものである。
+同様に、{anchorName ProdSugar}`Prod`には数学で普通に使う組の記法も用意されている。
+つまり、次のように書く代わりに、
 
 ```anchor fivesStruct
 def fives : String × Int := { fst := "five", snd := 5 }
 ```
 
-it suffices to write:
+次のように書けばよい。
 
 ```anchor fives
 def fives : String × Int := ("five", 5)
@@ -533,8 +533,8 @@ def fives : String × Int := ("five", 5)
 
 :::paragraph
 
-Both notations are right-associative.
-This means that the following definitions are equivalent:
+どちらの記法も右結合である。
+つまり、次の二つの定義は同じ意味である。
 
 ```anchor sevens
 def sevens : String × Int × Nat := ("VII", 7, 4 + 3)
@@ -544,7 +544,7 @@ def sevens : String × Int × Nat := ("VII", 7, 4 + 3)
 def sevens : String × (Int × Nat) := ("VII", (7, 4 + 3))
 ```
 
-In other words, all products of more than two types, and their corresponding constructors, are actually nested products and nested pairs behind the scenes.
+言い換えれば、三つ以上の型の直積とそれに対応するコンストラクタは、舞台裏では入れ子になった直積と組になっている。
 
 :::
 
@@ -554,13 +554,13 @@ In other words, all products of more than two types, and their corresponding con
 tag := "Sum"
 %%%
 
-The {anchorName Sum}`Sum` datatype is a generic way of allowing a choice between values of two different types.
-For instance, a {anchorTerm fragments}`Sum String Int` is either a {anchorName fragments}`String` or an {anchorName fragments}`Int`.
-Like {anchorName Prod}`Prod`, {anchorName Sum}`Sum` should be used either when writing very generic code, for a very small section of code where there is no sensible domain-specific type, or when the standard library contains useful functions.
-In most situations, it is more readable and maintainable to use a custom inductive type.
+{anchorName Sum}`Sum`データ型は、異なる二つの型の値のどちらかを選べるようにする一般的な方法である。
+たとえば{anchorTerm fragments}`Sum String Int`は、{anchorName fragments}`String`か{anchorName fragments}`Int`のどちらかである。
+{anchorName Prod}`Prod`と同じく、{anchorName Sum}`Sum`は、非常に一般的なコードを書くとき、分野固有の適切な型がないごく小さな部分に使うとき、あるいは標準ライブラリに役立つ関数がそろっているときに使う。
+ほとんどの場面では、独自の帰納型を使う方が読みやすく保守しやすい。
 
 :::paragraph
-Values of type {anchorTerm Sumαβ}`Sum α β` are either the constructor {anchorName Sum}`inl` applied to a value of type {anchorName Sum}`α` or the constructor {anchorName Sum}`inr` applied to a value of type {anchorName Sum}`β`:
+{anchorTerm Sumαβ}`Sum α β`型の値は、{anchorName Sum}`α`型の値にコンストラクタ{anchorName Sum}`inl`を適用したものか、{anchorName Sum}`β`型の値にコンストラクタ{anchorName Sum}`inr`を適用したものである。
 
 ```anchor Sum
 inductive Sum (α : Type) (β : Type) : Type where
@@ -568,22 +568,22 @@ inductive Sum (α : Type) (β : Type) : Type where
   | inr : β → Sum α β
 ```
 
-These names are abbreviations for “left injection” and “right injection”, respectively.
-Just as the Cartesian product notation is used for {anchorName Prod}`Prod`, a “circled plus” notation is used for {anchorName SumSugar}`Sum`, so {anchorTerm SumSugar}`α ⊕ β` is another way to write {anchorTerm SumSugar}`Sum α β`.
-There is no special syntax for {anchorName FakeSum}`Sum.inl` and {anchorName FakeSum}`Sum.inr`.
+これらの名前は、それぞれ「左入射」「右入射」の略である。
+{anchorName Prod}`Prod`に直積の記法を使うのと同じように、{anchorName SumSugar}`Sum`には「丸付きプラス」の記法を使うので、{anchorTerm SumSugar}`α ⊕ β`は{anchorTerm SumSugar}`Sum α β`の別の書き方である。
+{anchorName FakeSum}`Sum.inl`と{anchorName FakeSum}`Sum.inr`には特別な記法はない。
 
 :::
 
 :::paragraph
-As an example, if pet names can either be dog names or cat names, then a type for them can be introduced as a sum of strings:
+例として、ペットの名前が犬の名前か猫の名前のどちらかだとすると、その型は文字列の直和として導入できる。
 
 ```anchor PetName
 def PetName : Type := String ⊕ String
 ```
 
-In a real program, it would usually be better to define a custom inductive datatype for this purpose with informative constructor names.
-Here, {anchorName animals}`Sum.inl` is to be used for dog names, and {anchorName animals}`Sum.inr` is to be used for cat names.
-These constructors can be used to write a list of animal names:
+実際のプログラムでは、たいてい、意味の分かるコンストラクタ名を持つ独自の帰納型を定義した方がよい。
+ここでは、犬の名前に{anchorName animals}`Sum.inl`を、猫の名前に{anchorName animals}`Sum.inr`を使うことにする。
+これらのコンストラクタを使って、動物の名前のリストを書ける。
 
 ```anchor animals
 def animals : List PetName :=
@@ -594,8 +594,8 @@ def animals : List PetName :=
 :::
 
 :::paragraph
-Pattern matching can be used to distinguish between the two constructors.
-For instance, a function that counts the number of dogs in a list of animal names (that is, the number of {anchorName howManyDogs}`Sum.inl` constructors) looks like this:
+二つのコンストラクタの区別にはパターンマッチングを使える。
+たとえば、動物の名前のリストに犬が何匹いるか（つまり{anchorName howManyDogs}`Sum.inl`コンストラクタの個数）を数える関数は次のようになる。
 
 ```anchor howManyDogs
 def howManyDogs (pets : List PetName) : Nat :=
@@ -605,8 +605,8 @@ def howManyDogs (pets : List PetName) : Nat :=
   | Sum.inr _ :: morePets => howManyDogs morePets
 ```
 
-Function calls are evaluated before infix operators, so {anchorTerm howManyDogsAdd}`howManyDogs morePets + 1` is the same as {anchorTerm howManyDogsAdd}`(howManyDogs morePets) + 1`.
-As expected, {anchor dogCount}`#eval howManyDogs animals` yields {anchorInfo dogCount}`3`.
+関数呼び出しは中置演算子より先に評価されるので、{anchorTerm howManyDogsAdd}`howManyDogs morePets + 1`は{anchorTerm howManyDogsAdd}`(howManyDogs morePets) + 1`と同じである。
+期待どおり、{anchor dogCount}`#eval howManyDogs animals`は{anchorInfo dogCount}`3`になる。
 :::
 
 ## {anchorName Unit}`Unit`
@@ -615,9 +615,9 @@ tag := "Unit"
 %%%
 
 :::paragraph
-{anchorName Unit}`Unit` is a type with just one argumentless constructor, called {anchorName Unit}`unit`.
-In other words, it describes only a single value, which consists of said constructor applied to no arguments whatsoever.
-{anchorName Unit}`Unit` is defined as follows:
+{anchorName Unit}`Unit`は、引数を取らないコンストラクタ{anchorName Unit}`unit`を一つだけ持つ型である。
+言い換えれば、そのコンストラクタを一切の引数なしに適用した、ただ一つの値だけを表す。
+{anchorName Unit}`Unit`は次のように定義される。
 
 ```anchor Unit
 inductive Unit : Type where
@@ -627,9 +627,9 @@ inductive Unit : Type where
 :::
 
 :::paragraph
-On its own, {anchorName Unit}`Unit` is not particularly useful.
-However, in polymorphic code, it can be used as a placeholder for data that is missing.
-For instance, the following inductive datatype represents arithmetic expressions:
+{anchorName Unit}`Unit`それ自体は、あまり役に立たない。
+しかし多相的なコードでは、欠けているデータの場所を埋めるのに使える。
+たとえば、次の帰納的データ型は算術式を表す。
 
 ```anchor ArithExpr
 inductive ArithExpr (ann : Type) : Type where
@@ -639,63 +639,63 @@ inductive ArithExpr (ann : Type) : Type where
   | times : ann → ArithExpr ann → ArithExpr ann → ArithExpr ann
 ```
 
-The type argument {anchorName ArithExpr}`ann` stands for annotations, and each constructor is annotated.
-Expressions coming from a parser might be annotated with source locations, so a return type of {anchorTerm ArithExprEx}`ArithExpr SourcePos` ensures that the parser put a {anchorName ArithExprEx}`SourcePos` at each subexpression.
-Expressions that don't come from the parser, however, will not have source locations, so their type can be {anchorTerm ArithExprEx}`ArithExpr Unit`.
+型引数{anchorName ArithExpr}`ann`は注釈を表し、どのコンストラクタにも注釈が付く。
+パーサから得た式にはソース上の位置を注釈として付けられるので、戻り値の型を{anchorTerm ArithExprEx}`ArithExpr SourcePos`にしておけば、パーサが各部分式に{anchorName ArithExprEx}`SourcePos`を付けたことが保証される。
+一方、パーサから来ない式にはソース上の位置がないので、その型は{anchorTerm ArithExprEx}`ArithExpr Unit`でよい。
 
 :::
 
-Additionally, because all Lean functions have arguments, zero-argument functions in other languages can be represented as functions that take a {anchorName ArithExprEx}`Unit` argument.
-In a return position, the {anchorName ArithExprEx}`Unit` type is similar to {CSharp}`void` in languages derived from C.
-In the C family, a function that returns {CSharp}`void` will return control to its caller, but it will not return any interesting value.
-By being an intentionally uninteresting value, {anchorName ArithExprEx}`Unit` allows this to be expressed without requiring a special-purpose {CSharp}`void` feature in the type system.
-Unit's constructor can be written as empty parentheses: {anchorTerm unitParens}`() : Unit`.
+さらに、Leanの関数はすべて引数を持つので、他の言語の引数なしの関数は、{anchorName ArithExprEx}`Unit`の引数を取る関数として表せる。
+戻り値の位置では、{anchorName ArithExprEx}`Unit`型はC系の言語の{CSharp}`void`に似ている。
+C系の言語では、{CSharp}`void`を返す関数は呼び出し元に制御を返すが、意味のある値は返さない。
+{anchorName ArithExprEx}`Unit`は意図的に意味のない値であることで、型システムに{CSharp}`void`専用の機能を用意しなくてもこれを表せるようにする。
+Unitのコンストラクタは空の括弧で書ける。{anchorTerm unitParens}`() : Unit`である。
 
 ## {lit}`Empty`
 %%%
 tag := "Empty"
 %%%
 
-The {anchorName fragments}`Empty` datatype has no constructors whatsoever.
-Thus, it indicates unreachable code, because no series of calls can ever terminate with a value at type {anchorName fragments}`Empty`.
+{anchorName fragments}`Empty`データ型にはコンストラクタが一つもない。
+したがって、到達しないコードを表す。{anchorName fragments}`Empty`型の値で終わる呼び出しの連なりは存在しないためである。
 
-{anchorName fragments}`Empty` is not used nearly as often as {anchorName fragments}`Unit`.
-However, it is useful in some specialized contexts.
-Many polymorphic datatypes do not use all of their type arguments in all of their constructors.
-For instance, {anchorName animals}`Sum.inl` and {anchorName animals}`Sum.inr` each use only one of {anchorName fragments}`Sum`'s type arguments.
-Using {anchorName fragments}`Empty` as one of the type arguments to {anchorName fragments}`Sum` can rule out one of the constructors at a particular point in a program.
-This can allow generic code to be used in contexts that have additional restrictions.
+{anchorName fragments}`Empty`は、{anchorName fragments}`Unit`ほど頻繁には使わない。
+しかし、特殊な場面では役に立つ。
+多相的なデータ型の多くは、すべてのコンストラクタで型引数をすべて使うわけではない。
+たとえば{anchorName animals}`Sum.inl`と{anchorName animals}`Sum.inr`は、それぞれ{anchorName fragments}`Sum`の型引数のうち一つしか使わない。
+{anchorName fragments}`Sum`の型引数の一つに{anchorName fragments}`Empty`を使うと、プログラムのある地点でコンストラクタの一方を排除できる。
+これにより、追加の制約がある場面でも一般的なコードを使えるようになる。
 
-## Naming: Sums, Products, and Units
+## 直和型、直積型、Unitという名前
 %%%
 tag := "sum-products-units"
 %%%
 
-Generally speaking, types that offer multiple constructors are called _sum types_, while types whose single constructor takes multiple arguments are called {deftech}_product types_.
-These terms are related to sums and products used in ordinary arithmetic.
-The relationship is easiest to see when the types involved contain a finite number of values.
-If {anchorName SumProd}`α` and {anchorName SumProd}`β` are types that contain $`n` and $`k` distinct values, respectively, then {anchorTerm SumProd}`α ⊕ β` contains $`n + k` distinct values and {anchorTerm SumProd}`α × β` contains $`n \times k` distinct values.
-For instance, {anchorName fragments}`Bool` has two values: {anchorName BoolNames}`true` and {anchorName BoolNames}`false`, and {anchorName Unit}`Unit` has one value: {anchorName BooloUnit}`Unit.unit`.
-The product {anchorTerm fragments}`Bool × Unit` has the two values {anchorTerm BoolxUnit}`(true, Unit.unit)` and {anchorTerm BoolxUnit}`(false, Unit.unit)`, and the sum {anchorTerm fragments}`Bool ⊕ Unit` has the three values {anchorTerm BooloUnit}`Sum.inl true`, {anchorTerm BooloUnit}`Sum.inl false`, and {anchorTerm BooloUnit}`Sum.inr Unit.unit`.
-Similarly, $`2 \times 1 = 2`, and $`2 + 1 = 3`.
+一般に、複数のコンストラクタを提供する型を*直和型*、一つのコンストラクタが複数の引数を取る型を{deftech}*直積型*と呼ぶ。
+これらの用語は、普通の算数で使う和と積に関係がある。
+この関係は、対象の型が有限個の値しか持たないときに最も分かりやすい。
+{anchorName SumProd}`α`と{anchorName SumProd}`β`がそれぞれ$`n`個と$`k`個の異なる値を持つ型なら、{anchorTerm SumProd}`α ⊕ β`は$`n + k`個、{anchorTerm SumProd}`α × β`は$`n \times k`個の異なる値を持つ。
+たとえば{anchorName fragments}`Bool`には{anchorName BoolNames}`true`と{anchorName BoolNames}`false`の二つの値があり、{anchorName Unit}`Unit`には{anchorName BooloUnit}`Unit.unit`という一つの値がある。
+直積{anchorTerm fragments}`Bool × Unit`には{anchorTerm BoolxUnit}`(true, Unit.unit)`と{anchorTerm BoolxUnit}`(false, Unit.unit)`の二つの値があり、直和{anchorTerm fragments}`Bool ⊕ Unit`には{anchorTerm BooloUnit}`Sum.inl true`、{anchorTerm BooloUnit}`Sum.inl false`、{anchorTerm BooloUnit}`Sum.inr Unit.unit`の三つの値がある。
+同様に$`2 \times 1 = 2`であり、$`2 + 1 = 3`である。
 
-# Messages You May Meet
+# 出会うかもしれないメッセージ
 %%%
 tag := "polymorphism-messages"
 %%%
 
 :::paragraph
-Not all definable structures or inductive types can have the type {anchorTerm Prod}`Type`.
-In particular, if a constructor takes an arbitrary type as an argument, then the inductive type must have a different type.
-These errors usually state something about “universe levels”.
-For example, for this inductive type:
+定義できる構造体や帰納型が、すべて{anchorTerm Prod}`Type`という型を持てるわけではない。
+とくに、コンストラクタが任意の型を引数に取る場合、その帰納型は別の型を持たなければならない。
+こうしたエラーは通常、「宇宙レベル」に関することを述べている。
+たとえば、次の帰納型を考える。
 
 ```anchor TypeInType
 inductive MyType : Type where
   | ctor : (α : Type) → α → MyType
 ```
 
-Lean gives the following error:
+Leanは次のエラーを出す。
 
 ```anchorError TypeInType
 Invalid universe level in constructor `MyType.ctor`: Parameter `α` has type
@@ -706,32 +706,32 @@ which is not less than or equal to the inductive type's resulting universe level
   1
 ```
 
-A later chapter describes why this is the case, and how to modify definitions to make them work.
-For now, try making the type an argument to the inductive type as a whole, rather than to the constructor.
+なぜこうなるのか、また定義をどう直せば通るのかは、後の章で説明する。
+今のところは、型をコンストラクタではなく帰納型全体の引数にしてみるとよい。
 :::
 
 :::paragraph
-Similarly, if a constructor's argument is a function that takes the datatype being defined as an argument, then the definition is rejected.
-For example:
+同様に、コンストラクタの引数が、定義しようとしているデータ型を引数に取る関数である場合、その定義は受け入れられない。
+たとえば、
 
 ```anchor Positivity
 inductive MyType : Type where
   | ctor : (MyType → Int) → MyType
 ```
 
-yields the message:
+とすると、次のメッセージが出る。
 
 ```anchorError Positivity
 (kernel) arg #1 of 'MyType.ctor' has a non positive occurrence of the datatypes being declared
 ```
 
-For technical reasons, allowing these datatypes could make it possible to undermine Lean's internal logic, making it unsuitable for use as a theorem prover.
+技術的な理由により、このようなデータ型を許すとLeanの内部論理が崩れ、定理証明器として使えなくなるおそれがある。
 :::
 
 :::paragraph
-Recursive functions that take two parameters should not match against the pair, but rather match each parameter independently.
-Otherwise, the mechanism in Lean that checks whether recursive calls are made on smaller values is unable to see the connection between the input value and the argument in the recursive call.
-For example, this function that determines whether two lists have the same length is rejected:
+二つの引数を取る再帰関数では、その組に対してマッチさせるのではなく、各引数を別々にマッチさせる。
+そうしないと、再帰呼び出しがより小さい値に対して行われるかを調べるLeanの仕組みが、入力の値と再帰呼び出しの引数のつながりを見いだせない。
+たとえば、二つのリストの長さが等しいかを調べる次の関数は受け入れられない。
 
 ```anchor sameLengthPair
 def sameLength (xs : List α) (ys : List β) : Bool :=
@@ -741,7 +741,7 @@ def sameLength (xs : List α) (ys : List β) : Bool :=
   | _ => false
 ```
 
-The error message is:
+エラーメッセージは次のとおりである。
 
 ```anchorError sameLengthPair
 fail to show termination for
@@ -768,7 +768,7 @@ The basic measures relate at each recursive call as follows:
 Please use `termination_by` to specify a decreasing measure.
 ```
 
-The problem can be fixed through nested pattern matching:
+この問題は、入れ子にしたパターンマッチングで解決できる。
 
 ```anchor sameLengthOk1
 def sameLength (xs : List α) (ys : List β) : Bool :=
@@ -783,32 +783,32 @@ def sameLength (xs : List α) (ys : List β) : Bool :=
     | _ => false
 ```
 
-{ref "simultaneous-matching"}[Simultaneous matching], described in the next section, is another way to solve the problem that is often more elegant.
+次の節で説明する{ref "simultaneous-matching"}[同時マッチング]も、この問題を解く別の方法であり、しばしばより簡潔である。
 :::
 
 :::paragraph
-Forgetting an argument to an inductive type can also yield a confusing message.
-For example, when the argument {anchorName MissingTypeArg}`α` is not passed to {anchorName MissingTypeArg}`MyType` in {anchorTerm MissingTypeArg}`ctor`'s type:
+帰納型の引数を忘れると、これも紛らわしいメッセージになる。
+たとえば、{anchorTerm MissingTypeArg}`ctor`の型で{anchorName MissingTypeArg}`MyType`に引数{anchorName MissingTypeArg}`α`を渡し忘れると、次のようになる。
 
 ```anchor MissingTypeArg
 inductive MyType (α : Type) : Type where
   | ctor : α → MyType
 ```
 
-Lean replies with the following error:
+Leanは次のエラーを返す。
 
 ```anchorError MissingTypeArg
 type expected, got
   (MyType : Type → Type)
 ```
 
-The error message is saying that {anchorName MissingTypeArg}`MyType`'s type, which is {anchorTerm MissingTypeArgT}`Type → Type`, does not itself describe types.
-{anchorName MissingTypeArg}`MyType` requires an argument to become an actual honest-to-goodness type.
+このエラーメッセージは、{anchorName MissingTypeArg}`MyType`の型である{anchorTerm MissingTypeArgT}`Type → Type`が、それ自体は型を記述するものではない、と言っている。
+{anchorName MissingTypeArg}`MyType`は、本当の型になるには引数が必要である。
 
 :::
 
 :::paragraph
-The same message can appear when type arguments are omitted in other contexts, such as in a type signature for a definition:
+同じメッセージは、定義の型シグネチャなど、別の場面で型引数を省略したときにも現れる。
 
 ```anchor MyTypeDef
 inductive MyType (α : Type) : Type where
@@ -827,10 +827,10 @@ type expected, got
 :::
 
 :::paragraph
-Evaluating expressions that use polymorphic types may trigger a situation in which Lean is incapable of displaying a value.
-The {anchorTerm evalAxe}`#eval` command evaluates the provided expression, using the expression's type to determine how to display the result.
-For some types, such as functions, this process fails, but Lean is perfectly capable of automatically generating display code for most other types.
-There is no need, for example, to provide Lean with any specific display code for {anchorName WoodSplittingTool}`WoodSplittingTool`:
+多相型を使った式を評価すると、Leanが値を表示できない状況に陷ることがある。
+{anchorTerm evalAxe}`#eval`コマンドは与えられた式を評価し、その式の型を使って結果の表示方法を決める。
+関数のようないくつかの型ではこの処理が失敗するが、他のほとんどの型についてはLeanが表示用のコードを自動で生成できる。
+たとえば{anchorName WoodSplittingTool}`WoodSplittingTool`に、表示用のコードを用意する必要はない。
 ```anchor WoodSplittingTool
 inductive WoodSplittingTool where
   | axe
@@ -843,8 +843,8 @@ inductive WoodSplittingTool where
 ```anchorInfo evalAxe
 WoodSplittingTool.axe
 ```
-There are limits to the automation that Lean uses here, however.
-{anchorName allTools}`allTools` is a list of all three tools:
+ただし、ここでLeanが行う自動化には限界がある。
+{anchorName allTools}`allTools`は三つの道具をすべて入れたリストである。
 ```anchor allTools
 def allTools : List WoodSplittingTool := [
   WoodSplittingTool.axe,
@@ -852,7 +852,7 @@ def allTools : List WoodSplittingTool := [
   WoodSplittingTool.froe
 ]
 ```
-Evaluating it leads to an error:
+これを評価するとエラーになる。
 ```anchor evalAllTools
 #eval allTools
 ```
@@ -860,8 +860,8 @@ Evaluating it leads to an error:
 Could not synthesize a `ToExpr`, `Repr`, or `ToString` instance for type
   List WoodSplittingTool
 ```
-This is because Lean attempts to use code from a built-in table to display a list, but this code demands that display code for {anchorName WoodSplittingTool}`WoodSplittingTool` already exists.
-This error can be worked around by instructing Lean to generate this display code when a datatype is defined, instead of at the last moment as part of {anchorTerm evalAllTools}`#eval`, by adding {anchorTerm Firewood}`deriving Repr` to its definition:
+Leanはリストを表示するのに組み込みの表にあるコードを使おうとするが、そのコードは{anchorName WoodSplittingTool}`WoodSplittingTool`の表示用コードがすでにあることを要求するためである。
+このエラーは、{anchorTerm evalAllTools}`#eval`の時点で慌てて生成するのではなく、データ型を定義するときに表示用コードを生成するようLeanに指示すれば避けられる。定義に{anchorTerm Firewood}`deriving Repr`を加えればよい。
 ```anchor Firewood
 inductive Firewood where
   | birch
@@ -869,7 +869,7 @@ inductive Firewood where
   | beech
 deriving Repr
 ```
-Evaluating a list of {anchorName Firewood}`Firewood` succeeds:
+{anchorName Firewood}`Firewood`のリストの評価は成功する。
 ```anchor allFirewood
 def allFirewood : List Firewood := [
   Firewood.birch,
@@ -885,16 +885,16 @@ def allFirewood : List Firewood := [
 ```
 :::
 
-# Exercises
+# 練習問題
 %%%
 tag := "polymorphism-exercises"
 %%%
 
- * Write a function to find the last entry in a list. It should return an {anchorName fragments}`Option`.
- * Write a function that finds the first entry in a list that satisfies a given predicate. Start the definition with {anchorTerm List.findFirst?Ex}`def List.findFirst? {α : Type} (xs : List α) (predicate : α → Bool) : Option α := …`.
- * Write a function {anchorName Prod.switchEx}`Prod.switch` that switches the two fields in a pair for each other. Start the definition with {anchor Prod.switchEx}`def Prod.switch {α β : Type} (pair : α × β) : β × α := …`.
- * Rewrite the {anchorName PetName}`PetName` example to use a custom datatype and compare it to the version that uses {anchorName Sum}`Sum`.
- * Write a function {anchorName zipEx}`zip` that combines two lists into a list of pairs. The resulting list should be as long as the shortest input list. Start the definition with {anchor zipEx}`def zip {α β : Type} (xs : List α) (ys : List β) : List (α × β) := …`.
- * Write a polymorphic function {anchorName takeOne}`take` that returns the first $`n` entries in a list, where $`n` is a {anchorName fragments}`Nat`. If the list contains fewer than $`n` entries, then the resulting list should be the entire input list. {anchorTerm takeThree}`#eval take 3 ["bolete", "oyster"]` should yield {anchorInfo takeThree}`["bolete", "oyster"]`, and {anchor takeOne}`#eval take 1 ["bolete", "oyster"]` should yield {anchorInfo takeOne}`["bolete"]`.
- * Using the analogy between types and arithmetic, write a function that distributes products over sums. In other words, it should have type {anchorTerm distr}`α × (β ⊕ γ) → (α × β) ⊕ (α × γ)`.
- * Using the analogy between types and arithmetic, write a function that turns multiplication by two into a sum. In other words, it should have type {anchorTerm distr}`Bool × α → α ⊕ α`.
+ * リストの最後の要素を求める関数を書け。{anchorName fragments}`Option`を返すようにする。
+ * 与えられた述語を満たす最初の要素をリストから求める関数を書け。定義は{anchorTerm List.findFirst?Ex}`def List.findFirst? {α : Type} (xs : List α) (predicate : α → Bool) : Option α := …`から始める。
+ * 組の二つのフィールドを入れ替える関数{anchorName Prod.switchEx}`Prod.switch`を書け。定義は{anchor Prod.switchEx}`def Prod.switch {α β : Type} (pair : α × β) : β × α := …`から始める。
+ * {anchorName PetName}`PetName`の例を独自のデータ型を使う形に書き直し、{anchorName Sum}`Sum`を使った版と比べよ。
+ * 二つのリストを組のリストにまとめる関数{anchorName zipEx}`zip`を書け。結果のリストの長さは、短い方の入力リストと同じにする。定義は{anchor zipEx}`def zip {α β : Type} (xs : List α) (ys : List β) : List (α × β) := …`から始める。
+ * リストの先頭から$`n`個の要素を返す多相関数{anchorName takeOne}`take`を書け。$`n`は{anchorName fragments}`Nat`である。リストの要素が$`n`個より少ない場合は、結果は入力のリスト全体とする。{anchorTerm takeThree}`#eval take 3 ["bolete", "oyster"]`は{anchorInfo takeThree}`["bolete", "oyster"]`に、{anchor takeOne}`#eval take 1 ["bolete", "oyster"]`は{anchorInfo takeOne}`["bolete"]`になるはずである。
+ * 型と算数の類似を使って、直積を直和に分配する関数を書け。型は{anchorTerm distr}`α × (β ⊕ γ) → (α × β) ⊕ (α × γ)`である。
+ * 型と算数の類似を使って、2倍の乗算を直和に変える関数を書け。型は{anchorTerm distr}`Bool × α → α ⊕ α`である。

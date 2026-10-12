@@ -16,18 +16,18 @@ set_option verso.exampleModule "Examples.Intro"
 tag := "getting-to-know-conveniences"
 %%%
 
-Lean contains a number of convenience features that make programs much more concise.
+Leanには、プログラムをずっと簡潔にする便利な機能がいくつかある。
 
-# Automatic Implicit Parameters
+# 暗瞑の引数の自動追加
 %%%
 tag := "automatic-implicit-parameters"
 %%%
 
 :::paragraph
-When writing polymorphic functions in Lean, it is typically not necessary to list all the implicit parameters.
-Instead, they can simply be mentioned.
-If Lean can determine their type, then they are automatically inserted as implicit parameters.
-In other words, the previous definition of {anchorName lengthImp}`length`:
+Leanで多相関数を書くとき、通常は暗瞑の引数をすべて列挙する必要はない。
+名前を書くだけでよい。
+その型をLeanが決められるなら、暗瞑の引数として自動的に挿入される。
+つまり、先ほどの{anchorName lengthImp}`length`の定義は、
 
 ```anchor lengthImp
 def length {α : Type} (xs : List α) : Nat :=
@@ -36,7 +36,7 @@ def length {α : Type} (xs : List α) : Nat :=
   | y :: ys => Nat.succ (length ys)
 ```
 
-can be written without {anchorTerm lengthImp}`{α : Type}`:
+{anchorTerm lengthImp}`{α : Type}`を書かずに定義できる。
 
 ```anchor lengthImpAuto
 def length (xs : List α) : Nat :=
@@ -45,23 +45,23 @@ def length (xs : List α) : Nat :=
   | y :: ys => Nat.succ (length ys)
 ```
 
-This can greatly simplify highly polymorphic definitions that take many implicit parameters.
+これにより、多くの暗瞑の引数を取る非常に多相的な定義が、大幅に簡単になる。
 
 :::
 
-# Pattern-Matching Definitions
+# パターンマッチングによる定義
 %%%
 tag := "pattern-matching-definitions"
 %%%
 
-When defining functions with {kw}`def`, it is quite common to name an argument and then immediately use it with pattern matching.
-For instance, in {anchorName lengthImpAuto}`length`, the argument {anchorName lengthImpAuto}`xs` is used only in {kw}`match`.
-In these situations, the cases of the {kw}`match` expression can be written directly, without naming the argument at all.
+{kw}`def`で関数を定義するとき、引数に名前を付けてすぐパターンマッチングに使う、という書き方はよくある。
+たとえば{anchorName lengthImpAuto}`length`では、引数{anchorName lengthImpAuto}`xs`は{kw}`match`でしか使っていない。
+このような場合は、引数に名前を付けずに、{kw}`match`式の枝を直接書ける。
 
 :::paragraph
-The first step is to move the arguments' types to the right of the colon, so the return type is a function type.
-For instance, the type of {anchorName lengthMatchDef}`length` is {anchorTerm lengthMatchDef}`List α → Nat`.
-Then, replace the {lit}`:=` with each case of the pattern match:
+まず、引数の型をコロンの右側に移し、戻り値の型を関数型にする。
+たとえば{anchorName lengthMatchDef}`length`の型は{anchorTerm lengthMatchDef}`List α → Nat`である。
+次に、{lit}`:=`をパターンマッチングの各枝で置き換える。
 
 ```anchor lengthMatchDef
 def length : List α → Nat
@@ -69,9 +69,9 @@ def length : List α → Nat
   | y :: ys => Nat.succ (length ys)
 ```
 
-This syntax can also be used to define functions that take more than one argument.
-In this case, their patterns are separated by commas.
-For instance, {anchorName drop}`drop` takes a number $`n` and a list, and returns the list after removing the first $`n` entries.
+この記法は、二つ以上の引数を取る関数の定義にも使える。
+その場合、パターンはコンマで区切る。
+たとえば{anchorName drop}`drop`は、数$`n`とリストを受け取り、先頭の$`n`個の要素を取り除いたリストを返す。
 
 ```anchor drop
 def drop : Nat → List α → List α
@@ -84,8 +84,8 @@ def drop : Nat → List α → List α
 
 :::paragraph
 
-Named arguments and patterns can also be used in the same definition.
-For instance, a function that takes a default value and an optional value, and returns the default when the optional value is {anchorName fromOption}`none`, can be written:
+名前付きの引数とパターンは、同じ定義の中で併用できる。
+たとえば、既定値と省略可能な値を受け取り、省略可能な値が{anchorName fromOption}`none`なら既定値を返す関数は次のように書ける。
 
 ```anchor fromOption
 def fromOption (default : α) : Option α → α
@@ -93,7 +93,7 @@ def fromOption (default : α) : Option α → α
   | some x => x
 ```
 
-This function is called {anchorTerm fragments}`Option.getD` in the standard library, and can be called with dot notation:
+この関数は標準ライブラリでは{anchorTerm fragments}`Option.getD`といい、ドット記法で呼び出せる。
 
 ```anchor getD
 #eval (some "salmonberry").getD ""
@@ -116,22 +116,22 @@ This function is called {anchorTerm fragments}`Option.getD` in the standard libr
 
 :::
 
-# Local Definitions
+# ローカル定義
 %%%
 tag := "local-definitions"
 %%%
 
-It is often useful to name intermediate steps in a computation.
-In many cases, intermediate values represent useful concepts all on their own, and naming them explicitly can make the program easier to read.
-In other cases, the intermediate value is used more than once.
-As in most other languages, writing down the same code twice in Lean causes it to be computed twice, while saving the result in a variable leads to the result of the computation being saved and re-used.
+計算の途中の結果に名前を付けておくと役に立つことが多い。
+多くの場合、途中の値はそれ自体が意味のある概念であり、名前を付けておくとプログラムが読みやすくなる。
+そうでなくても、途中の値を二度以上使うことがある。
+他の多くの言語と同じく、Leanで同じコードを二度書くと二度計算される。結果を変数に入れておけば、計算結果が保存されて再利用される。
 
 :::paragraph
 
-For instance, {anchorName unzipBad}`unzip` is a function that transforms a list of pairs into a pair of lists.
-When the list of pairs is empty, then the result of {anchorName unzipBad}`unzip` is a pair of empty lists.
-When the list of pairs has a pair at its head, then the two fields of the pair are added to the result of unzipping the rest of the list.
-This definition of {anchorName unzipBad}`unzip` follows that description exactly:
+たとえば{anchorName unzipBad}`unzip`は、組のリストをリストの組に変換する関数である。
+組のリストが空なら、{anchorName unzipBad}`unzip`の結果は空のリストの組である。
+組のリストの先頭に組があるなら、その組の二つのフィールドを、残りのリストをunzipした結果に加える。
+この{anchorName unzipBad}`unzip`の定義は、その説明のとおりに書かれている。
 
 ```anchor unzipBad
 def unzip : List (α × β) → List α × List β
@@ -140,16 +140,16 @@ def unzip : List (α × β) → List α × List β
     (x :: (unzip xys).fst, y :: (unzip xys).snd)
 ```
 
-Unfortunately, there is a problem: this code is slower than it needs to be.
-Each entry in the list of pairs leads to two recursive calls, which makes this function take exponential time.
-However, both recursive calls will have the same result, so there is no reason to make the recursive call twice.
+残念ながら、ここには問題がある。このコードは必要以上に遅いのである。
+組のリストの各要素について再帰呼び出しが二回行われるため、この関数は指数時間かかる。
+しかし、二つの再帰呼び出しは同じ結果になるので、二度呼び出す理由はない。
 :::
 
 :::paragraph
-In Lean, the result of the recursive call can be named, and thus saved, using {kw}`let`.
-Local definitions with {kw}`let` resemble top-level definitions with {kw}`def`: it takes a name to be locally defined, arguments if desired, a type signature, and then a body following {lit}`:=`.
-After the local definition, the expression in which the local definition is available (called the _body_ of the {kw}`let`-expression) must be on a new line, starting at a column in the file that is less than or equal to that of the {kw}`let` keyword.
-A local definition with {kw}`let` in {anchorName unzip}`unzip` looks like this:
+Leanでは、{kw}`let`を使って再帰呼び出しの結果に名前を付け、保存できる。
+{kw}`let`によるローカル定義は、{kw}`def`によるトップレベルの定義と似ている。ローカルに定義する名前、必要なら引数、型シグネチャを取り、{lit}`:=`に続けて本体を書く。
+ローカル定義の後ろには、その定義が使える式（{kw}`let`式の*本体*と呼ぶ）を新しい行に書き、ファイル内の桁位置を{kw}`let`キーワードと同じかそれより左にする必要がある。
+{anchorName unzip}`unzip`での{kw}`let`によるローカル定義は次のようになる。
 
 ```anchor unzip
 def unzip : List (α × β) → List α × List β
@@ -159,13 +159,13 @@ def unzip : List (α × β) → List α × List β
     (x :: unzipped.fst, y :: unzipped.snd)
 ```
 
-To use {kw}`let` on a single line, separate the local definition from the body with a semicolon.
+{kw}`let`を1行で使うには、ローカル定義と本体をセミコロンで区切る。
 :::
 
 :::paragraph
-Local definitions with {kw}`let` may also use pattern matching when one pattern is enough to match all cases of a datatype.
-In the case of {anchorName unzip}`unzip`, the result of the recursive call is a pair.
-Because pairs have only a single constructor, the name {anchorName unzip}`unzipped` can be replaced with a pair pattern:
+{kw}`let`によるローカル定義でも、一つのパターンでデータ型の全場合に一致するときはパターンマッチングを使える。
+{anchorName unzip}`unzip`の場合、再帰呼び出しの結果は組である。
+組のコンストラクタは一つだけなので、名前{anchorName unzip}`unzipped`を組のパターンで置き換えられる。
 
 ```anchor unzipPat
 def unzip : List (α × β) → List α × List β
@@ -175,12 +175,12 @@ def unzip : List (α × β) → List α × List β
     (x :: xs, y :: ys)
 ```
 
-Judicious use of patterns with {kw}`let` can make code easier to read, compared to writing the accessor calls by hand.
+{kw}`let`でパターンを適切に使うと、アクセサを手で呼ぶよりコードが読みやすくなる。
 :::
 
 :::paragraph
-The biggest difference between {kw}`let` and {kw}`def` is that recursive {kw}`let` definitions must be explicitly indicated by writing {kw}`let rec`.
-For instance, one way to reverse a list involves a recursive helper function, as in this definition:
+{kw}`let`と{kw}`def`の最大の違いは、再帰的な{kw}`let`定義は{kw}`let rec`と明示しなければならないことである。
+たとえば、リストを反転する方法の一つに、再帰的な補助関数を使うものがある。
 
 ```anchor reverse
 def reverse (xs : List α) : List α :=
@@ -190,19 +190,19 @@ def reverse (xs : List α) : List α :=
   helper xs []
 ```
 
-The helper function walks down the input list, moving one entry at a time over to {anchorName reverse}`soFar`.
-When it reaches the end of the input list, {anchorName reverse}`soFar` contains a reversed version of the input.
+この補助関数は入力のリストをたどり、要素を一つずつ{anchorName reverse}`soFar`に移していく。
+入力のリストの終わりに達したとき、{anchorName reverse}`soFar`には入力の逆順が入っている。
 :::
 
-# Type Inference
+# 型推論
 %%%
 tag := "type-inference"
 %%%
 
 :::paragraph
-In many situations, Lean can automatically determine an expression's type.
-In these cases, explicit types may be omitted from both top-level definitions (with {kw}`def`) and local definitions (with {kw}`let`).
-For example, the recursive call to {anchorName unzipNT}`unzip` does not need an annotation:
+多くの場合、Leanは式の型を自動で決められる。
+そのような場合は、トップレベルの定義（{kw}`def`）でもローカル定義（{kw}`let`）でも、型を省略できる。
+たとえば、{anchorName unzipNT}`unzip`への再帰呼び出しには注釈が要らない。
 
 ```anchor unzipNT
 def unzip : List (α × β) → List α × List β
@@ -214,13 +214,13 @@ def unzip : List (α × β) → List α × List β
 
 :::
 
-As a rule of thumb, omitting the types of literal values (like strings and numbers) usually works, although Lean may pick a type for literal numbers that is more specific than the intended type.
-Lean can usually determine a type for a function application, because it already knows the argument types and the return type.
-Omitting return types for function definitions will often work, but function parameters typically require annotations.
-Definitions that are not functions, like {anchorName unzipNT}`unzipped` in the example, do not need type annotations if their bodies do not need type annotations, and the body of this definition is a function application.
+目安として、文字列や数値のようなリテラルの型はふつう省略できる。ただし、数値リテラルについてはLeanが意図より狭い型を選ぶことがある。
+関数適用の型は、Leanが引数の型と戻り値の型をすでに知っているので、たいてい決められる。
+関数定義の戻り値の型の省略は多くの場合うまくいくが、関数の引数には通常注釈が必要である。
+関数でない定義、たとえば例の{anchorName unzipNT}`unzipped`は、本体に注釈が要らなければ型注釈も要らない。この定義の本体は関数適用である。
 
 :::paragraph
-Omitting the return type for {anchorName unzipNRT}`unzip` is possible when using an explicit {kw}`match` expression:
+{kw}`match`式を明示的に使う場合、{anchorName unzipNRT}`unzip`の戻り値の型は省略できる。
 
 ```anchor unzipNRT
 def unzip (pairs : List (α × β)) :=
@@ -235,18 +235,18 @@ def unzip (pairs : List (α × β)) :=
 
 :::paragraph
 
-Generally speaking, it is a good idea to err on the side of too many, rather than too few, type annotations.
-First off, explicit types communicate assumptions about the code to readers.
-Even if Lean can determine the type on its own, it can still be easier to read code without having to repeatedly query Lean for type information.
-Secondly, explicit types help localize errors.
-The more explicit a program is about its types, the more informative the error messages can be.
-This is especially important in a language like Lean that has a very expressive type system.
-Thirdly, explicit types make it easier to write the program in the first place.
-The type is a specification, and the compiler's feedback can be a helpful tool in writing a program that meets the specification.
-Finally, Lean's type inference is a best-effort system.
-Because Lean's type system is so expressive, there is no “best” or most general type to find for all expressions.
-This means that even if you get a type, there's no guarantee that it's the _right_ type for a given application.
-For instance, {anchorTerm fourteenNat}`14` can be a {anchorName length1}`Nat` or an {anchorName fourteenInt}`Int`:
+一般に、型注釈は少なすぎるより多すぎる方がよい。
+第一に、型を明示すると、コードについての前提が読み手に伝わる。
+Leanが型を自分で決められる場合でも、型情報をいちいちLeanに問い合わせずに読める方が楽である。
+第二に、型を明示すると、誤りの場所を絞り込みやすい。
+型について明示的なプログラムほど、エラーメッセージも情報量が多くなる。
+これは、Leanのように表現力の高い型システムを持つ言語ではとくに重要である。
+第三に、型を明示すると、そもそもプログラムが書きやすくなる。
+型は仕様であり、コンパイラのフィードバックは、その仕様を満たすプログラムを書くための助けになる。
+最後に、Leanの型推論はできる範囲で推論する仕組みである。
+Leanの型システムは非常に表現力が高いので、すべての式に対して「最良の」あるいは最も一般的な型が存在するわけではない。
+つまり、型が得られたとしても、それが用途にとって*正しい*型である保証はない。
+たとえば{anchorTerm fourteenNat}`14`は{anchorName length1}`Nat`にも{anchorName fourteenInt}`Int`にもなりうる。
 
 ```anchor fourteenNat
 #check 14
@@ -269,8 +269,8 @@ For instance, {anchorTerm fourteenNat}`14` can be a {anchorName length1}`Nat` or
 :::
 
 :::paragraph
-Missing type annotations can give confusing error messages.
-Omitting all types from the definition of {anchorName unzipNoTypesAtAll}`unzip`:
+型注釈が足りないと、紛らわしいエラーメッセージが出ることがある。
+{anchorName unzipNoTypesAtAll}`unzip`の定義から型をすべて省くと、
 
 ```anchor unzipNoTypesAtAll
 def unzip pairs :=
@@ -281,34 +281,34 @@ def unzip pairs :=
     (x :: unzipped.fst, y :: unzipped.snd)
 ```
 
-leads to a message about the {kw}`match` expression:
+{kw}`match`式についてのメッセージが出る。
 
 ```anchorError unzipNoTypesAtAll
 Invalid match expression: This pattern contains metavariables:
   []
 ```
 
-This is because {kw}`match` needs to know the type of the value being inspected, but that type was not available.
-A “metavariable” is an unknown part of a program, written {lit}`?m.XYZ` in error messages—they are described in the {ref "polymorphism"}[section on Polymorphism].
-In this program, the type annotation on the argument is required.
+{kw}`match`は調べる値の型を知る必要があるのに、その型が分からなかったためである。
+「メタ変数」とは、プログラム中の未知の部分のことである。エラーメッセージでは{lit}`?m.XYZ`と書かれる。{ref "polymorphism"}[多相性の節]で説明している。
+このプログラムでは、引数の型注釈が必要である。
 :::
 
 :::paragraph
-Even some very simple programs require type annotations.
-For instance, the identity function just returns whatever argument it is passed.
-With argument and type annotations, it looks like this:
+ごく簡単なプログラムでも型注釈が要る場合がある。
+たとえば恒等関数は、渡された引数をそのまま返すだけである。
+引数と戻り値の型注釈を付けると、次のようになる。
 
 ```anchor idA
 def id (x : α) : α := x
 ```
 
-Lean is capable of determining the return type on its own:
+Leanは戻り値の型を自分で決められる。
 
 ```anchor idB
 def id (x : α) := x
 ```
 
-Omitting the argument type, however, causes an error:
+しかし、引数の型を省くとエラーになる。
 
 ```anchor identNoTypes
 def id x := x
@@ -320,19 +320,19 @@ Failed to infer type of binder `x`
 ```
 :::
 
-In general, messages that say something like “failed to infer” or that mention metavariables are often a sign that more type annotations are necessary.
-Especially while still learning Lean, it is useful to provide most types explicitly.
+一般に、「failed to infer」のような文言やメタ変数を含むメッセージは、型注釈を増やす必要があるしるしであることが多い。
+とくにLeanを学んでいる間は、ほとんどの型を明示しておくと役に立つ。
 
-# Simultaneous Matching
+# 同時マッチング
 %%%
 tag := "simultaneous-matching"
 %%%
 
 :::paragraph
 
-Pattern-matching expressions, just like pattern-matching definitions, can match on multiple values at once.
-Both the expressions to be inspected and the patterns that they match against are written with commas between them, similarly to the syntax used for definitions.
-Here is a version of {anchorName dropMatch}`drop` that uses simultaneous matching:
+パターンマッチングの式も、パターンマッチングによる定義と同じく、複数の値に一度にマッチできる。
+調べる式も、それにマッチさせるパターンも、コンマで区切って書く。定義に使う記法と同様である。
+同時マッチングを使った{anchorName dropMatch}`drop`の版は次のとおりである。
 
 ```anchor dropMatch
 def drop (n : Nat) (xs : List α) : List α :=
@@ -346,9 +346,9 @@ def drop (n : Nat) (xs : List α) : List α :=
 
 :::paragraph
 
-Simultaneous matching resembles matching on a pair, but there is an important difference.
-Lean tracks the connection between the expression being matched and the patterns, and this information is used for purposes that include checking for termination and propagating static type information.
-As a result, the version of {anchorName sameLengthPair}`sameLength` that matches a pair is rejected by the termination checker, because the connection between {anchorName sameLengthPair}`xs` and {anchorTerm sameLengthPair}`x :: xs'` is obscured by the intervening pair:
+同時マッチングは組に対するマッチングに似ているが、重要な違いがある。
+Leanは、マッチさせる式とパターンのつながりを追跡しており、その情報は停止性の検査や静的な型情報の伝播などに使われる。
+その結果、組に対してマッチする{anchorName sameLengthPair}`sameLength`は停止性検査に弾かれる。{anchorName sameLengthPair}`xs`と{anchorTerm sameLengthPair}`x :: xs'`のつながりが、間に入った組によって見えなくなるためである。
 
 ```anchor sameLengthPair
 def sameLength (xs : List α) (ys : List β) : Bool :=
@@ -383,7 +383,7 @@ The basic measures relate at each recursive call as follows:
 Please use `termination_by` to specify a decreasing measure.
 ```
 
-Simultaneously matching both lists is accepted:
+両方のリストを同時にマッチさせれば受け入れられる。
 
 ```anchor sameLengthOk2
 def sameLength (xs : List α) (ys : List β) : Bool :=
@@ -395,14 +395,14 @@ def sameLength (xs : List α) (ys : List β) : Bool :=
 
 :::
 
-# Natural Number Patterns
+# 自然数のパターン
 %%%
 tag := "natural-number-patterns"
 %%%
 
 :::paragraph
 
-In the section on {ref "datatypes-and-patterns"}[datatypes and patterns], {anchorName even}`even` was defined like this:
+{ref "datatypes-and-patterns"}[データ型とパターン]の節では、{anchorName even}`even`を次のように定義した。
 
 ```anchor even
 def even (n : Nat) : Bool :=
@@ -411,8 +411,8 @@ def even (n : Nat) : Bool :=
   | Nat.succ k => not (even k)
 ```
 
-Just as there is special syntax to make list patterns more readable than using {anchorName length1}`List.cons` and {anchorName length1}`List.nil` directly, natural numbers can be matched using literal numbers and {anchorTerm evenFancy}`+`.
-For example, {anchorName evenFancy}`even` can also be defined like this:
+{anchorName length1}`List.cons`や{anchorName length1}`List.nil`を直接使うよりリストのパターンが読みやすくなる特別な記法があるのと同じように、自然数は数値リテラルと{anchorTerm evenFancy}`+`を使ってマッチできる。
+たとえば{anchorName evenFancy}`even`は次のようにも定義できる。
 
 ```anchor evenFancy
 def even : Nat → Bool
@@ -420,9 +420,9 @@ def even : Nat → Bool
   | n + 1 => not (even n)
 ```
 
-In this notation, the arguments to the {anchorTerm evenFancy}`+` pattern serve different roles.
-Behind the scenes, the left argument ({anchorName evenFancy}`n` above) becomes an argument to some number of {anchorName even}`Nat.succ` patterns, and the right argument ({anchorTerm evenFancy}`1` above) determines how many {anchorName even}`Nat.succ`s to wrap around the pattern.
-The explicit patterns in {anchorName explicitHalve}`halve`, which divides a {anchorName explicitHalve}`Nat` by two and drops the remainder:
+この記法では、{anchorTerm evenFancy}`+`パターンの引数はそれぞれ別の役割を担う。
+舞台裏では、左の引数（上の{anchorName evenFancy}`n`）が何個かの{anchorName even}`Nat.succ`パターンの引数になり、右の引数（上の{anchorTerm evenFancy}`1`）がそのパターンを{anchorName even}`Nat.succ`で何重に包むかを決める。
+{anchorName explicitHalve}`Nat`を2で割って余りを切り捨てる{anchorName explicitHalve}`halve`の明示的なパターンは、
 
 ```anchor explicitHalve
 def halve : Nat → Nat
@@ -431,7 +431,7 @@ def halve : Nat → Nat
   | Nat.succ (Nat.succ n) => halve n + 1
 ```
 
-can be replaced by numeric literals and {anchorTerm halve}`+`:
+数値リテラルと{anchorTerm halve}`+`で置き換えられる。
 
 ```anchor halve
 def halve : Nat → Nat
@@ -440,15 +440,15 @@ def halve : Nat → Nat
   | n + 2 => halve n + 1
 ```
 
-Behind the scenes, both definitions are completely equivalent.
-Remember: {anchorTerm halve}`halve n + 1` is equivalent to {anchorTerm halveParens}`(halve n) + 1`, not {anchorTerm halveParens}`halve (n + 1)`.
+舞台裏では、この二つの定義は完全に同等である。
+念のため、{anchorTerm halve}`halve n + 1`は{anchorTerm halveParens}`(halve n) + 1`と同じであり、{anchorTerm halveParens}`halve (n + 1)`ではない。
 
 :::
 
 :::paragraph
 
-When using this syntax, the second argument to {anchorTerm halveFlippedPat}`+` should always be a literal {anchorName halveFlippedPat}`Nat`.
-Even though addition is commutative, flipping the arguments in a pattern can result in errors like the following:
+この記法を使うとき、{anchorTerm halveFlippedPat}`+`の二番目の引数は必ず{anchorName halveFlippedPat}`Nat`のリテラルにする。
+加法は可換だが、パターンの中で引数を入れ替えると次のようなエラーになる。
 
 ```anchor halveFlippedPat
 def halve : Nat → Nat
@@ -462,21 +462,21 @@ Invalid pattern(s): `n` is an explicit pattern variable, but it only occurs in p
   .(Nat.add 2 n)
 ```
 
-This restriction enables Lean to transform all uses of the {anchorTerm halveFlippedPat}`+` notation in a pattern into uses of the underlying {anchorName even}`Nat.succ`, keeping the language simpler behind the scenes.
+この制限により、パターン中の{anchorTerm halveFlippedPat}`+`記法をすべて基になる{anchorName even}`Nat.succ`の使用に変換でき、舞台裏の言語が簡単になる。
 
 :::
 
-# Anonymous Functions
+# 無名関数
 %%%
 tag := "anonymous-functions"
 %%%
 
 :::paragraph
 
-Functions in Lean need not be defined at the top level.
-As expressions, functions are produced with the {kw}`fun` syntax.
-Function expressions begin with the keyword {kw}`fun`, followed by one or more parameters, which are separated from the return expression using {lit}`=>`.
-For instance, a function that adds one to a number can be written:
+Leanの関数は、トップレベルで定義しなくてもよい。
+式として関数を作るには{kw}`fun`の記法を使う。
+関数式は{kw}`fun`というキーワードで始まり、その後に一つ以上の引数を書き、戻り値の式とは{lit}`=>`で区切る。
+たとえば、数に1を足す関数は次のように書ける。
 
 ```anchor incr
 #check fun x => x + 1
@@ -486,7 +486,7 @@ For instance, a function that adds one to a number can be written:
 fun x => x + 1 : Nat → Nat
 ```
 
-Type annotations are written the same way as on {kw}`def`, using parentheses and colons:
+型注釈は{kw}`def`と同じく、括弧とコロンで書く。
 
 ```anchor incrInt
 #check fun (x : Int) => x + 1
@@ -497,7 +497,7 @@ Type annotations are written the same way as on {kw}`def`, using parentheses and
 fun x => x + 1 : Int → Int
 ```
 
-Similarly, implicit parameters may be written with curly braces:
+同様に、暗瞑の引数は淡括弧で書ける。
 
 ```anchor identLambda
 #check fun {α : Type} (x : α) => x
@@ -507,15 +507,15 @@ Similarly, implicit parameters may be written with curly braces:
 fun {α} x => x : {α : Type} → α → α
 ```
 
-This style of anonymous function expression is often referred to as a _lambda expression_, because the typical notation used in mathematical descriptions of programming languages uses the Greek letter λ (lambda) where Lean has the keyword {kw}`fun`.
-Even though Lean does permit {kw}`λ` to be used instead of {kw}`fun`, it is most common to write {kw}`fun`.
+この形の無名関数式は*ラムダ式*と呼ばれることが多い。プログラミング言語を数学的に記述するときの記法では、Leanの{kw}`fun`キーワードにあたる場所にギリシャ文字のλ（ラムダ）を使うためである。
+Leanでは{kw}`fun`の代わりに{kw}`λ`も使えるが、{kw}`fun`と書くのが最も一般的である。
 
 :::
 
 :::paragraph
 
-Anonymous functions also support the multiple-pattern style used in {kw}`def`.
-For instance, a function that returns the predecessor of a natural number if it exists can be written:
+無名関数でも、{kw}`def`で使う複数パターンの書き方が使える。
+たとえば、自然数の前者があればそれを返す関数は次のように書ける。
 
 ```anchor predHuh
 #check fun
@@ -531,15 +531,15 @@ fun x =>
   | n.succ => some n : Nat → Option Nat
 ```
 
-Note that Lean's own description of the function has a named argument and a {kw}`match` expression.
-Many of Lean's convenient syntactic shorthands are expanded to simpler syntax behind the scenes, and the abstraction sometimes leaks.
+Lean自身によるこの関数の表示では、名前付きの引数と{kw}`match`式になっている。
+Leanの便利な構文糖の多くは、舞台裏ではより単純な構文に展開される。その抽象化がときには漏れ見えるのである。
 
 :::
 
 :::paragraph
 
-Definitions using {kw}`def` that take arguments may be rewritten as function expressions.
-For instance, a function that doubles its argument can be written as follows:
+引数を取る{kw}`def`の定義は、関数式として書き直せる。
+たとえば、引数を2倍する関数は次のように書ける。
 
 ```anchor doubleLambda
 def double : Nat → Nat := fun
@@ -548,18 +548,18 @@ def double : Nat → Nat := fun
 ```
 
 
-When an anonymous function is very simple, like {anchorEvalStep incrSteps 0}`fun x => x + 1`, the syntax for creating the function can be fairly verbose.
-In that particular example, six non-whitespace characters are used to introduce the function, and its body consists of only three non-whitespace characters.
-For these simple cases, Lean provides a shorthand.
-In an expression surrounded by parentheses, a centered dot character {anchorTerm incrSteps}`·` can stand for a parameter, and the expression inside the parentheses becomes the function's body.
-That particular function can also be written {anchorEvalStep incrSteps 1}`(· + 1)`.
+{anchorEvalStep incrSteps 0}`fun x => x + 1`のようにごく簡単な無名関数では、関数を作るための記法がやや冗長になる。
+この例では、関数を導入するのに空白を除いて6文字を使っているのに対し、本体は空白を除いて3文字しかない。
+このような簡単な場合のために、Leanには省略記法がある。
+括弧で囲んだ式の中で、中央の点{anchorTerm incrSteps}`·`を引数の代わりに使うことができ、括弧の中の式が関数の本体になる。
+この関数は{anchorEvalStep incrSteps 1}`(· + 1)`とも書ける。
 :::
 
 :::paragraph
 
-The centered dot always creates a function out of the _closest_ surrounding set of parentheses.
-For instance, {anchorEvalStep funPair 0}`(· + 5, 3)` is a function that returns a pair of numbers, while {anchorEvalStep pairFun 0}`((· + 5), 3)` is a pair of a function and a number.
-If multiple dots are used, then they become parameters from left to right:
+中央の点は、常に、それを囲む*最も内側の*括弧の組から関数を作る。
+たとえば{anchorEvalStep funPair 0}`(· + 5, 3)`は数の組を返す関数であり、{anchorEvalStep pairFun 0}`((· + 5), 3)`は関数と数の組である。
+点を複数使うと、左から順に引数になる。
 
 ```anchorEvalSteps twoDots
 (· , ·) 1 2
@@ -569,14 +569,14 @@ If multiple dots are used, then they become parameters from left to right:
 (1, 2)
 ```
 
-Anonymous functions can be applied in precisely the same way as functions defined using {kw}`def` or {kw}`let`.
-The command {anchor applyLambda}`#eval (fun x => x + x) 5` results in:
+無名関数は、{kw}`def`や{kw}`let`で定義した関数とまったく同じように適用できる。
+{anchor applyLambda}`#eval (fun x => x + x) 5`というコマンドの結果は次のようになる。
 
 ```anchorInfo applyLambda
 10
 ```
 
-while {anchor applyCdot}`#eval (· * 2) 5` results in:
+{anchor applyCdot}`#eval (· * 2) 5`の結果は次のようになる。
 
 ```anchorInfo applyCdot
 10
@@ -584,26 +584,26 @@ while {anchor applyCdot}`#eval (· * 2) 5` results in:
 
 :::
 
-# Namespaces
+# 名前空間
 %%%
 tag := "namespaces"
 %%%
 
-Each name in Lean occurs in a _namespace_, which is a collection of names.
-Names are placed in namespaces using {lit}`.`, so {anchorName fragments}`List.map` is the name {anchorName fragments}`map` in the {lit}`List` namespace.
-Names in different namespaces do not conflict with each other, even if they are otherwise identical.
-This means that {anchorName fragments}`List.map` and {anchorName fragments}`Array.map` are different names.
-Namespaces may be nested, so {lit}`Project.Frontend.User.loginTime` is the name {lit}`loginTime` in the nested namespace {lit}`Project.Frontend.User`.
+Leanの名前はそれぞれ*名前空間*の中にあり、名前空間は名前の集まりである。
+名前は{lit}`.`を使って名前空間に置かれる。たとえば{anchorName fragments}`List.map`は{lit}`List`名前空間の{anchorName fragments}`map`という名前である。
+別の名前空間にある名前は、それ以外が同じでも衝突しない。
+つまり、{anchorName fragments}`List.map`と{anchorName fragments}`Array.map`は別の名前である。
+名前空間は入れ子にできる。たとえば{lit}`Project.Frontend.User.loginTime`は、入れ子になった名前空間{lit}`Project.Frontend.User`にある{lit}`loginTime`という名前である。
 
 :::paragraph
-Names can be directly defined within a namespace.
-For instance, the name {anchorName fragments}`double` can be defined in the {anchorName even}`Nat` namespace:
+名前は名前空間の中で直接定義できる。
+たとえば{anchorName fragments}`double`という名前を{anchorName even}`Nat`名前空間に定義できる。
 
 ```anchor NatDouble
 def Nat.double (x : Nat) : Nat := x + x
 ```
 
-Because {anchorName even}`Nat` is also the name of a type, dot notation is available to call {anchorName fragments}`Nat.double` on expressions with type {anchorName even}`Nat`:
+{anchorName even}`Nat`は型の名前でもあるので、{anchorName even}`Nat`型の式に対して{anchorName fragments}`Nat.double`を呼ぶのにドット記法が使える。
 
 ```anchor NatDoubleFour
 #eval (4 : Nat).double
@@ -617,8 +617,8 @@ Because {anchorName even}`Nat` is also the name of a type, dot notation is avail
 
 :::paragraph
 
-In addition to defining names directly in a namespace, a sequence of declarations can be placed in a namespace using the {kw}`namespace` and {kw}`end` commands.
-For instance, this defines {anchorName NewNamespace}`triple` and {anchorName NewNamespace}`quadruple` in the namespace {lit}`NewNamespace`:
+名前を名前空間の中で直接定義するほかに、{kw}`namespace`と{kw}`end`のコマンドを使って一連の宣言を名前空間に置ける。
+たとえば、これは{lit}`NewNamespace`名前空間に{anchorName NewNamespace}`triple`と{anchorName NewNamespace}`quadruple`を定義する。
 
 ```anchor NewNamespace
 namespace NewNamespace
@@ -627,7 +627,7 @@ def quadruple (x : Nat) : Nat := 2 * x + 2 * x
 end NewNamespace
 ```
 
-To refer to them, prefix their names with {lit}`NewNamespace.`:
+参照するには、名前の前に{lit}`NewNamespace.`を付ける。
 
 ```anchor tripleNamespace
 #check NewNamespace.triple
@@ -649,9 +649,9 @@ NewNamespace.quadruple (x : Nat) : Nat
 :::
 
 :::paragraph
-Namespaces may be _opened_, which allows the names in them to be used without explicit qualification.
-Writing {kw}`open` {lit}`MyNamespace `{kw}`in` before an expression causes the contents of {lit}`MyNamespace` to be available in the expression.
-For example, {anchorName quadrupleOpenDef}`timesTwelve` uses both {anchorName quadrupleOpenDef}`quadruple` and {anchorName quadrupleOpenDef}`triple` after opening {anchorTerm NewNamespace}`NewNamespace`:
+名前空間は*開く*ことができ、中の名前を修飾なしで使えるようになる。
+式の前に{kw}`open` {lit}`MyNamespace `{kw}`in`と書くと、その式の中で{lit}`MyNamespace`の中身が使えるようになる。
+たとえば{anchorName quadrupleOpenDef}`timesTwelve`は、{anchorTerm NewNamespace}`NewNamespace`を開いたうえで{anchorName quadrupleOpenDef}`quadruple`と{anchorName quadrupleOpenDef}`triple`の両方を使っている。
 
 ```anchor quadrupleOpenDef
 def timesTwelve (x : Nat) :=
@@ -662,9 +662,9 @@ def timesTwelve (x : Nat) :=
 :::
 
 :::paragraph
-Namespaces can also be opened prior to a command.
-This allows all parts of the command to refer to the contents of the namespace, rather than just a single expression.
-To do this, place the {kw}`open`﻿{lit}` ... `{kw}`in` prior to the command.
+名前空間はコマンドの前で開くこともできる。
+これにより、一つの式だけでなく、そのコマンドのすべての部分から名前空間の中身を参照できる。
+このためには、コマンドの前に{kw}`open`{lit}` ... `{kw}`in`を置く。
 
 ```anchor quadrupleNamespaceOpen
 open NewNamespace in
@@ -675,9 +675,9 @@ open NewNamespace in
 NewNamespace.quadruple (x : Nat) : Nat
 ```
 
-Function signatures show the name's full namespace.
-Namespaces may additionally be opened for _all_ following commands for the rest of the file.
-To do this, simply omit the {kw}`in` from a top-level usage of {kw}`open`.
+関数のシグネチャには、名前の完全な名前空間が表示される。
+さらに、ファイルの残りにある*以降すべての*コマンドに対して名前空間を開くこともできる。
+そのためには、トップレベルで使う{kw}`open`から{kw}`in`を省くだけでよい。
 
 :::
 
@@ -687,8 +687,8 @@ tag := "if-let"
 %%%
 
 :::paragraph
-When consuming values that have a sum type, it is often the case that only a single constructor is of interest.
-For example, given this type that represents a subset of Markdown inline elements:
+直和型の値を扱うとき、関心があるコンストラクタが一つだけということがよくある。
+たとえば、Markdownのインライン要素の一部を表す次の型を考える。
 
 ```anchor Inline
 inductive Inline : Type where
@@ -698,7 +698,7 @@ inductive Inline : Type where
   | strong : Inline → Inline
 ```
 
-a function that recognizes string elements and extracts their contents can be written:
+文字列の要素を見分けて中身を取り出す関数は次のように書ける。
 
 ```anchor inlineStringHuhMatch
 def Inline.string? (inline : Inline) : Option String :=
@@ -710,7 +710,7 @@ def Inline.string? (inline : Inline) : Option String :=
 :::
 
 :::paragraph
-An alternative way of writing this function's body uses {kw}`if` together with {kw}`let`:
+この関数の本体は、{kw}`if`と{kw}`let`を組み合わせても書ける。
 
 ```anchor inlineStringHuh
 def Inline.string? (inline : Inline) : Option String :=
@@ -719,39 +719,39 @@ def Inline.string? (inline : Inline) : Option String :=
   else none
 ```
 
-This is very much like the pattern-matching {kw}`let` syntax.
-The difference is that it can be used with sum types, because a fallback is provided in the {kw}`else` case.
-In some contexts, using {kw}`if let` instead of {kw}`match` can make code easier to read.
+これは、パターンマッチングの{kw}`let`記法とよく似ている。
+違いは、{kw}`else`の場合に代替の処理を書けるので、直和型にも使えることである。
+{kw}`match`の代わりに{kw}`if let`を使うと、コードが読みやすくなる場面もある。
 
 :::
 
-# Positional Structure Arguments
+# 構造体の引数の位置指定
 %%%
 tag := "positional-structure-arguments"
 %%%
 
-The {ref "structures"}[section on structures] presents two ways of constructing structures:
- 1. The constructor can be called directly, as in {anchorTerm pointCtor}`Point.mk 1 2`.
- 2. Brace notation can be used, as in {anchorTerm pointBraces}`{ x := 1, y := 2 }`.
+{ref "structures"}[構造体の節]では、構造体を作る二つの方法を紹介した。
+ 1. {anchorTerm pointCtor}`Point.mk 1 2`のように、コンストラクタを直接呼ぶ。
+ 2. {anchorTerm pointBraces}`{ x := 1, y := 2 }`のように、淡括弧の記法を使う。
 
-In some contexts, it can be convenient to pass arguments positionally, rather than by name, but without naming the constructor directly.
-For instance, defining a variety of similar structure types can help keep domain concepts separate, but the natural way to read the code may treat each of them as being essentially a tuple.
-In these contexts, the arguments can be enclosed in angle brackets {lit}`⟨` and {lit}`⟩`.
-A {anchorName pointBraces}`Point` can be written {anchorTerm pointPos}`⟨1, 2⟩`.
-Be careful!
-Even though they look like the less-than sign {lit}`<` and greater-than sign {lit}`>`, these brackets are different.
-They can be input using {lit}`\<` and {lit}`\>`, respectively.
+場面によっては、コンストラクタの名前を直接書かずに、名前ではなく位置で引数を渡せると便利である。
+たとえば、似た構造体をいくつも定義すると分野の概念を分けておけるが、コードを自然に読むときには、どれも本質的には組として扱いたいこともある。
+そのような場合は、引数を山括弧{lit}`⟨`と{lit}`⟩`で囲める。
+{anchorName pointBraces}`Point`は{anchorTerm pointPos}`⟨1, 2⟩`と書ける。
+注意が必要である。
+不等号の{lit}`<`と{lit}`>`に似ているが、これらは別の括弧である。
+それぞれ{lit}`\<`と{lit}`\>`で入力できる。
 
 :::paragraph
-Just as with the brace notation for named constructor arguments, this positional syntax can only be used in a context where Lean can determine the structure's type, either from a type annotation or from other type information in the program.
-For instance, {anchorTerm pointPosEvalNoType}`#eval ⟨1, 2⟩` yields the following error:
+名前付きのコンストラクタ引数に淡括弧の記法を使う場合と同じく、この位置指定の記法は、型注釈やプログラム中の他の型情報から構造体の型をLeanが決められる場面でしか使えない。
+たとえば{anchorTerm pointPosEvalNoType}`#eval ⟨1, 2⟩`は次のエラーになる。
 
 ```anchorError pointPosEvalNoType
 Invalid `⟨...⟩` notation: The expected type of this term could not be determined
 ```
 
-This error occurs because there is no type information available.
-Adding an annotation, such as in {anchorTerm pointPosWithType}`#eval (⟨1, 2⟩ : Point)`, solves the problem:
+このエラーは、使える型情報がないために起こる。
+{anchorTerm pointPosWithType}`#eval (⟨1, 2⟩ : Point)`のように注釈を付ければ解決する。
 
 ```anchorInfo pointPosWithType
 { x := 1.000000, y := 2.000000 }
@@ -759,21 +759,21 @@ Adding an annotation, such as in {anchorTerm pointPosWithType}`#eval (⟨1, 2⟩
 
 :::
 
-# String Interpolation
+# 文字列補間
 %%%
 tag := "string-interpolation"
 %%%
 
 :::paragraph
-In Lean, prefixing a string with {kw}`s!` triggers _interpolation_, where expressions contained in curly braces inside the string are replaced with their values.
-This is similar to {python}`f`-strings in Python and {CSharp}`$`-prefixed strings in C#.
-For instance,
+Leanでは、文字列の前に{kw}`s!`を付けると*補間*が働き、文字列中の淡括弧で囲んだ式がその値で置き換えられる。
+これはPythonの{python}`f`文字列やC#の{CSharp}`$`付き文字列に似ている。
+たとえば、
 
 ```anchor interpolation
 #eval s!"three fives is {NewNamespace.triple 5}"
 ```
 
-yields the output
+と出力される。
 
 ```anchorInfo interpolation
 "three fives is 15"
@@ -782,14 +782,14 @@ yields the output
 :::
 
 :::paragraph
-Not all expressions can be interpolated into a string.
-For instance, attempting to interpolate a function results in an error.
+すべての式を文字列に補間できるわけではない。
+たとえば、関数を補間しようとするとエラーになる。
 
 ```anchor interpolationOops
 #check s!"three fives is {NewNamespace.triple}"
 ```
 
-yields the error
+とエラーになる。
 
 ```anchorError interpolationOops
 failed to synthesize instance of type class
@@ -798,8 +798,8 @@ failed to synthesize instance of type class
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
-This is because there is no standard way to convert functions into strings.
-Just as the compiler maintains a table that describes how to display the result of evaluating expressions of various types, it maintains a table that describes how to convert values of various types into strings.
-The message {lit}`failed to synthesize instance` means that the Lean compiler didn't find an entry in this table for the given type.
-The chapter on {ref "type-classes"}[type classes] describes this mechanism in more detail, including the means of adding new entries to the table.
+関数を文字列に変換する標準的な方法がないためである。
+コンパイラは、いろいろな型の式を評価した結果をどう表示するかを記した表を持っているのと同じように、いろいろな型の値を文字列に変換する方法を記した表も持っている。
+{lit}`failed to synthesize instance`というメッセージは、Leanコンパイラがその型に対する項目をこの表に見つけられなかったという意味である。
+この仕組みの詳細と、表に新しい項目を追加する方法は{ref "type-classes"}[型クラス]の章で説明する。
 :::
