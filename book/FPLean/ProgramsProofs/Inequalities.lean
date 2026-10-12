@@ -467,7 +467,7 @@ tag := "finishing-splitList-shorter-proof"
 %%%
 
 両方の補助定理を証明したので、{anchorName splitList_shorter_le5}`splitList_shorter_le`の残りはすぐに完成する。
-The current proof state has one goal remaining:
+現在の証明の状態にはゴールが一つ残っている。
 ```anchorError splitList_shorter_le5
 unsolved goals
 case cons.intro.right
@@ -479,7 +479,7 @@ right✝ : (splitList xs).snd.length ≤ xs.length
 ⊢ (splitList xs).fst.length ≤ xs.length + 1
 ```
 
-Using {anchorName splitList_shorter_le}`Nat.le_succ_of_le` together with the {lit}`right✝` assumption completes the proof:
+{anchorName splitList_shorter_le}`Nat.le_succ_of_le`を{lit}`right✝`の前提とともに使うと証明が完成する。
 
 ```anchor splitList_shorter_le
 theorem splitList_shorter_le (lst : List α) :
@@ -497,7 +497,7 @@ theorem splitList_shorter_le (lst : List α) :
       assumption
 ```
 
-The next step is to return to the actual theorem that is needed to prove that merge sort terminates: that so long as a list has at least two entries, both results of splitting it are strictly shorter.
+次は、マージソートが停止することを証明するのに必要な本来の定理に戻る。リストが少なくとも二つの要素を持つ限り、それを分けた結果のどちらも真に短い、というものである。
 ```anchor splitList_shorter_start
 theorem splitList_shorter (lst : List α) (_ : lst.length ≥ 2) :
     (splitList lst).fst.length < lst.length ∧
@@ -511,8 +511,8 @@ lst : List α
 x✝ : lst.length ≥ 2
 ⊢ (splitList lst).fst.length < lst.length ∧ (splitList lst).snd.length < lst.length
 ```
-Pattern matching works just as well in tactic scripts as it does in programs.
-Because {anchorName splitList_shorter_1}`lst` has at least two entries, they can be exposed with {kw}`match`, which also refines the type through dependent pattern matching:
+パターンマッチングは、プログラムと同様にタクティクの筋書きでも問題なく働く。
+{anchorName splitList_shorter_1}`lst`は少なくとも二つの要素を持つので、{kw}`match`でそれらを現せる。これも依存パターンマッチングによって型を洗練する。
 ```anchor splitList_shorter_1
 theorem splitList_shorter (lst : List α) (_ : lst.length ≥ 2) :
     (splitList lst).fst.length < lst.length ∧
@@ -531,7 +531,7 @@ x✝ : (x :: y :: xs).length ≥ 2
 ⊢ (splitList (x :: y :: xs)).fst.length < (x :: y :: xs).length ∧
   (splitList (x :: y :: xs)).snd.length < (x :: y :: xs).length
 ```
-Simplifying using {anchorName splitList}`splitList` removes {anchorName splitList_shorter_2}`x` and {anchorName splitList_shorter_2}`y`, resulting in the computed lengths of lists each gaining a {anchorTerm le_succ_of_le}`+ 1`:
+{anchorName splitList}`splitList`を使って単純化すると{anchorName splitList_shorter_2}`x`と{anchorName splitList_shorter_2}`y`が取り除かれ、計算されたリストの長さにそれぞれ{anchorTerm le_succ_of_le}`+ 1`が付く。
 ```anchor splitList_shorter_2
 theorem splitList_shorter (lst : List α) (_ : lst.length ≥ 2) :
     (splitList lst).fst.length < lst.length ∧
@@ -549,7 +549,7 @@ xs : List α
 x✝ : (x :: y :: xs).length ≥ 2
 ⊢ (splitList xs).fst.length < xs.length + 1 ∧ (splitList xs).snd.length < xs.length + 1
 ```
-Replacing {anchorTerm splitList_shorter_2b}`simp` with {anchorTerm splitList_shorter_2b}`simp +arith` removes these {anchorTerm le_succ_of_le}`+ 1`s, because {anchorTerm splitList_shorter_2b}`simp +arith` makes use of the fact that {anchorTerm Nat.lt_imp}`n + 1 < m + 1` implies {anchorTerm Nat.lt_imp}`n < m`:
+{anchorTerm splitList_shorter_2b}`simp`を{anchorTerm splitList_shorter_2b}`simp +arith`に置き換えると、これらの{anchorTerm le_succ_of_le}`+ 1`が取り除かれる。{anchorTerm splitList_shorter_2b}`simp +arith`が、{anchorTerm Nat.lt_imp}`n + 1 < m + 1`ならば{anchorTerm Nat.lt_imp}`n < m`であるという事実を使うためである。
 ```anchor splitList_shorter_2b
 theorem splitList_shorter (lst : List α) (_ : lst.length ≥ 2) :
     (splitList lst).fst.length < lst.length ∧
@@ -567,7 +567,7 @@ xs : List α
 x✝ : (x :: y :: xs).length ≥ 2
 ⊢ (splitList xs).fst.length ≤ xs.length ∧ (splitList xs).snd.length ≤ xs.length
 ```
-This goal now matches {anchorName splitList_shorter}`splitList_shorter_le`, which can be used to conclude the proof:
+このゴールは{anchorName splitList_shorter}`splitList_shorter_le`に一致し、これを使って証明を締めくくれる。
 
 ```anchor splitList_shorter
 theorem splitList_shorter (lst : List α) (_ : lst.length ≥ 2) :
@@ -579,7 +579,7 @@ theorem splitList_shorter (lst : List α) (_ : lst.length ≥ 2) :
     apply splitList_shorter_le
 ```
 
-The facts needed to prove that {anchorName mergeSort}`mergeSort` terminates can be pulled out of the resulting {anchorName AndUse}`And`:
+{anchorName mergeSort}`mergeSort`が停止することを証明するのに必要な事実は、得られた{anchorName AndUse}`And`から取り出せる。
 
 ```anchor splitList_shorter_sides
 theorem splitList_shorter_fst (lst : List α) (h : lst.length ≥ 2) :
@@ -591,14 +591,14 @@ theorem splitList_shorter_snd (lst : List α) (h : lst.length ≥ 2) :
   splitList_shorter lst h |>.right
 ```
 
-## A Simpler Proof
+## より簡単な証明
 %%%
 tag := "splitList-shorter-le-simpler-proof"
 %%%
 
 
 :::paragraph
-Instead of using ordinary induction, {anchorName splitList_shorter_le_funInd1}`splitList_shorter_le` can be proved using functional induction, resulting in one case for each branch of {anchorName splitList}`splitList`:
+普通の帰納法を使う代わりに、{anchorName splitList_shorter_le_funInd1}`splitList_shorter_le`は関数による帰納法で証明でき、{anchorName splitList}`splitList`の枝ごとに一つの場合が得られる。
 ```anchor splitList_shorter_le_funInd1
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -607,16 +607,16 @@ theorem splitList_shorter_le (lst : List α) :
   | case1 => skip
   | case2 x xs a b splitEq ih => skip
 ```
-The first case matches the base case of {anchorName splitList}`splitList`.
-_Both_ applications of {anchorName splitList}`splitList` have been replaced by the result of this first branch:
+一つ目の場合は{anchorName splitList}`splitList`の基底の場合に一致する。
+{anchorName splitList}`splitList`の*両方*の適用が、この最初の枝の結果で置き換えられている。
 ```anchorError splitList_shorter_le_funInd1
 unsolved goals
 case case1
 α : Type u_1
 ⊢ ([], []).fst.length ≤ [].length ∧ ([], []).snd.length ≤ [].length
 ```
-The second case matches the recursive branch of {anchorName splitList}`splitList`.
-In addition to the induction hypothesis, the value of the {anchorTerm splitList}`let` in {anchorName splitList}`splitList` is tracked in an assumption:
+二つ目の場合は{anchorName splitList}`splitList`の再帰の枝に一致する。
+帰納法の仮定に加えて、{anchorName splitList}`splitList`の{anchorTerm splitList}`let`の値が前提で追跡されている。
 ```anchorError splitList_shorter_le_funInd1
 unsolved goals
 case case2
@@ -629,8 +629,8 @@ ih : (splitList xs).fst.length ≤ xs.length ∧ (splitList xs).snd.length ≤ x
 ```
 :::
 
-While the second case looks a bit complicated, everything needed to complete the proof is present.
-Indeed, {tactic}`grind` can prove both goals immediately:
+二つ目の場合は少し複雑に見えるが、証明を完成させるのに必要なものはすべてそろっている。
+実際、{tactic}`grind`が両方のゴールをすぐに証明できる。
 ```anchor splitList_shorter_le_funInd2
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -638,24 +638,24 @@ theorem splitList_shorter_le (lst : List α) :
   fun_induction splitList <;> grind
 ```
 
-# Merge Sort Terminates
+# マージソートの停止
 %%%
 tag := "merge-sort-terminates"
 %%%
 
-Merge sort has two recursive calls, one for each sub-list returned by {anchorName splitList}`splitList`.
-Each recursive call will require a proof that the length of the list being passed to it is shorter than the length of the input list.
-It's usually convenient to write a termination proof in two steps: first, write down the propositions that will allow Lean to verify termination, and then prove them.
-Otherwise, it's possible to put a lot of effort into proving the propositions, only to find out that they aren't quite what's needed to establish that the recursive calls are on smaller inputs.
+マージソートには再帰呼び出しが二つあり、{anchorName splitList}`splitList`が返す部分リストごとに一つずつである。
+各再帰呼び出しには、渡されるリストの長さが入力のリストの長さより短いという証明が要る。
+停止性の証明は通常二段階で書くと便利である。まず、Leanが停止性を検証できるようにする命題を書き、次にそれらを証明する。
+そうしないと、命題の証明に多大な労力を注いだ末に、それらが再帰呼び出しがより小さな入力に対して行われていることを示すのに必要なものと少し違うと分かることがある。
 
-The {lit}`sorry` tactic can prove any goal, even false ones.
-It isn't intended for use in production code or final proofs, but it is a convenient way to “sketch out” a proof or program ahead of time.
-Any definitions or theorems that use {lit}`sorry` are annotated with a warning.
+{lit}`sorry`タクティクはどのゴールでも、偽のものでも証明できる。
+製品のコードや最終的な証明で使うためのものではないが、証明やプログラムを前もって「下書き」する便利な手段である。
+{lit}`sorry`を使う定義や定理には警告が付けられる。
 
-The initial sketch of {anchorName mergeSortSorry}`mergeSort`'s termination argument that uses {lit}`sorry` can be written by copying the goals that Lean couldn't prove into {kw}`have`-expressions.
-In Lean, {kw}`have` is similar to {kw}`let`.
-When using {kw}`have`, the name is optional.
-Typically, {kw}`let` is used to define names that refer to interesting values, while {kw}`have` is used to locally prove propositions that can be found when Lean is searching for evidence that an array lookup is in-bounds or that a function terminates.
+{lit}`sorry`を使う{anchorName mergeSortSorry}`mergeSort`の停止性の議論の最初の下書きは、Leanが証明できなかったゴールを{kw}`have`式に写すことで書ける。
+Leanでは、{kw}`have`は{kw}`let`に似ている。
+{kw}`have`を使うとき、名前は任意である。
+通常、{kw}`let`は関心のある値を指す名前を定義するのに使い、{kw}`have`は、Leanが配列の参照が範囲内である証拠や関数が停止する証拠を探すときに見つけられる命題を局所的に証明するのに使う。
 ```anchor mergeSortSorry
 def mergeSort [Ord α] (xs : List α) : List α :=
   if h : xs.length < 2 then
@@ -671,13 +671,13 @@ def mergeSort [Ord α] (xs : List α) : List α :=
     merge (mergeSort halves.fst) (mergeSort halves.snd)
 termination_by xs.length
 ```
-The warning is located on the name {anchorName mergeSortSorry}`mergeSort`:
+警告は名前{anchorName mergeSortSorry}`mergeSort`のところに出る。
 ```anchorWarning mergeSortSorry
 declaration uses `sorry`
 ```
-Because there are no errors, the proposed propositions are enough to establish termination.
+エラーがないので、提案した命題は停止性を示すのに十分である。
 
-The proofs begin by applying the helper theorems:
+証明は補助定理を適用することから始める。
 ```anchor mergeSortNeedsGte
 def mergeSort [Ord α] (xs : List α) : List α :=
   if h : xs.length < 2 then
@@ -693,7 +693,7 @@ def mergeSort [Ord α] (xs : List α) : List α :=
     merge (mergeSort halves.fst) (mergeSort halves.snd)
 termination_by xs.length
 ```
-Both proofs fail, because {anchorName mergeSortNeedsGte}`splitList_shorter_fst` and {anchorName mergeSortNeedsGte}`splitList_shorter_snd` both require a proof that {anchorTerm mergeSortGteStarted}`xs.length ≥ 2`:
+どちらの証明も失敗する。{anchorName mergeSortNeedsGte}`splitList_shorter_fst`と{anchorName mergeSortNeedsGte}`splitList_shorter_snd`のどちらも{anchorTerm mergeSortGteStarted}`xs.length ≥ 2`の証明を要求するためである。
 ```anchorError mergeSortNeedsGte
 unsolved goals
 α : Type ?u.3
@@ -703,7 +703,7 @@ h : ¬xs.length < 2
 halves : List α × List α := ⋯
 ⊢ xs.length ≥ 2
 ```
-To check that this will be enough to complete the proof, add it using {lit}`sorry` and check for errors:
+これで証明を完成させるのに十分かを確かめるには、{lit}`sorry`を使ってそれを加え、エラーがないか調べる。
 ```anchor mergeSortGteStarted
 def mergeSort [Ord α] (xs : List α) : List α :=
   if h : xs.length < 2 then
@@ -722,14 +722,14 @@ def mergeSort [Ord α] (xs : List α) : List α :=
     merge (mergeSort halves.fst) (mergeSort halves.snd)
 termination_by xs.length
 ```
-Once again, there is only a warning.
+ここでもまた、警告だけが出る。
 ```anchorWarning mergeSortGteStarted
 declaration uses `sorry`
 ```
 
-There is one promising assumption available: {lit}`h : ¬List.length xs < 2`, which comes from the {kw}`if`.
-Clearly, if it is not the case that {anchorTerm mergeSort}`xs.length < 2`, then {anchorTerm mergeSort}`xs.length ≥ 2`.
-The {anchorTerm mergeSort}`grind` tactic solves this goal, and the program is now complete:
+使えそうな前提が一つある。{lit}`h : ¬List.length xs < 2`で、{kw}`if`から来ている。
+明らかに、{anchorTerm mergeSort}`xs.length < 2`でないなら{anchorTerm mergeSort}`xs.length ≥ 2`である。
+{anchorTerm mergeSort}`grind`タクティクがこのゴールを解き、プログラムが完成する。
 
 ```anchor mergeSort
 def mergeSort [Ord α] (xs : List α) : List α :=
@@ -751,7 +751,7 @@ def mergeSort [Ord α] (xs : List α) : List α :=
 termination_by xs.length
 ```
 
-The function can be tested on examples:
+この関数は例で試せる。
 ```anchor mergeSortRocks
 #eval mergeSort ["soapstone", "geode", "mica", "limestone"]
 ```
@@ -765,16 +765,16 @@ The function can be tested on examples:
 [3, 5, 15, 22]
 ```
 
-# Division as Iterated Subtraction
+# 引き算の繰り返しとしての除算
 %%%
 tag := "division-as-iterated-subtraction"
 %%%
 
-Just as multiplication is iterated addition and exponentiation is iterated multiplication, division can be understood as iterated subtraction.
-The {ref "recursive-functions"}[very first description of recursive functions in this book] presents a version of division that terminates when the divisor is not zero, but that Lean does not accept.
-Proving that division terminates requires the use of a fact about inequalities.
+乗算が加算の繰り返しであり、累乗が乗算の繰り返しであるのと同じく、除算は引き算の繰り返しとして理解できる。
+{ref "recursive-functions"}[この本で最初に再帰関数を説明した箇所]で、除数が0でないときに停止する除算の版を示したが、Leanはそれを受け付けない。
+除算が停止することを証明するには、不等号についての事実を使う必要がある。
 
-Lean cannot prove that this definition of division terminates:
+Leanはこの除算の定義が停止することを証明できない。
 ```anchor divTermination (module := Examples.ProgramsProofs.Div)
 def div (n k : Nat) : Nat :=
   if n < k then
@@ -804,11 +804,11 @@ h✝ : ¬n < k
 ⊢ n - k < n
 ```
 
-That's a good thing, because it doesn't!
-When {anchorName divTermination (module:=Examples.ProgramsProofs.Div)}`k` is {anchorTerm divTermination (module:=Examples.ProgramsProofs.Div)}`0`, value of {anchorName divTermination (module:=Examples.ProgramsProofs.Div)}`n` does not decrease, so the program is an infinite loop.
+これはよいことである。実際、停止しないからである。
+{anchorName divTermination (module:=Examples.ProgramsProofs.Div)}`k`が{anchorTerm divTermination (module:=Examples.ProgramsProofs.Div)}`0`のとき、{anchorName divTermination (module:=Examples.ProgramsProofs.Div)}`n`の値が小さくならないので、そのプログラムは無限ループになる。
 
 :::paragraph
-Rewriting the function to take evidence that {anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`k` is not {anchorTerm divRecursiveNeedsProof (module:=Examples.ProgramsProofs.Div)}`0` allows Lean to automatically prove termination:
+{anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`k`が{anchorTerm divRecursiveNeedsProof (module:=Examples.ProgramsProofs.Div)}`0`でない証拠を取るように関数を書き換えると、Leanが停止性を自動で証明できる。
 
 ```anchor divRecursiveNeedsProof (module := Examples.ProgramsProofs.Div)
 def div (n k : Nat) (ok : k ≠ 0) : Nat :=
@@ -819,7 +819,7 @@ def div (n k : Nat) (ok : k ≠ 0) : Nat :=
 ```
 :::
 
-This definition of {anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`div` terminates because the first argument {anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`n` is smaller on each recursive call.
+この{anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`div`の定義は、再帰呼び出しごとに一つ目の引数{anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`n`が小さくなるので停止する。
 これは{kw}`termination_by`の句で表せる。
 
 
@@ -833,16 +833,16 @@ termination_by n
 ```
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "inequalities-exercises"
 %%%
 
-Prove the following theorems without using {tactic}`grind`:
+次の定理を{tactic}`grind`を使わずに証明せよ。
 
- * For all natural numbers $`n`, $`0 < n + 1`.
- * For all natural numbers $`n`, $`0 \leq n`.
- * For all natural numbers $`n` and $`k`, $`(n + 1) - (k + 1) = n - k`
- * For all natural numbers $`n` and $`k`, if $`k < n` then $`n \neq 0`
- * For all natural numbers $`n`, $`n - n = 0`
- * For all natural numbers $`n` and $`k`, if $`n + 1 < k` then $`n < k`
+ * すべての自然数$`n`について$`0 < n + 1`。
+ * すべての自然数$`n`について$`0 \leq n`。
+ * すべての自然数$`n`と$`k`について$`(n + 1) - (k + 1) = n - k`。
+ * すべての自然数$`n`と$`k`について、$`k < n`なら$`n \neq 0`。
+ * すべての自然数$`n`について$`n - n = 0`。
+ * すべての自然数$`n`と$`k`について、$`n + 1 < k`なら$`n < k`。
