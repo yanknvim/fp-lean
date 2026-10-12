@@ -20,21 +20,21 @@ set_option verso.exampleModule "Examples.FunctorApplicativeMonad"
 
 #doc (Manual) "Functors, Applicative Functors, and Monads" =>
 
-{anchorTerm FunctorPair}`Functor` and {moduleName}`Monad` both describe operations for types that are still waiting for a type argument.
-One way to understand them is that {anchorTerm FunctorPair}`Functor` describes containers in which the contained data can be transformed, and {moduleName}`Monad` describes an encoding of programs with side effects.
-This understanding is incomplete, however.
-After all, {moduleName}`Option` has instances for both {moduleName}`Functor` and {moduleName}`Monad`, and simultaneously represents an optional value _and_ a computation that might fail to return a value.
+{anchorTerm FunctorPair}`Functor`と{moduleName}`Monad`はどちらも、型引数をまだ待っている型のための操作を記述する。
+それらを理解する一つの方法は、{anchorTerm FunctorPair}`Functor`は中に入ったデータを変換できる容器を記述し、{moduleName}`Monad`は副作用を持つプログラムの符号化を記述する、と見ることである。
+しかしこの理解は完全ではない。
+何しろ{moduleName}`Option`は{moduleName}`Functor`と{moduleName}`Monad`の両方のインスタンスを持ち、省略可能な値*であり*、値を返すのに失敗しうる計算*でも*ある。
 
-From the perspective of data structures, {anchorName AlternativeOption}`Option` is a bit like a nullable type or like a list that can contain at most one entry.
-From the perspective of control structures, {anchorName AlternativeOption}`Option` represents a computation that might terminate early without a result.
-Typically, programs that use the {anchorName FunctorValidate}`Functor` instance are easiest to think of as using {anchorName AlternativeOption}`Option` as a data structure, while programs that use the {anchorName MonadExtends}`Monad` instance are easiest to think of as using {anchorName AlternativeOption}`Option` to allow early failure, but learning to use both of these perspectives fluently is an important part of becoming proficient at functional programming.
+データ構造の観点では、{anchorName AlternativeOption}`Option`はnull許容型か、要素を高々一つしか持てないリストに少し似ている。
+制御構造の観点では、{anchorName AlternativeOption}`Option`は結果を出さずに途中で終わりうる計算を表す。
+ふつう、{anchorName FunctorValidate}`Functor`インスタンスを使うプログラムは{anchorName AlternativeOption}`Option`をデータ構造として使うものと考えるのが最も分かりやすく、{anchorName MonadExtends}`Monad`インスタンスを使うプログラムは{anchorName AlternativeOption}`Option`で早期の失敗を可能にするものと考えるのが最も分かりやすい。しかし、どちらの観点も自在に使えるようになることは、関数型プログラミングに熟達するうえで重要な部分である。
 
-There is a deeper relationship between functors and monads.
-It turns out that _every monad is a functor_.
-Another way to say this is that the monad abstraction is more powerful than the functor abstraction, because not every functor is a monad.
-Furthermore, there is an additional intermediate abstraction, called _applicative functors_, that has enough power to write many interesting programs and yet permits libraries that cannot use the {anchorName MonadExtends}`Monad` interface.
-The type class {anchorName ApplicativeValidate}`Applicative` provides the overloadable operations of applicative functors.
-Every monad is an applicative functor, and every applicative functor is a functor, but the converses do not hold.
+ファンクタとモナドの間にはより深い関係がある。
+*すべてのモナドはファンクタである*ことが分かる。
+言い換えれば、モナドという抽象はファンクタという抽象より強力である。すべてのファンクタがモナドなわけではないためである。
+さらに、*アプリカティブファンクタ*と呼ばれる中間の抽象があり、多くの興味深いプログラムを書けるだけの力を持ちながら、{anchorName MonadExtends}`Monad`インターフェースを使えないライブラリも許す。
+{anchorName ApplicativeValidate}`Applicative`型クラスがアプリカティブファンクタのオーバーロード可能な操作を与える。
+すべてのモナドはアプリカティブファンクタであり、すべてのアプリカティブファンクタはファンクタであるが、逆は成り立たない。
 
 {include 1 FPLean.FunctorApplicativeMonad.Inheritance}
 
