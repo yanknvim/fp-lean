@@ -15,14 +15,14 @@ set_option verso.exampleModule "Examples.ProgramsProofs.Fin"
 tag := "Fin"
 %%%
 
-The {anchorTerm sundries}`GetElem` instance for {anchorName sundries}`Array` and {anchorName sundries}`Nat` requires a proof that the provided {anchorName sundries}`Nat` is smaller than the array.
-In practice, these proofs often end up being passed to functions along with the indices.
-Rather than passing an index and a proof separately, a type called {anchorName Fin}`Fin` can be used to bundle up the index and the proof into a single value.
-This can make code easier to read.
+{anchorName sundries}`Array`と{anchorName sundries}`Nat`の{anchorTerm sundries}`GetElem`インスタンスは、与えられた{anchorName sundries}`Nat`が配列より小さいという証明を要求する。
+実際には、これらの証明はしばしば添字とともに特に関数へ渡されることになる。
+添字と証明を別々に渡す代わりに、{anchorName Fin}`Fin`という型を使って添字と証明を一つの値にまとめられる。
+これでコードが読みやすくなることがある。
 
-The type {anchorTerm sundries}`Fin n` represents numbers that are strictly less than {anchorName sundries}`n`.
-In other words, {anchorTerm sundries}`Fin 3` describes {anchorTerm sundries}`0`, {anchorTerm sundries}`1`, and {anchorTerm sundries}`2`, while {anchorTerm sundries}`Fin 0` has no values at all.
-The definition of {anchorName Fin}`Fin` resembles {anchorName sundries}`Subtype`, as a {anchorTerm sundries}`Fin n` is a structure that contains a {anchorName Fin}`Nat` and a proof that it is less than {anchorName sundries}`n`:
+型{anchorTerm sundries}`Fin n`は{anchorName sundries}`n`より真に小さい数を表す。
+言い換えれば、{anchorTerm sundries}`Fin 3`は{anchorTerm sundries}`0`、{anchorTerm sundries}`1`、{anchorTerm sundries}`2`を記述し、{anchorTerm sundries}`Fin 0`には値がまったくない。
+{anchorName Fin}`Fin`の定義は{anchorName sundries}`Subtype`に似ており、{anchorTerm sundries}`Fin n`は{anchorName Fin}`Nat`と、それが{anchorName sundries}`n`より小さいという証明を含む構造体である。
 
 ```anchor Fin
 structure Fin (n : Nat) where
@@ -30,15 +30,15 @@ structure Fin (n : Nat) where
   isLt : LT.lt val n
 ```
 
-Lean includes instances of {anchorName sundries}`ToString` and {anchorName sundries}`OfNat` that allow {anchorName Fin}`Fin` values to be conveniently used as numbers.
-In other words, the output of {anchorTerm fiveFinEight}`#eval (5 : Fin 8)` is {anchorInfo fiveFinEight}`5`, rather than something like {lit}`{val := 5, isLt := _}`.
+Leanには{anchorName sundries}`ToString`と{anchorName sundries}`OfNat`のインスタンスがあり、{anchorName Fin}`Fin`の値を数として便利に使える。
+言い換えれば、{anchorTerm fiveFinEight}`#eval (5 : Fin 8)`の出力は{lit}`{val := 5, isLt := _}`のようなものではなく{anchorInfo fiveFinEight}`5`である。
 
-Instead of failing when the provided number is larger than the bound, the {anchorName sundries}`OfNat` instance for {anchorName Fin}`Fin` returns a value modulo the bound.
-This means that {anchorTerm finOverflow}`#eval (45 : Fin 10)` results in {anchorInfo finOverflow}`5` rather than a compile-time error.
+与えられた数が上限より大きいときに失敗する代わりに、{anchorName Fin}`Fin`の{anchorName sundries}`OfNat`インスタンスは上限を法とした値を返す。
+つまり、{anchorTerm finOverflow}`#eval (45 : Fin 10)`はコンパイル時のエラーではなく{anchorInfo finOverflow}`5`になる。
 
-In a return type, a {anchorName Fin}`Fin` returned as a found index makes its connection to the data structure in which it was found more clear.
-The {anchorName ArrayFind}`Array.find` in the {ref "proving-termination"}[previous section] returns an index that the caller cannot immediately use to perform lookups into the array, because the information about its validity has been lost.
-A more specific type results in a value that can be used without making the program significantly more complicated:
+戻り値の型で、見つかった添字として{anchorName Fin}`Fin`を返すと、それが見つかったデータ構造との結び付きがより明確になる。
+{ref "proving-termination"}[前の節]の{anchorName ArrayFind}`Array.find`は、呼び出し側がすぐには配列の参照に使えない添字を返す。その妥当性についての情報が失われているためである。
+より具体的な型にすると、プログラムをそれほど複雑にせずに使える値が得られる。
 
 ```anchor ArrayFindHelper
 def findHelper (arr : Array α) (p : α → Bool) (i : Nat) :
@@ -56,25 +56,25 @@ def Array.find (arr : Array α) (p : α → Bool) : Option (Fin arr.size × α) 
   findHelper arr p 0
 ```
 
-# Exercise
+# 練習問題
 %%%
 tag := "Fin-exercises"
 %%%
 
-Write a function {anchorTerm exercise}`Fin.next? : Fin n → Option (Fin n)` that returns the next largest {anchorName nextThreeFin}`Fin` when it would be in bounds, or {anchorName ArrayFindHelper}`none` if not.
-Check that
+範囲内ならその次に大きい{anchorName nextThreeFin}`Fin`を返し、そうでなければ{anchorName ArrayFindHelper}`none`を返す{anchorTerm exercise}`Fin.next? : Fin n → Option (Fin n)`関数を書け。
+まず、次を実行すると、
 ```anchor nextThreeFin
 #eval (3 : Fin 8).next?
 ```
-outputs
+次の出力になることを確かめよ。
 ```anchorInfo nextThreeFin
 some 4
 ```
-and that
+また、
 ```anchor nextSevenFin
 #eval (7 : Fin 8).next?
 ```
-outputs
+次の出力になることを確かめよ。
 ```anchorInfo nextSevenFin
 none
 ```
