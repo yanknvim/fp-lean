@@ -17,14 +17,14 @@ set_option verso.exampleModule "FelineLib"
 tag := "hello-world-conveniences"
 %%%
 
-# Nested Actions
+# 入れ子のアクション
 %%%
 tag := "nested-actions"
 %%%
 
 :::paragraph
-Many of the functions in {lit}`feline` exhibit a repetitive pattern in which an {anchorName dump}`IO` action's result is given a name, and then used immediately and only once.
-For instance, in {moduleName}`dump`:
+{lit}`feline`の関数の多くには、{anchorName dump}`IO`アクションの結果に名前を付け、それをすぐ一度だけ使う、という繰り返しの形が現れる。
+たとえば{moduleName}`dump`では、
 ```anchor dump
 partial def dump (stream : IO.FS.Stream) : IO Unit := do
   let buf ← stream.read bufsize
@@ -36,13 +36,13 @@ partial def dump (stream : IO.FS.Stream) : IO Unit := do
     dump stream
 ```
 
-the pattern occurs for {moduleName (anchor:=stdoutBind)}`stdout`:
+{moduleName (anchor:=stdoutBind)}`stdout`についてこの形が現れる。
 ```anchor stdoutBind
     let stdout ← IO.getStdout
     stdout.write buf
 ```
 
-Similarly, {moduleName}`fileStream` contains the following snippet:
+同様に、{moduleName}`fileStream`には次の部分がある。
 ```anchor fileExistsBind
   let fileExists ← filename.pathExists
   if not fileExists then
@@ -50,9 +50,9 @@ Similarly, {moduleName}`fileStream` contains the following snippet:
 :::
 
 :::paragraph
-When Lean is compiling a {moduleTerm}`do` block, expressions that consist of a left arrow immediately under parentheses are lifted to the nearest enclosing {moduleTerm}`do`, and their results are bound to a unique name.
-This unique name replaces the origin of the expression.
-This means that {moduleName (module := Examples.Cat)}`dump` can also be written as follows:
+Leanが{moduleTerm}`do`ブロックをコンパイルするとき、括弧の直下にある左矢印から成る式は、最も内側の{moduleTerm}`do`へ持ち上げられ、その結果は一意な名前に対応付けられる。
+この一意な名前が、その式があった場所を置き換える。
+つまり、{moduleName (module := Examples.Cat)}`dump`は次のようにも書ける。
 
 ```anchor dump (module:=Examples.Cat)
 partial def dump (stream : IO.FS.Stream) : IO Unit := do
@@ -64,12 +64,12 @@ partial def dump (stream : IO.FS.Stream) : IO Unit := do
     dump stream
 ```
 
-This version of {anchorName dump (module := Examples.Cat)}`dump` avoids introducing names that are used only once, which can greatly simplify a program.
-{moduleName (module := Examples.Cat)}`IO` actions that Lean lifts from a nested expression context are called _nested actions_.
+この版の{anchorName dump (module := Examples.Cat)}`dump`は、一度しか使わない名前を導入せずに済み、プログラムがかなり簡単になる。
+Leanが入れ子になった式の文脈から持ち上げる{moduleName (module := Examples.Cat)}`IO`アクションを*入れ子のアクション*と呼ぶ。
 :::
 
 :::paragraph
-{moduleName (module := Examples.Cat)}`fileStream` can be simplified using the same technique:
+{moduleName (module := Examples.Cat)}`fileStream`も同じ手法で簡単にできる。
 
 ```anchor fileStream (module := Examples.Cat)
 def fileStream (filename : System.FilePath) : IO (Option IO.FS.Stream) := do
@@ -81,15 +81,15 @@ def fileStream (filename : System.FilePath) : IO (Option IO.FS.Stream) := do
     pure (some (IO.FS.Stream.ofHandle handle))
 ```
 
-In this case, the local name of {anchorName fileStream (module := Examples.Cat)}`handle` could also have been eliminated using nested actions, but the resulting expression would have been long and complicated.
-Even though it's often good style to use nested actions, it can still sometimes be helpful to name intermediate results.
+この場合、{anchorName fileStream (module := Examples.Cat)}`handle`というローカル名も入れ子のアクションで消せるが、そうすると式が長く複雑になる。
+入れ子のアクションを使うのがよいスタイルであることは多いが、途中の結果に名前を付けた方が役に立つこともある。
 :::
 
-It is important to remember, however, that nested actions are only a shorter notation for {moduleName (module := Examples.Cat)}`IO` actions that occur in a surrounding {moduleTerm (module := Examples.Cat)}`do` block.
-The side effects that are involved in executing them still occur in the same order, and execution of side effects is not interspersed with the evaluation of expressions.
-Therefore, nested actions cannot be lifted from the branches of an {kw}`if`.
+ただし、入れ子のアクションは、周囲の{moduleTerm (module := Examples.Cat)}`do`ブロックの中にある{moduleName (module := Examples.Cat)}`IO`アクションの短い書き方にすぎないことを覚えておきたい。
+それらを実行する際の副作用はやはり同じ順序で起こり、副作用の実行が式の評価に混ざることはない。
+したがって、入れ子のアクションを{kw}`if`の枝から持ち上げることはできない。
 
-For an example of where this might be confusing, consider the following helper definitions that return data after announcing to the world that they have been executed:
+これが紛らわしくなる例として、実行されたことを世間に知らせてからデータを返す、次の補助的な定義を考える。
 
 ```anchor getNumA (module := Examples.Cat)
 def getNumA : IO Nat := do
@@ -103,9 +103,9 @@ def getNumB : IO Nat := do
   pure 7
 ```
 
-These definitions are intended to stand in for more complicated {anchorName getNumB (module:=Examples.Cat)}`IO` code that might validate user input, read a database, or open a file.
+これらの定義は、利用者の入力を検証したり、データベースを読んだり、ファイルを開いたりする、もっと複雑な{anchorName getNumB (module:=Examples.Cat)}`IO`コードの代わりである。
 
-A program that prints {moduleTerm (module := Examples.Cat)}`0` when number A is five, or number B otherwise, might be written as follows:
+数Aが5なら{moduleTerm (module := Examples.Cat)}`0`を、そうでなければ数Bを表示するプログラムは、次のように書くかもしれない。
 
 ```anchor testEffects (module := Examples.Cat)
 def test : IO Unit := do
@@ -113,7 +113,7 @@ def test : IO Unit := do
   (← IO.getStdout).putStrLn s!"The answer is {a}"
 ```
 
-This program would be equivalent to:
+このプログラムは次と等価である。
 
 ```anchor testEffectsExpanded (module := Examples.Cat)
 def test : IO Unit := do
@@ -123,26 +123,26 @@ def test : IO Unit := do
   (← IO.getStdout).putStrLn s!"The answer is {a}"
 ```
 
-which runs {moduleName (module := Examples.Cat)}`getNumB` regardless of whether the result of {moduleName (module := Examples.Cat)}`getNumA` is equal to {moduleTerm (module := Examples.Cat)}`5`.
-To prevent this confusion, nested actions are not allowed in an {kw}`if` that is not itself a line in the {moduleTerm (module := Examples.Cat)}`do`, and the following error message results:
+これは、{moduleName (module := Examples.Cat)}`getNumA`の結果が{moduleTerm (module := Examples.Cat)}`5`に等しいかどうかに関係なく{moduleName (module := Examples.Cat)}`getNumB`を実行してしまう。
+この混乱を防ぐため、{moduleTerm (module := Examples.Cat)}`do`の行そのものではない{kw}`if`の中では入れ子のアクションを使えず、次のエラーメッセージになる。
 
 ```anchorError testEffects (module := Examples.Cat)
 Nested action `← getNumB` must be nested inside a `do` expression.
 ```
 
 
-# Flexible Layouts for {lit}`do`
+# {lit}`do`の柔軟なレイアウト
 %%%
 tag := "do-layout-syntax"
 %%%
 
-In Lean, {moduleTerm (module := Examples.Cat)}`do` expressions are whitespace-sensitive.
-Each {moduleName (module := Examples.Cat)}`IO` action or local binding in the {moduleTerm (module := Examples.Cat)}`do` is expected to start on its own line, and they should all have the same indentation.
-Almost all uses of {moduleTerm (module := Examples.Cat)}`do` should be written this way.
-In some rare contexts, however, manual control over whitespace and indentation may be necessary, or it may be convenient to have multiple small actions on a single line.
-In these cases, newlines can be replaced with a semicolon and indentation can be replaced with curly braces.
+Leanでは、{moduleTerm (module := Examples.Cat)}`do`式は空白に敏感である。
+{moduleTerm (module := Examples.Cat)}`do`の中の{moduleName (module := Examples.Cat)}`IO`アクションやローカル束縛は、それぞれ自分の行から始め、すべて同じインデントにする。
+{moduleTerm (module := Examples.Cat)}`do`のほとんどは、このように書くべきである。
+ただし、まれに空白とインデントを手で制御する必要がある場合や、小さなアクションを複数1行にまとめると便利な場合がある。
+そのような場合は、改行をセミコロンで、インデントを淡括弧で置き換えられる。
 
-For instance, all of the following programs are equivalent:
+たとえば、次のプログラムはすべて等価である。
 
 ```anchor helloOne (module := Examples.Cat)
 -- This version uses only whitespace-sensitive layout
@@ -178,26 +178,26 @@ def main : IO Unit := do
 ```
 
 
-Idiomatic Lean code uses curly braces with {moduleTerm (module := Examples.Cat)}`do` very rarely.
+慣用的なLeanのコードでは、{moduleTerm (module := Examples.Cat)}`do`に淡括弧を使うことはほとんどない。
 
-# Running {lit}`IO` Actions With {kw}`#eval`
+# {kw}`#eval`で{lit}`IO`アクションを実行する
 %%%
 tag := "eval-io"
 %%%
 
-Lean's {moduleTerm (module := Examples.Cat)}`#eval` command can be used to execute {moduleName (module := Examples.Cat)}`IO` actions, rather than just evaluating them.
-Normally, adding a {moduleTerm (module := Examples.Cat)}`#eval` command to a Lean file causes Lean to evaluate the provided expression, convert the resulting value to a string, and provide that string as a tooltip and in the info window.
-Rather than failing because {moduleName (module := Examples.Cat)}`IO` actions can't be converted to strings, {moduleTerm (module := Examples.Cat)}`#eval` executes them, carrying out their side effects.
-If the result of execution is the {moduleName (module := Examples.Cat)}`Unit` value {moduleTerm (module := Examples.Cat)}`()`, then no result string is shown, but if it is a type that can be converted to a string, then Lean displays the resulting value.
+Leanの{moduleTerm (module := Examples.Cat)}`#eval`コマンドは、{moduleName (module := Examples.Cat)}`IO`アクションを評価するだけでなく実行するのにも使える。
+通常、Leanのファイルに{moduleTerm (module := Examples.Cat)}`#eval`コマンドを書くと、Leanは与えられた式を評価し、その値を文字列に変換して、ツールチップと情報ウィンドウに表示する。
+{moduleName (module := Examples.Cat)}`IO`アクションは文字列に変換できないからといって失敗するのではなく、{moduleTerm (module := Examples.Cat)}`#eval`はそれを実行し、副作用を起こす。
+実行の結果が{moduleName (module := Examples.Cat)}`Unit`の値{moduleTerm (module := Examples.Cat)}`()`なら結果の文字列は表示されないが、文字列に変換できる型なら、Leanは得られた値を表示する。
 
 :::paragraph
-This means that, given the prior definitions of {moduleName (module := Examples.HelloWorld)}`countdown` and {moduleName (module := Examples.HelloWorld)}`runActions`,
+つまり、先ほどの{moduleName (module := Examples.HelloWorld)}`countdown`と{moduleName (module := Examples.HelloWorld)}`runActions`の定義があれば、
 
 ```anchor evalDoesIO (module := Examples.HelloWorld)
 #eval runActions (countdown 3)
 ```
 
-displays
+と表示される。
 
 ```anchorInfo evalDoesIO (module := Examples.HelloWorld)
 3
@@ -207,11 +207,11 @@ Blast off!
 ```
 :::
 
-This is the output produced by running the {moduleName (module := Examples.HelloWorld)}`IO` action, rather than some opaque representation of the action itself.
-In other words, for {moduleName (module := Examples.HelloWorld)}`IO` actions, {moduleTerm (module := Examples.HelloWorld)}`#eval` both _evaluates_ the provided expression and _executes_ the resulting action value.
+これは、{moduleName (module := Examples.HelloWorld)}`IO`アクションそのものの分かりにくい表現ではなく、そのアクションを実行して得られる出力である。
+言い換えれば、{moduleName (module := Examples.HelloWorld)}`IO`アクションに対して、{moduleTerm (module := Examples.HelloWorld)}`#eval`は与えられた式を*評価*し、得られたアクションの値を*実行*する。
 
-Quickly testing {moduleName (module := Examples.HelloWorld)}`IO` actions with {moduleTerm (module := Examples.HelloWorld)}`#eval` can be much more convenient that compiling and running whole programs.
-However, there are some limitations.
-For instance, reading from standard input simply returns empty input.
-Additionally, the {moduleName (module := Examples.HelloWorld)}`IO` action is re-executed whenever Lean needs to update the diagnostic information that it provides to users, and this can happen at unpredictable times.
-An action that reads and writes files, for instance, may do so unexpectedly.
+{moduleName (module := Examples.HelloWorld)}`IO`アクションを{moduleTerm (module := Examples.HelloWorld)}`#eval`で手早く試すのは、プログラム全体をコンパイルして実行するよりずっと便利なことが多い。
+ただし、いくつか制限がある。
+たとえば、標準入力からの読み込みは、単に空の入力を返す。
+さらに、Leanが利用者に提供する診断情報を更新する必要があるたびに、{moduleName (module := Examples.HelloWorld)}`IO`アクションが再実行される。これは予測できない時点で起こりうる。
+たとえば、ファイルを読み書きするアクションが、予期しないときに読み書きしてしまうことがある。

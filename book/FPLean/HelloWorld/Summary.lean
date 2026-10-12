@@ -18,75 +18,75 @@ set_option verso.exampleModule "Examples.HelloWorld"
 tag := "hello-world-summary"
 %%%
 
-# Evaluation vs Execution
+# 評価と実行
 %%%
 tag := none
 %%%
 
-Side effects are aspects of program execution that go beyond the evaluation of mathematical expressions, such as reading files, throwing exceptions, or triggering industrial machinery.
-While most languages allow side effects to occur during evaluation, Lean does not.
-Instead, Lean has a type called {moduleName}`IO` that represents _descriptions_ of programs that use side effects.
-These descriptions are then executed by the language's run-time system, which invokes the Lean expression evaluator to carry out specific computations.
-Values of type {moduleTerm}`IO α` are called _{moduleName}`IO` actions_.
-The simplest is {moduleName}`pure`, which returns its argument and has no actual side effects.
+副作用とは、数式の評価を超えてプログラムの実行に伴う事柄であり、ファイルの読み込み、例外の送出、産業機械の起動などが含まれる。
+ほとんどの言語は評価の途中で副作用を許すが、Leanは許さない。
+代わりに、Leanには{moduleName}`IO`という型があり、副作用を使うプログラムの*記述*を表す。
+その記述は、言語の実行時システムが実行する。実行時システムは、個々の計算を行うためにLeanの式評価器を呼び出す。
+{moduleTerm}`IO α`型の値を*{moduleName}`IO`アクション*と呼ぶ。
+最も単純なのは{moduleName}`pure`で、引数を返し、実際の副作用はない。
 
-{moduleName}`IO` actions can also be understood as functions that take the whole world as an argument and return a new world in which the side effect has occurred.
-Behind the scenes, the {moduleName}`IO` library ensures that the world is never duplicated, created, or destroyed.
-While this model of side effects cannot actually be implemented, as the whole universe is too big to fit in memory, the real world can be represented by a token that is passed around through the program.
+{moduleName}`IO`アクションは、世界全体を引数に取り、副作用が起きた新しい世界を返す関数としても理解できる。
+舞台裏では、{moduleName}`IO`ライブラリが、世界が複製されたり作られたり壊されたりしないことを保証する。
+この副作用のモデルは、宇宙全体をメモリに収めることができないので実際には実装できないが、現実の世界はプログラムの中で受け渡されるトークンで表せる。
 
-An {moduleName}`IO` action {anchorName MainTypes}`main` is executed when the program starts.
-{anchorName MainTypes}`main` can have one of three types:
- * {anchorTerm MainTypes}`main : IO Unit` is used for simple programs that cannot read their command-line arguments and always return exit code {anchorTerm MainTypes}`0`,
- * {anchorTerm MainTypes}`main : IO UInt32` is used for programs without arguments that may signal success or failure, and
- * {anchorTerm MainTypes}`main : List String → IO UInt32` is used for programs that take command-line arguments and signal success or failure.
+プログラムが起動すると、{moduleName}`IO`アクション{anchorName MainTypes}`main`が実行される。
+{anchorName MainTypes}`main`は次の三つの型のいずれかを持つ。
+ * {anchorTerm MainTypes}`main : IO Unit`は、コマンドライン引数を読めず、常に終了コード{anchorTerm MainTypes}`0`を返す単純なプログラムに使う。
+ * {anchorTerm MainTypes}`main : IO UInt32`は、引数を取らず、成功か失敗を知らせうるプログラムに使い、
+ * {anchorTerm MainTypes}`main : List String → IO UInt32`は、コマンドライン引数を取り、成功か失敗を知らせるプログラムに使う。
 
 
-# {lit}`do` Notation
+# {lit}`do`記法
 %%%
 tag := none
 %%%
 
-The Lean standard library provides a number of basic {moduleName}`IO` actions that represent effects such as reading from and writing to files and interacting with standard input and standard output.
-These base {moduleName}`IO` actions are composed into larger {moduleName}`IO` actions using {kw}`do` notation, which is a built-in domain-specific language for writing descriptions of programs with side effects.
-A {kw}`do` expression contains a sequence of _statements_, which may be:
- * expressions that represent {moduleName}`IO` actions,
- * ordinary local definitions with {kw}`let` and {lit}`:=`, where the defined name refers to the value of the provided expression, or
- * local definitions with {kw}`let` and {lit}`←`, where the defined name refers to the result of executing the value of the provided expression.
+Leanの標準ライブラリには、ファイルの読み書きや標準入出力とのやり取りといった副作用を表す基本的な{moduleName}`IO`アクションが多数用意されている。
+これらの基本的な{moduleName}`IO`アクションは、{kw}`do`記法でより大きな{moduleName}`IO`アクションに組み立てる。{kw}`do`記法は、副作用のあるプログラムの記述を書くために言語に組み込まれたドメイン固有言語である。
+{kw}`do`式には*文*の並びが入り、文は次のいずれかである。
+ * {moduleName}`IO`アクションを表す式、
+ * {kw}`let`と{lit}`:=`による普通のローカル定義（定義した名前は与えられた式の値を指す）、または
+ * {kw}`let`と{lit}`←`によるローカル定義（定義した名前は与えられた式の値を実行した結果を指す）。
 
-{moduleName}`IO` actions that are written with {kw}`do` are executed one statement at a time.
+{kw}`do`で書いた{moduleName}`IO`アクションは、文を一つずつ実行する。
 
-Furthermore, {kw}`if` and {kw}`match` expressions that occur immediately under a {kw}`do` are implicitly considered to have their own {kw}`do` in each branch.
-Inside of a {kw}`do` expression, _nested actions_ are expressions with a left arrow immediately under parentheses.
-The Lean compiler implicitly lifts them to the nearest enclosing {kw}`do`, which may be implicitly part of a branch of a {kw}`match` or {kw}`if` expression, and gives them a unique name.
-This unique name then replaces the origin site of the nested action.
+さらに、{kw}`do`の直下にある{kw}`if`式と{kw}`match`式は、各枝に暗黙にそれぞれの{kw}`do`があるものとして扱われる。
+{kw}`do`式の中では、括弧の直下に左矢印がある式が*入れ子のアクション*である。
+Leanコンパイラは、それらを最も内側の{kw}`do`（{kw}`match`式や{kw}`if`式の枝に暗黙に属する{kw}`do`であることもある）へ暗黙に持ち上げ、一意な名前を与える。
+その一意な名前が、入れ子のアクションがあった場所を置き換える。
 
 
-# Compiling and Running Programs
+# プログラムのコンパイルと実行
 %%%
 tag := none
 %%%
 
-A Lean program that consists of a single file with a {moduleName}`main` definition can be run using {lit}`lean --run FILE`.
-While this can be a nice way to get started with a simple program, most programs will eventually graduate to a multiple-file project that should be compiled before running.
+{moduleName}`main`の定義がある1ファイルだけのLeanプログラムは、{lit}`lean --run FILE`で実行できる。
+単純なプログラムを始めるにはこれでよいが、ほとんどのプログラムはいずれ、実行前にコンパイルする複数ファイルのプロジェクトに移行する。
 
-Lean projects are organized into _packages_, which are collections of libraries and executables together with information about dependencies and a build configuration.
-Packages are described using Lake, a Lean build tool.
-Use {lit}`lake new` to create a Lake package in a new directory, or {lit}`lake init` to create one in the current directory.
-Lake package configuration is another domain-specific language.
-Use {lit}`lake build` to build a project.
+Leanのプロジェクトは*パッケージ*として整理する。パッケージは、ライブラリと実行ファイルの集まりに、依存関係の情報とビルド設定を添えたものである。
+パッケージはLeanのビルドツールであるLakeで記述する。
+新しいディレクトリにLakeのパッケージを作るには{lit}`lake new`を、現在のディレクトリに作るには{lit}`lake init`を使う。
+Lakeのパッケージ設定もまたドメイン固有言語である。
+プロジェクトをビルドするには{lit}`lake build`を使う。
 
-# Partiality
+# 部分性
 %%%
 tag := none
 %%%
 
-One consequence of following the mathematical model of expression evaluation is that every expression must have a value.
-This rules out both incomplete pattern matches that fail to cover all constructors of a datatype and programs that can fall into an infinite loop.
-Lean ensures that all {kw}`match` expressions cover all cases, and that all recursive functions are either structurally recursive or have an explicit proof of termination.
+式の評価という数学的モデルに従うことの一つの帰結は、すべての式が値を持たなければならないことである。
+これにより、データ型のすべてのコンストラクタを網羅しないパターンマッチングと、無限ループに陷りうるプログラムの両方が排除される。
+Leanは、すべての{kw}`match`式がすべての場合を網羅すること、そしてすべての再帰関数が構造的再帰であるか、停止性の明示的な証明を持つことを保証する。
 
-However, some real programs require the possibility of looping infinitely, because they handle potentially-infinite data, such as POSIX streams.
-Lean provides an escape hatch: functions whose definition is marked {kw}`partial` are not required to terminate.
-This comes at a cost.
-Because types are a first-class part of the Lean language, functions can return types.
-Partial functions, however, are not evaluated during type checking, because an infinite loop in a function could cause the type checker to enter an infinite loop.
-Furthermore, mathematical proofs are unable to inspect the definitions of partial functions, which means that programs that use them are much less amenable to formal proof.
+しかし、現実のプログラムの中には、POSIXのストリームのように無限になりうるデータを扱うため、無限にループする可能性を必要とするものがある。
+Leanには逃げ道がある。定義に{kw}`partial`と付けた関数には停止性を要求しない。
+ただし、代償がある。
+型はLean言語の第一級の要素なので、関数は型を返せる。
+しかし、partialな関数は型検査のときに評価されない。関数の無限ループが型検査器を無限ループに陷らせうるためである。
+さらに、数学的な証明はpartialな関数の定義を調べられないので、それを使うプログラムは形式的な証明に向かない。

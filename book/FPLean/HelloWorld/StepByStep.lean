@@ -21,8 +21,8 @@ tag := "step-by-step"
 %%%
 
 :::paragraph
-A {moduleTerm}`do` block can be executed one line at a time.
-Start with the program from the prior section:
+{moduleTerm}`do`ブロックは、1行ずつ実行できる。
+前の節のプログラムから始める。
 
 ```anchor block1
   let stdin ← IO.getStdin
@@ -34,13 +34,13 @@ Start with the program from the prior section:
 ```
 :::
 
-# Standard IO
+# 標準入出力
 %%%
 tag := "stdio"
 %%%
 
 :::paragraph
-The first line is {anchor line1}`let stdin ← IO.getStdin`, while the remainder is:
+最初の行は{anchor line1}`let stdin ← IO.getStdin`であり、残りは次のとおりである。
 ```anchor block2
   let stdout ← IO.getStdout
   stdout.putStrLn "How would you like to be addressed?"
@@ -50,24 +50,24 @@ The first line is {anchor line1}`let stdin ← IO.getStdin`, while the remainder
 ```
 :::
 
-To execute a {kw}`let` statement that uses a {anchorTerm block2}`←`, start by evaluating the expression to the right of the arrow (in this case, {moduleTerm}`IO.getStdin`).
-Because this expression is just a variable, its value is looked up.
-The resulting value is a built-in primitive {moduleTerm}`IO` action.
-The next step is to execute this {moduleTerm}`IO` action, resulting in a value that represents the standard input stream, which has type {moduleTerm}`IO.FS.Stream`.
-Standard input is then associated with the name to the left of the arrow (here {anchorTerm line1}`stdin`) for the remainder of the {moduleTerm}`do` block.
+{anchorTerm block2}`←`を使う{kw}`let`文を実行するには、まず矢印の右の式（この場合は{moduleTerm}`IO.getStdin`）を評価する。
+この式は単なる変数なので、その値が参照される。
+得られた値は、組み込みの原始的な{moduleTerm}`IO`アクションである。
+次の手順は、この{moduleTerm}`IO`アクションを実行することである。標準入力ストリームを表す{moduleTerm}`IO.FS.Stream`型の値が得られる。
+そのあと、標準入力は{moduleTerm}`do`ブロックの残りにおいて、矢印の左の名前（ここでは{anchorTerm line1}`stdin`）に対応付けられる。
 
-Executing the second line, {anchor line2}`let stdout ← IO.getStdout`, proceeds similarly.
-First, the expression {moduleTerm}`IO.getStdout` is evaluated, yielding an {moduleTerm}`IO` action that will return the standard output.
-Next, this action is executed, actually returning the standard output.
-Finally, this value is associated with the name {anchorTerm line2}`stdout` for the remainder of the {moduleTerm}`do` block.
+二番目の行{anchor line2}`let stdout ← IO.getStdout`の実行も同様に進む。
+まず{moduleTerm}`IO.getStdout`という式が評価され、標準出力を返す{moduleTerm}`IO`アクションが得られる。
+次にこのアクションが実行され、実際に標準出力が返る。
+最後に、この値が{moduleTerm}`do`ブロックの残りにおいて名前{anchorTerm line2}`stdout`に対応付けられる。
 
-# Asking a Question
+# 質問する
 %%%
 tag := "asking-a-question"
 %%%
 
 :::paragraph
-Now that {anchorTerm line1}`stdin` and {anchorTerm line2}`stdout` have been found, the remainder of the block consists of a question and an answer:
+{anchorTerm line1}`stdin`と{anchorTerm line2}`stdout`が得られたので、ブロックの残りは質問と応答である。
 ```anchor block3
   stdout.putStrLn "How would you like to be addressed?"
   let input ← stdin.getLine
@@ -76,22 +76,22 @@ Now that {anchorTerm line1}`stdin` and {anchorTerm line2}`stdout` have been foun
 ```
 :::
 
-The first statement in the block, {anchor line3}`stdout.putStrLn "How would you like to be addressed?"`, consists of an expression.
-To execute an expression, it is first evaluated.
-In this case, {moduleTerm}`IO.FS.Stream.putStrLn` has type {moduleTerm}`IO.FS.Stream → String → IO Unit`.
-This means that it is a function that accepts a stream and a string, returning an {moduleTerm}`IO` action.
-The expression uses {ref "behind-the-scenes"}[accessor notation] for a function call.
-This function is applied to two arguments: the standard output stream and a string.
-The value of the expression is an {moduleTerm}`IO` action that will write the string and a newline character to the output stream.
-Having found this value, the next step is to execute it, which causes the string and newline to actually be written to {anchorTerm setup}`stdout`.
-Statements that consist only of expressions do not introduce any new variables.
+ブロックの最初の文{anchor line3}`stdout.putStrLn "How would you like to be addressed?"`は、式だけから成る。
+式を実行するには、まずそれを評価する。
+この場合、{moduleTerm}`IO.FS.Stream.putStrLn`の型は{moduleTerm}`IO.FS.Stream → String → IO Unit`である。
+つまり、ストリームと文字列を受け取って{moduleTerm}`IO`アクションを返す関数である。
+この式では、関数呼び出しに{ref "behind-the-scenes"}[アクセサ記法]を使っている。
+この関数は、標準出力ストリームと文字列の二つの引数に適用される。
+この式の値は、文字列と改行文字を出力ストリームに書き込む{moduleTerm}`IO`アクションである。
+この値が得られたので、次の手順はそれを実行することである。これにより、文字列と改行が実際に{anchorTerm setup}`stdout`に書き込まれる。
+式だけから成る文は、新しい変数を導入しない。
 
-The next statement in the block is {anchor line4}`let input ← stdin.getLine`.
-{moduleTerm}`IO.FS.Stream.getLine` has type {moduleTerm}`IO.FS.Stream → IO String`, which means that it is a function from a stream to an {moduleTerm}`IO` action that will return a string.
-Once again, this is an example of accessor notation.
-This {moduleTerm}`IO` action is executed, and the program waits until the user has typed a complete line of input.
-Assume the user writes “{lit}`David`”.
-The resulting line ({lit}`"David\n"`) is associated with {anchorTerm block5}`input`, where the escape sequence {lit}`\n` denotes the newline character.
+ブロックの次の文は{anchor line4}`let input ← stdin.getLine`である。
+{moduleTerm}`IO.FS.Stream.getLine`の型は{moduleTerm}`IO.FS.Stream → IO String`であり、ストリームから、文字列を返す{moduleTerm}`IO`アクションへの関数である。
+これもまたアクセサ記法の例である。
+この{moduleTerm}`IO`アクションが実行され、利用者が入力行を最後まで打ち終えるまでプログラムは待つ。
+利用者が「{lit}`David`」と入力したとする。
+得られた行（{lit}`"David\n"`）が{anchorTerm block5}`input`に対応付けられる。エスケープシーケンス{lit}`\n`は改行文字を表す。
 
 ```anchor block5
   let name := input.dropEndWhile Char.isWhitespace
@@ -99,72 +99,72 @@ The resulting line ({lit}`"David\n"`) is associated with {anchorTerm block5}`inp
 ```
 
 :::paragraph
-The next line, {anchor line5}`let name := input.dropEndWhile Char.isWhitespace`, is a {kw}`let` statement.
-Unlike the other {kw}`let` statements in this program, it uses {anchorTerm block5}`:=` instead of {anchorTerm line4}`←`.
-This means that the expression will be evaluated, but the resulting value need not be an {moduleTerm}`IO` action and will not be executed.
-In this case, {moduleName}`String.dropEndWhile` takes a string and a {ref "string-matching"}[pattern] and returns a {tech}[string slice] from which all substrings at the end of the string that match the pattern have been removed.
-For example,
+次の行{anchor line5}`let name := input.dropEndWhile Char.isWhitespace`は{kw}`let`文である。
+このプログラムの他の{kw}`let`文と違い、{anchorTerm line4}`←`ではなく{anchorTerm block5}`:=`を使っている。
+つまり、式は評価されるが、その値は{moduleTerm}`IO`アクションである必要はなく、実行もされない。
+この場合、{moduleName}`String.dropEndWhile`は文字列と{ref "string-matching"}[パターン]を受け取り、文字列の末尾にあってパターンに一致する部分文字列をすべて取り除いた{tech}[文字列スライス]を返す。
+たとえば、
 
 ```anchorTerm dropBang (module := Examples.HelloWorld)
 #eval "Hello!!!".dropEndWhile (· == '!')
 ```
 
-yields
+が得られる。
 
 ```anchorInfo dropBang (module := Examples.HelloWorld)
 Hello
 ```
 
-and
+また、
 
 ```anchorTerm dropNonLetter (module := Examples.HelloWorld)
 #eval "Hello...   ".dropEndWhile (fun c => not (c.isAlphanum))
 ```
 
-yields
+が得られる。
 
 ```anchorInfo dropNonLetter (module := Examples.HelloWorld)
 Hello
 ```
 
-in which all non-alphanumeric characters have been removed from the right side of the string.
-In the current line of the program, whitespace characters (including the newline) are removed from the right side of the input string, resulting in {lit}`David`, which is associated with {anchorTerm block5}`name` for the remainder of the block.
+文字列の右側から英数字以外の文字がすべて取り除かれている。
+プログラムのこの行では、入力文字列の右側から空白文字（改行を含む）が取り除かれ、{lit}`David`が得られる。これがブロックの残りで{anchorTerm block5}`name`に対応付けられる。
 :::
 
-# Greeting the User
+# 利用者に挨拶する
 %%%
 tag := "greeting"
 %%%
 
 :::paragraph
-All that remains to be executed in the {moduleTerm}`do` block is a single statement:
+{moduleTerm}`do`ブロックで残っているのは、一つの文だけである。
 ```anchor line6
   stdout.putStrLn s!"Hello, {name}!"
 ```
 :::
 
-The string argument to {anchorTerm line6}`putStrLn` is constructed via string interpolation, yielding the string {moduleTerm (module := Examples.HelloWorld)}`"Hello, David!"`.
-Because this statement is an expression, it is evaluated to yield an {moduleTerm}`IO` action that will print this string with a newline to standard output.
-Once the expression has been evaluated, the resulting {moduleTerm}`IO` action is executed, resulting in the greeting.
+{anchorTerm line6}`putStrLn`に渡す文字列は文字列補間で組み立てられ、{moduleTerm (module := Examples.HelloWorld)}`"Hello, David!"`という文字列になる。
+この文は式なので評価され、この文字列を改行付きで標準出力に表示する{moduleTerm}`IO`アクションが得られる。
+式の評価が終わると、得られた{moduleTerm}`IO`アクションが実行され、挨拶が表示される。
 
-# {lit}`IO` Actions as Values
+# 値としての{lit}`IO`アクション
 %%%
 tag := "actions-as-values"
 %%%
 
 
-In the above description, it can be difficult to see why the distinction between evaluating expressions and executing {moduleTerm}`IO` actions is necessary.
-After all, each action is executed immediately after it is produced.
-Why not simply carry out the effects during evaluation, as is done in other languages?
+ここまでの説明では、式の評価と{moduleTerm}`IO`アクションの実行を区別する必要がなぜあるのか、分かりにくいかもしれない。
+どのアクションも、作られた直後に実行されているからである。
+他の言語のように、評価の途中で副作用をそのまま起こせばよいのではないか。
 
-The answer is twofold.
-First off, separating evaluation from execution means that programs must be explicit about which functions can have side effects.
-Because the parts of the program that do not have effects are much more amenable to mathematical reasoning, whether in the heads of programmers or using Lean's facilities for formal proof, this separation can make it easier to avoid bugs.
-Secondly, not all {moduleTerm}`IO` actions need be executed at the time that they come into existence.
-The ability to mention an action without carrying it out allows ordinary functions to be used as control structures.
+理由は二つある。
+第一に、評価と実行を分けると、どの関数が副作用を持ちうるかをプログラムに明示させられる。
+副作用のない部分は、プログラマの頭の中でも、Leanの形式的な証明の仕組みを使う場合でも、数学的な推論に向いている。この分離により、誤りを避けやすくなる。
+第二に、{moduleTerm}`IO`アクションができた時点ですべて実行しなければならないわけではない。
+アクションに言及するだけで実行しないでおけるので、普通の関数を制御構造として使える。
 
 :::paragraph
-For example, the function {anchorName twice (module:=Examples.HelloWorld)}`twice` takes an {moduleTerm}`IO` action as its argument, returning a new action that will execute the argument action twice.
+たとえば、関数{anchorName twice (module:=Examples.HelloWorld)}`twice`は{moduleTerm}`IO`アクションを引数に取り、そのアクションを二度実行する新しいアクションを返す。
 
 ```anchor twice (module := Examples.HelloWorld)
 def twice (action : IO Unit) : IO Unit := do
@@ -172,21 +172,21 @@ def twice (action : IO Unit) : IO Unit := do
   action
 ```
 
-Executing
+次を実行すると、
 
 ```anchorTerm twiceShy (module := Examples.HelloWorld)
 twice (IO.println "shy")
 ```
 
-results in
+出力は次のようになる。
 
 ```anchorInfo twiceShy (module := Examples.HelloWorld)
 shy
 shy
 ```
 
-being printed.
-This can be generalized to a version that runs the underlying action any number of times:
+と表示される。
+これを一般化して、元のアクションを任意の回数実行する版も書ける。
 
 ```anchor nTimes (module := Examples.HelloWorld)
 def nTimes (action : IO Unit) : Nat → IO Unit
@@ -198,11 +198,11 @@ def nTimes (action : IO Unit) : Nat → IO Unit
 :::
 
 :::paragraph
-In the base case for {moduleTerm (module := Examples.HelloWorld)}`Nat.zero`, the result is {moduleTerm (module := Examples.HelloWorld)}`pure ()`.
-The function {moduleTerm (module := Examples.HelloWorld)}`pure` creates an {moduleTerm (module := Examples.HelloWorld)}`IO` action that has no side effects, but returns {moduleTerm (module := Examples.HelloWorld)}`pure`'s argument, which in this case is the constructor for {moduleTerm (module := Examples.HelloWorld)}`Unit`.
-As an action that does nothing and returns nothing interesting, {moduleTerm (module := Examples.HelloWorld)}`pure ()` is at the same time utterly boring and very useful.
-In the recursive step, a {moduleTerm (module := Examples.HelloWorld)}`do` block is used to create an action that first executes {moduleTerm (module := Examples.HelloWorld)}`action` and then executes the result of the recursive call.
-Executing {anchor nTimes3 (module := Examples.HelloWorld)}`#eval nTimes (IO.println "Hello") 3` causes the following output:
+{moduleTerm (module := Examples.HelloWorld)}`Nat.zero`の場合の結果は{moduleTerm (module := Examples.HelloWorld)}`pure ()`である。
+関数{moduleTerm (module := Examples.HelloWorld)}`pure`は、副作用を持たず、{moduleTerm (module := Examples.HelloWorld)}`pure`の引数（この場合は{moduleTerm (module := Examples.HelloWorld)}`Unit`のコンストラクタ）を返す{moduleTerm (module := Examples.HelloWorld)}`IO`アクションを作る。
+何もせず、意味のあるものも返さないアクションである{moduleTerm (module := Examples.HelloWorld)}`pure ()`は、退屈このうえないが、非常に役に立つ。
+再帰の場合は、{moduleTerm (module := Examples.HelloWorld)}`do`ブロックを使って、まず{moduleTerm (module := Examples.HelloWorld)}`action`を実行し、次に再帰呼び出しの結果を実行するアクションを作る。
+{anchor nTimes3 (module := Examples.HelloWorld)}`#eval nTimes (IO.println "Hello") 3`を実行すると、次の出力が得られる。
 
 ```anchorInfo nTimes3 (module := Examples.HelloWorld)
 Hello
@@ -213,8 +213,8 @@ Hello
 :::
 
 :::paragraph
-In addition to using functions as control structures, the fact that {moduleTerm (module := Examples.HelloWorld)}`IO` actions are first-class values means that they can be saved in data structures for later execution.
-For instance, the function {moduleName (module := Examples.HelloWorld)}`countdown` takes a {moduleTerm (module := Examples.HelloWorld)}`Nat` and returns a list of unexecuted {moduleTerm (module := Examples.HelloWorld)}`IO` actions, one for each {moduleTerm (module := Examples.HelloWorld)}`Nat`:
+関数を制御構造として使えるほかに、{moduleTerm (module := Examples.HelloWorld)}`IO`アクションが第一級の値であることから、後で実行するためにデータ構造に入れておける。
+たとえば、関数{moduleName (module := Examples.HelloWorld)}`countdown`は{moduleTerm (module := Examples.HelloWorld)}`Nat`を取り、まだ実行していない{moduleTerm (module := Examples.HelloWorld)}`IO`アクションのリストを、それぞれの{moduleTerm (module := Examples.HelloWorld)}`Nat`に対して一つずつ返す。
 
 ```anchor countdown (module := Examples.HelloWorld)
 def countdown : Nat → List (IO Unit)
@@ -222,14 +222,14 @@ def countdown : Nat → List (IO Unit)
   | n + 1 => IO.println s!"{n + 1}" :: countdown n
 ```
 
-This function has no side effects, and does not print anything.
-For example, it can be applied to an argument, and the length of the resulting list of actions can be checked:
+この関数には副作用がなく、何も表示しない。
+たとえば、引数に適用して、得られたアクションのリストの長さを確かめられる。
 
 ```anchor from5  (module := Examples.HelloWorld)
 def from5 : List (IO Unit) := countdown 5
 ```
 
-This list contains six elements (one for each number, plus a {moduleTerm (module := Examples.HelloWorld)}`"Blast off!"` action for zero):
+このリストには六つの要素が入っている（各数の分と、0に対応する{moduleTerm (module := Examples.HelloWorld)}`"Blast off!"`アクションである）。
 
 ```anchorTerm from5length (module := Examples.HelloWorld)
 #eval from5.length
@@ -242,7 +242,7 @@ This list contains six elements (one for each number, plus a {moduleTerm (module
 :::
 
 :::paragraph
-The function {moduleTerm (module := Examples.HelloWorld)}`runActions` takes a list of actions and constructs a single action that runs them all in order:
+関数{moduleTerm (module := Examples.HelloWorld)}`runActions`はアクションのリストを取り、それらを順にすべて実行する一つのアクションを組み立てる。
 
 ```anchor runActions (module := Examples.HelloWorld)
 def runActions : List (IO Unit) → IO Unit
@@ -252,15 +252,15 @@ def runActions : List (IO Unit) → IO Unit
     runActions actions
 ```
 
-Its structure is essentially the same as that of {moduleName (module := Examples.HelloWorld)}`nTimes`, except instead of having one action that is executed for each {moduleName (module := Examples.HelloWorld)}`Nat.succ`, the action under each {moduleName (module := Examples.HelloWorld)}`List.cons` is to be executed.
-Similarly, {moduleName (module := Examples.HelloWorld)}`runActions` does not itself run the actions.
-It creates a new action that will run them, and that action must be placed in a position where it will be executed as a part of {moduleName (module := Examples.HelloWorld)}`main`:
+その構造は{moduleName (module := Examples.HelloWorld)}`nTimes`とほぼ同じである。違いは、{moduleName (module := Examples.HelloWorld)}`Nat.succ`ごとに一つのアクションを実行する代わりに、{moduleName (module := Examples.HelloWorld)}`List.cons`の下にあるアクションを実行する点である。
+同様に、{moduleName (module := Examples.HelloWorld)}`runActions`自身はアクションを実行しない。
+それらを実行する新しいアクションを作るので、そのアクションを{moduleName (module := Examples.HelloWorld)}`main`の一部として実行される位置に置く必要がある。
 
 ```anchor main (module := Examples.HelloWorld)
 def main : IO Unit := runActions from5
 ```
 
-Running this program results in the following output:
+このプログラムを実行すると、次の出力が得られる。
 
 ```commands countdownFromFive ""
 $ countdown
@@ -275,8 +275,8 @@ Blast off!
 :::
 
 :::paragraph
-What happens when this program is run?
-The first step is to evaluate {moduleName (module := Examples.HelloWorld)}`main`. That occurs as follows:
+このプログラムを実行すると、何が起こるか。
+まず{moduleName (module := Examples.HelloWorld)}`main`を評価する。これは次のように進む。
 
 ```anchorEvalSteps evalMain  (module := Examples.HelloWorld)
 main
@@ -302,18 +302,18 @@ do IO.println "5"
    pure ()
 ```
 
-The resulting {moduleTerm (module := Examples.HelloWorld)}`IO` action is a {moduleTerm (module := Examples.HelloWorld)}`do` block.
-Each step of the {moduleTerm (module := Examples.HelloWorld)}`do` block is then executed, one at a time, yielding the expected output.
-The final step, {moduleTerm (module := Examples.HelloWorld)}`pure ()`, does not have any effects, and it is only present because the definition of {moduleTerm (module := Examples.HelloWorld)}`runActions` needs a base case.
+得られた{moduleTerm (module := Examples.HelloWorld)}`IO`アクションは{moduleTerm (module := Examples.HelloWorld)}`do`ブロックである。
+次に、その{moduleTerm (module := Examples.HelloWorld)}`do`ブロックの各手順を一つずつ実行し、期待どおりの出力が得られる。
+最後の{moduleTerm (module := Examples.HelloWorld)}`pure ()`には副作用がなく、{moduleTerm (module := Examples.HelloWorld)}`runActions`の定義に基底ケースが必要なために置かれているだけである。
 :::
 
-# Exercise
+# 練習問題
 %%%
 tag := "step-by-step-exercise"
 %%%
 
 :::paragraph
-Step through the execution of the following program on a piece of paper:
+次のプログラムの実行を紙の上で一歩ずつたどってみよ。
 
 ```anchor ExMain (module := Examples.HelloWorld)
 def main : IO Unit := do
@@ -322,7 +322,7 @@ def main : IO Unit := do
   englishGreeting
 ```
 
-While stepping through the program's execution, identify when an expression is being evaluated and when an {moduleTerm (module := Examples.HelloWorld)}`IO` action is being executed.
-When executing an {moduleTerm (module := Examples.HelloWorld)}`IO` action results in a side effect, write it down.
-After doing this, run the program with Lean and double-check that your predictions about the side effects were correct.
+実行をたどりながら、どこで式が評価され、どこで{moduleTerm (module := Examples.HelloWorld)}`IO`アクションが実行されるのかを見分けよ。
+{moduleTerm (module := Examples.HelloWorld)}`IO`アクションの実行で副作用が起きるなら、それを書き留めよ。
+それが終わったら、Leanでプログラムを実行し、副作用についての予想が正しかったかを確かめよ。
 :::

@@ -21,12 +21,12 @@ open FPLean
 tag := "hello-world"
 %%%
 
-While Lean has been designed to have a rich interactive environment in which programmers can get quite a lot of feedback from the language without leaving the confines of their favorite text editor, it is also a language in which real programs can be written.
-This means that it also has a batch-mode compiler, a build system, a package manager, and all the other tools that are necessary for writing programs.
+Leanは、プログラマが使い慣れたテキストエディタから離れずに言語から多くのフィードバックを得られる、豊かな対話環境を持つように設計されている。それと同時に、本物のプログラムを書ける言語でもある。
+つまり、バッチ処理用のコンパイラ、ビルドシステム、パッケージマネージャなど、プログラムを書くのに必要な道具がそろっている。
 
-While the {ref "getting-to-know"}[previous chapter] presented the basics of functional programming in Lean, this chapter explains how to start a programming project, compile it, and run the result.
-Programs that run and interact with their environment (e.g. by reading input from standard input or creating files) are difficult to reconcile with the understanding of computation as the evaluation of mathematical expressions.
-In addition to a description of the Lean build tools, this chapter also provides a way to think about functional programs that interact with the world.
+{ref "getting-to-know"}[前の章]ではLeanでの関数型プログラミングの基本を扱った。この章では、プログラミングのプロジェクトを始め、コンパイルし、実行する方法を説明する。
+動作して環境とやり取りするプログラム（たとえば標準入力から読み込んだりファイルを作ったりするもの）は、計算を数式の評価と捉える見方とはうまく折り合わない。
+この章では、Leanのビルド用ツールの説明に加えて、外界とやり取りする関数型プログラムの考え方を示す。
 
 {include 1 FPLean.HelloWorld.RunningAProgram}
 
