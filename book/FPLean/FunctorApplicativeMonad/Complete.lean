@@ -24,7 +24,7 @@ tag := "complete-functor-definition"
 %%%
 
 
-The complete definition of the {anchorName Applicative}`Functor`クラスの完全な定義は、宇宙多相と既定のメソッドの実装を使う。
+{anchorName Applicative}`Functor`クラスの完全な定義は、宇宙多相と既定のメソッドの実装を使う。
 
 ```anchor HonestFunctor
 class Functor (f : Type u → Type v) : Type (max (u+1) v) where
