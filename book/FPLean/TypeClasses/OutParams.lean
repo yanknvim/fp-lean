@@ -17,9 +17,9 @@ set_option pp.rawOnError true
 tag := "out-params"
 %%%
 
-An instance of the {moduleName}`Add` class is sufficient to allow two expressions with type {moduleName}`Pos` to be conveniently added, producing another {moduleName}`Pos`.
-However, in many cases, it can be useful to be more flexible and allow _heterogeneous_ operator overloading, where the arguments may have different types.
-For example, adding a {moduleName}`Nat` to a {moduleName}`Pos` or a {moduleName}`Pos` to a {moduleName}`Nat` will always yield a {moduleName}`Pos`:
+{moduleName}`Add`クラスのインスタンスがあれば、{moduleName}`Pos`型の二つの式を手軽に足して、別の{moduleName}`Pos`を作れる。
+しかし多くの場合、引数の型が異なってもよい*異種の*演算子のオーバーロードを許す方が、柔軟で役に立つ。
+たとえば、{moduleName}`Nat`に{moduleName}`Pos`を足しても、{moduleName}`Pos`に{moduleName}`Nat`を足しても、結果は必ず{moduleName}`Pos`になる。
 
 ```anchor addNatPos
 def addNatPos : Nat → Pos → Pos
@@ -30,16 +30,16 @@ def addPosNat : Pos → Nat → Pos
   | p, 0 => p
   | p, n + 1 => Pos.succ (addPosNat p n)
 ```
-These functions allow natural numbers to be added to positive numbers, but they cannot be used with the {moduleName}`Add` type class, which expects both arguments to {moduleName}`add` to have the same type.
+これらの関数を使えば自然数と正の数を足せるが、{moduleName}`Add`型クラスでは使えない。{moduleName}`add`の二つの引数が同じ型であることを前提としているためである。
 
-# Heterogeneous Overloadings
+# 異種のオーバーロード
 %%%
 tag := "heterogeneous-operators"
 %%%
 
-As mentioned in the section on {ref "overloaded-addition"}[overloaded addition], Lean provides a type class called {anchorName chapterIntro}`HAdd` for overloading addition heterogeneously.
-The {anchorName chapterIntro}`HAdd` class takes three type parameters: the two argument types and the return type.
-Instances of {anchorTerm haddInsts}`HAdd Nat Pos Pos` and {anchorTerm haddInsts}`HAdd Pos Nat Pos` allow ordinary addition notation to be used to mix the types:
+{ref "overloaded-addition"}[加法のオーバーロード]の節で述べたように、Leanには加法を異種でオーバーロードする{anchorName chapterIntro}`HAdd`という型クラスがある。
+{anchorName chapterIntro}`HAdd`クラスは三つの型引数を取る。二つの引数の型と、戻り値の型である。
+{anchorTerm haddInsts}`HAdd Nat Pos Pos`と{anchorTerm haddInsts}`HAdd Pos Nat Pos`のインスタンスがあれば、型を混ぜるのに普通の加法の記法を使える。
 
 ```anchor haddInsts
 instance : HAdd Nat Pos Pos where
@@ -48,7 +48,7 @@ instance : HAdd Nat Pos Pos where
 instance : HAdd Pos Nat Pos where
   hAdd := addPosNat
 ```
-Given the above two instances, the following examples work:
+上の二つのインスタンスがあれば、次の例は動作する。
 ```anchor posNatEx
 #eval (3 : Pos) + (5 : Nat)
 ```
@@ -63,7 +63,7 @@ Given the above two instances, the following examples work:
 ```
 
 :::paragraph
-The definition of the {anchorName chapterIntro}`HAdd` type class is very much like the following definition of {moduleName}`HPlus` with the corresponding instances:
+{anchorName chapterIntro}`HAdd`型クラスの定義は、対応するインスタンスを添えた次の{moduleName}`HPlus`の定義とよく似ている。
 
 ```anchor HPlus
 class HPlus (α : Type) (β : Type) (γ : Type) where
@@ -77,8 +77,8 @@ instance : HPlus Nat Pos Pos where
 instance : HPlus Pos Nat Pos where
   hPlus := addPosNat
 ```
-However, instances of {moduleName}`HPlus` are significantly less useful than instances of {anchorName chapterIntro}`HAdd`.
-When attempting to use these instances with {kw}`#eval`, an error occurs:
+しかし、{moduleName}`HPlus`のインスタンスは{anchorName chapterIntro}`HAdd`のインスタンスよりずっと役に立たない。
+これらのインスタンスを{kw}`#eval`で使おうとすると、エラーになる。
 ```anchor hPlusOops
 #eval toString (HPlus.hPlus (3 : Pos) (5 : Nat))
 ```
@@ -90,43 +90,43 @@ Note: Lean will not try to resolve this typeclass instance problem because the t
 
 Hint: Adding type annotations and supplying implicit arguments to functions can give Lean more information for typeclass resolution. For example, if you have a variable `x` that you intend to be a `Nat`, but Lean reports it as having an unresolved type like `?m`, replacing `x` with `(x : Nat)` can get typeclass resolution un-stuck.
 ```
-The message indicates that this happens because there is a metavariable in the type, and Lean has no way to solve it.
+このメッセージは、型にメタ変数があり、Leanにそれを解く手立てがないために起きる、と述べている。
 :::
 
-As discussed in {ref "polymorphism"}[the initial description of polymorphism], metavariables represent unknown parts of a program that could not be inferred.
-When an expression is written following {kw}`#eval`, Lean attempts to determine its type automatically.
-In this case, it could not.
-Because the third type parameter for {anchorName HPlusInstances}`HPlus` was unknown, Lean couldn't carry out type class instance search, but instance search is the only way that Lean could determine the expression's type.
-That is, the {anchorTerm HPlusInstances}`HPlus Pos Nat Pos` instance can only apply if the expression should have type {moduleName}`Pos`, but there's nothing in the program other than the instance itself to indicate that it should have this type.
+{ref "polymorphism"}[多相性の最初の説明]で述べたように、メタ変数は推論できなかったプログラムの未知の部分を表す。
+{kw}`#eval`の後に式を書くと、Leanはその型を自動で決めようとする。
+この場合は決められなかった。
+{anchorName HPlusInstances}`HPlus`の三番目の型引数が不明だったので、Leanは型クラスのインスタンス探索を行えなかった。しかし、その探索だけが式の型を決める手段だったのである。
+つまり、{anchorTerm HPlusInstances}`HPlus Pos Nat Pos`のインスタンスは、式の型が{moduleName}`Pos`である場合にしか使えないが、プログラム中にはそのインスタンス自身のほかに、型がそうであるべきことを示すものがない。
 
-One solution to the problem is to ensure that all three types are available by adding a type annotation to the whole expression:
+この問題の解決策の一つは、式全体に型注釈を付けて三つの型すべてが分かるようにすることである。
 ```anchor hPlusLotsaTypes
 #eval (HPlus.hPlus (3 : Pos) (5 : Nat) : Pos)
 ```
 ```anchorInfo hPlusLotsaTypes
 8
 ```
-However, this solution is not very convenient for users of the positive number library.
+しかし、この解決策は正の数のライブラリの利用者にとってあまり便利ではない。
 
 
-# Output Parameters
+# 出力パラメータ
 %%%
 tag := "output-parameters"
 %%%
 
-This problem can also be solved by declaring {anchorName HPlus}`γ` to be an _output parameter_.
-Most type class parameters are inputs to the search algorithm: they are used to select an instance.
-For example, in an {moduleName}`OfNat` instance, both the type and the natural number are used to select a particular interpretation of a natural number literal.
-However, in some cases, it can be convenient to start the search process even when some of the type parameters are not yet known, and use the instances that are discovered in the search to determine values for metavariables.
-The parameters that aren't needed to start instance search are outputs of the process, which is declared with the {moduleName}`outParam` modifier:
+この問題は、{anchorName HPlus}`γ`を*出力パラメータ*として宣言することでも解決できる。
+型クラスの引数のほとんどは探索の入力である。インスタンスを選ぶのに使われる。
+たとえば{moduleName}`OfNat`のインスタンスでは、型と自然数の両方が、自然数のリテラルの特定の解釈を選ぶのに使われる。
+しかし場合によっては、一部の型引数がまだ分からない状態でも探索を始め、探索で見つかったインスタンスを使ってメタ変数の値を決められると便利である。
+インスタンス探索を始めるのに要らない引数はその処理の出力であり、{moduleName}`outParam`修飾子で宣言する。
 
 ```anchor HPlusOut
 class HPlus (α : Type) (β : Type) (γ : outParam Type) where
   hPlus : α → β → γ
 ```
 
-With this output parameter, type class instance search is able to select an instance without knowing {anchorName HPlusOut}`γ` in advance.
-For instance:
+この出力パラメータがあれば、{anchorName HPlusOut}`γ`を前もって知らなくても、型クラスのインスタンス探索がインスタンスを選べる。
+たとえば、
 ```anchor hPlusWorks
 #eval HPlus.hPlus (3 : Pos) (5 : Nat)
 ```
@@ -134,37 +134,37 @@ For instance:
 8
 ```
 
-It might be helpful to think of output parameters as defining a kind of function.
-Any given instance of a type class that has one or more output parameters provides Lean with instructions for determining the outputs from the inputs.
-The process of searching for an instance, possibly recursively, ends up being more powerful than mere overloading.
-Output parameters can determine other types in the program, and instance search can assemble a collection of underlying instances into a program that has this type.
+出力パラメータは一種の関数を定義するものだと考えると分かりやすい。
+出力パラメータを一つ以上持つ型クラスのインスタンスは、入力から出力を求める手順をLeanに与える。
+インスタンスを（再帰的に）探す処理は、単なるオーバーロードより強力である。
+出力パラメータはプログラム中の他の型を決められ、インスタンス探索は基になるインスタンスの集まりを、その型を持つプログラムに組み立てられる。
 
-# Default Instances
+# 既定のインスタンス
 %%%
 tag := "default-instances"
 %%%
 
-Deciding whether a parameter is an input or an output controls the circumstances under which Lean will initiate type class search.
-In particular, type class search does not occur until all inputs are known.
-However, in some cases, output parameters are not enough, and instance search should also occur when some inputs are unknown.
-This is a bit like default values for optional function arguments in Python or Kotlin, except default _types_ are being selected.
+引数を入力にするか出力にするかで、Leanが型クラス探索を始める状況が変わる。
+とくに、すべての入力が分かるまで型クラス探索は起こらない。
+しかし場合によっては出力パラメータでは足りず、一部の入力が不明でもインスタンス探索を行うべきことがある。
+これは、PythonやKotlinの省略可能な関数引数の既定値に少し似ているが、選ばれるのは*型*の既定値である。
 
-_Default instances_ are instances that are available for instance search _even when not all their inputs are known_.
-When one of these instances can be used, it will be used.
-This can cause programs to successfully type check, rather than failing with errors related to unknown types and metavariables.
-On the other hand, default instances can make instance selection less predictable.
-In particular, if an undesired default instance is selected, then an expression may have a different type than expected, which can cause confusing type errors to occur elsewhere in the program.
-Be selective about where default instances are used!
+*既定のインスタンス*とは、*入力がすべて分かっていなくても*インスタンス探索で使えるインスタンスである。
+このようなインスタンスが使えるときは、使われる。
+これにより、未知の型やメタ変数に関するエラーで失敗する代わりに、プログラムが型検査を通ることがある。
+一方、既定のインスタンスはインスタンスの選択を予測しにくくする。
+とくに、望まない既定のインスタンスが選ばれると、式が期待と違う型になり、プログラムの別の場所で紛らわしい型エラーが起きうる。
+既定のインスタンスを使う場所は選んでほしい。
 
-One example of where default instances can be useful is an instance of {anchorName HPlusOut}`HPlus` that can be derived from an {moduleName}`Add` instance.
-In other words, ordinary addition is a special case of heterogeneous addition in which all three types happen to be the same.
-This can be implemented using the following instance:
+既定のインスタンスが役に立つ例の一つは、{moduleName}`Add`のインスタンスから導ける{anchorName HPlusOut}`HPlus`のインスタンスである。
+言い換えれば、普通の加法は、三つの型がたまたま同じである異種の加法の特別な場合である。
+これは次のインスタンスで実装できる。
 
 ```anchor notDefaultAdd
 instance [Add α] : HPlus α α α where
   hPlus := Add.add
 ```
-With this instance, {anchorName notDefaultAdd}`hPlus` can be used for any addable type, like {moduleName}`Nat`:
+このインスタンスがあれば、{anchorName notDefaultAdd}`hPlus`を{moduleName}`Nat`のように足せる任意の型に使える。
 ```anchor hPlusNatNat
 #eval HPlus.hPlus (3 : Nat) (5 : Nat)
 ```
@@ -172,63 +172,64 @@ With this instance, {anchorName notDefaultAdd}`hPlus` can be used for any addabl
 8
 ```
 
-However, this instance will only be used in situations where the types of both arguments are known.
-For example,
+しかし、このインスタンスは二つの引数の型がどちらも分かっている場合にしか使われない。
+たとえば、
 ```anchor plusFiveThree
 #check HPlus.hPlus (5 : Nat) (3 : Nat)
 ```
-yields the type
+という型が得られる。
 ```anchorInfo plusFiveThree
 HPlus.hPlus 5 3 : Nat
 ```
-as expected, but
+これは期待どおりだが、
 ```anchor plusFiveMeta
 #check HPlus.hPlus (5 : Nat)
 ```
-yields a type that contains two metavariables, one for the remaining argument and one for the return type:
+の型にはメタ変数が二つ含まれる。残りの引数の分と、戻り値の型の分である。
 ```anchorInfo plusFiveMeta
 HPlus.hPlus 5 : ?m.15752 → ?m.15754
 ```
 
-In the vast majority of cases, when someone supplies one argument to addition, the other argument will have the same type.
-To make this instance into a default instance, apply the {anchorTerm defaultAdd}`default_instance` attribute:
+ほとんどの場合、加法の引数を一つ与えたとき、もう一方の引数の型は同じになる。
+このインスタンスを既定のインスタンスにするには、{anchorTerm defaultAdd}`default_instance`属性を付ける。
 
 ```anchor defaultAdd
 @[default_instance]
 instance [Add α] : HPlus α α α where
   hPlus := Add.add
 ```
-With this default instance, the example has a more useful type:
+この既定のインスタンスがあれば、この例はより役に立つ型になる。
 ```anchor plusFive
 #check HPlus.hPlus (5 : Nat)
 ```
-yields
+が得られる。
+
 ```anchorInfo plusFive
 HPlus.hPlus 5 : Nat → Nat
 ```
 
-Each operator that exists in overloadable heterogeneous and homogeneous versions follows the pattern of a default instance that allows the homogeneous version to be used in contexts where the heterogeneous is expected.
-The infix operator is replaced with a call to the heterogeneous version, and the homogeneous default instance is selected when possible.
+オーバーロード可能な異種版と同種版の両方を持つ演算子はどれも、異種版が期待される場面で同種版を使えるようにする既定のインスタンス、という形になっている。
+中置演算子は異種版の呼び出しに置き換えられ、可能なときは同種版の既定のインスタンスが選ばれる。
 
-Similarly, simply writing {anchorTerm fiveType}`5` gives a {anchorTerm fiveType}`Nat` rather than a type with a metavariable that is waiting for more information in order to select an {moduleName}`OfNat` instance.
-This is because the {moduleName}`OfNat` instance for {moduleName}`Nat` is a default instance.
+同様に、単に{anchorTerm fiveType}`5`と書くと、{moduleName}`OfNat`のインスタンスを選ぶための情報を待つメタ変数を含む型ではなく、{anchorTerm fiveType}`Nat`になる。
+{moduleName}`Nat`に対する{moduleName}`OfNat`のインスタンスが既定のインスタンスだからである。
 
-Default instances can also be assigned _priorities_ that affect which will be chosen in situations where more than one might apply.
-For more information on default instance priorities, please consult the Lean manual.
+既定のインスタンスには*優先度*も付けられ、複数の候補があるときにどれが選ばれるかに影響する。
+既定のインスタンスの優先度について詳しくは、Leanのマニュアルを参照してほしい。
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "out-params-exercises"
 %%%
 
-Define an instance of {anchorTerm MulPPoint}`HMul (PPoint α) α (PPoint α)` that multiplies both projections by the scalar.
-It should work for any type {anchorName MulPPoint}`α` for which there is a {anchorTerm MulPPoint}`Mul α` instance.
-For example,
+両方の成分をそのスカラー倍する{anchorTerm MulPPoint}`HMul (PPoint α) α (PPoint α)`のインスタンスを定義せよ。
+{anchorTerm MulPPoint}`Mul α`のインスタンスがある任意の型{anchorName MulPPoint}`α`に対して働くようにする。
+たとえば、
 ```anchor HMulPPoint
 #eval {x := 2.5, y := 3.7 : PPoint Float} * 2.0
 ```
-should yield
+となるはずである。
 ```anchorInfo HMulPPoint
 { x := 5.000000, y := 7.400000 }
 ```
