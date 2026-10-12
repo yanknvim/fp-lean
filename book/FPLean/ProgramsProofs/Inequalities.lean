@@ -15,28 +15,28 @@ set_option verso.exampleModule "Examples.ProgramsProofs.Inequalities"
 tag := "more-inequalities"
 %%%
 
-Lean's built-in proof automation is sufficient to check that {anchorName ArrayMapHelperOk (module:=Examples.ProgramsProofs.Arrays)}`arrayMapHelper` and {anchorName ArrayFindHelper (module:=Examples.ProgramsProofs.Arrays)}`findHelper` terminate.
-All that was needed was to provide an expression whose value decreases with each recursive call.
-However, Lean's built-in automation is not magic, and it often needs some help.
+Leanに組み込みの証明の自動化は、{anchorName ArrayMapHelperOk (module:=Examples.ProgramsProofs.Arrays)}`arrayMapHelper`と{anchorName ArrayFindHelper (module:=Examples.ProgramsProofs.Arrays)}`findHelper`が停止することを調べるのに十分であった。
+必要だったのは、再帰呼び出しごとに値が小さくなる式を与えることだけだった。
+しかし、Leanに組み込みの自動化は魔法ではなく、しばしば助けが要る。
 
-# Merge Sort
+# マージソート
 %%%
 tag := "merge-sort"
 %%%
 
 
-One example of a function whose termination proof is non-trivial is merge sort on {moduleName}`List`.
-Merge sort consists of two phases: first, a list is split in half.
-Each half is sorted using merge sort, and then the results are merged using a function that combines two sorted lists into a larger sorted list.
-The base cases are the empty list and the singleton list, both of which are already considered to be sorted.
+停止性の証明が自明でない関数の例が、{moduleName}`List`のマージソートである。
+マージソートは二つの段階から成る。まず、リストを半分に分ける。
+それぞれの半分をマージソートで並べ替え、次に、二つの整列済みのリストをより大きな整列済みのリストにまとめる関数でその結果を併合する。
+基底の場合は空のリストと単一要素のリストであり、どちらもすでに整列済みと見なす。
 
-To merge two sorted lists, there are two basic cases to consider:
- 1. If one of the input lists is empty, then the result is the other list.
- 2. If both lists are non-empty, then their heads should be compared. The result of the function is the smaller of the two heads, followed by the result of merging the remaining entries of both lists.
+二つの整列済みのリストを併合するには、基本的な場合を二つ考える。
+ 1. 入力のリストの一方が空なら、結果は他方のリストである。
+ 2. どちらのリストも空でなければ、それらの先頭を比べる。この関数の結果は、二つの先頭のうち小さいほうの後に、両方のリストの残りの要素を併合した結果を続けたものである。
 
-This is not structurally recursive on either list.
-The recursion terminates because an entry is removed from one of the two lists in each recursive call, but it could be either list.
-Behind the scenes, Lean uses this fact to prove that it terminates:
+これはどちらのリストについても構造的再帰ではない。
+再帰が停止するのは、再帰呼び出しごとに二つのリストの一方から要素が取り除かれるためだが、どちらのリストからでもありうる。
+裏では、Leanがこの事実を使って停止することを証明する。
 
 ```anchor merge
 def merge [Ord α] (xs : List α) (ys : List α) : List α :=
@@ -50,7 +50,7 @@ def merge [Ord α] (xs : List α) (ys : List α) : List α :=
 ```
 
 
-A simple way to split a list is to add each entry in the input list to two alternating output lists:
+リストを分ける単純な方法は、入力のリストの各要素を二つの出力リストに交互に加えることである。
 
 ```anchor splitList
 def splitList (lst : List α) : (List α × List α) :=
@@ -60,11 +60,11 @@ def splitList (lst : List α) : (List α × List α) :=
     let (a, b) := splitList xs
     (x :: b, a)
 ```
-This splitting function is structurally recursive.
+この分割の関数は構造的再帰である。
 
-Merge sort checks whether a base case has been reached.
-If so, it returns the input list.
-If not, it splits the input, and merges the result of sorting each half:
+マージソートは基底の場合に達したかを調べる。
+達していれば、入力のリストを返す。
+達していなければ、入力を分け、それぞれの半分を並べ替えた結果を併合する。
 ```anchor mergeSortNoTerm
 def mergeSort [Ord α] (xs : List α) : List α :=
   if h : xs.length < 2 then
@@ -75,8 +75,8 @@ def mergeSort [Ord α] (xs : List α) : List α :=
     let halves := splitList xs
     merge (mergeSort halves.fst) (mergeSort halves.snd)
 ```
-Lean's pattern match compiler is able to tell that the assumption {anchorName mergeSortNoTerm}`h` introduced by the {kw}`if` that tests whether {anchorTerm mergeSortNoTerm}`xs.length < 2` rules out lists longer than one entry, so there is no “missing cases” error.
-However, even though this program always terminates, it is not structurally recursive, and Lean is unable to automatically discover a decreasing measure:
+Leanのパターンマッチのコンパイラは、{anchorTerm mergeSortNoTerm}`xs.length < 2`を調べる{kw}`if`が導入する前提{anchorName mergeSortNoTerm}`h`が、要素が一つより多いリストを排除していると判断できるので、「場合の欠落」のエラーは出ない。
+しかし、このプログラムは常に停止するが構造的再帰ではなく、Leanは小さくなる尺度を自動で見つけられない。
 ```anchorError mergeSortNoTerm
 fail to show termination for
   mergeSort
@@ -102,9 +102,9 @@ The basic measures relate at each recursive call as follows:
 
 Please use `termination_by` to specify a decreasing measure.
 ```
-The reason it terminates is that {anchorName mergeSortNoTerm}`splitList` always returns lists that are shorter than its input, at least when applied to lists that contain at least two elements.
-Thus, the length of {anchorTerm mergeSortNoTerm}`halves.fst` and {anchorTerm mergeSortNoTerm}`halves.snd` are less than the length of {anchorName mergeSortNoTerm}`xs`.
-This can be expressed using a {kw}`termination_by` clause:
+停止するのは、少なくとも二つ以上の要素を含むリストに適用したときは、{anchorName mergeSortNoTerm}`splitList`が常に入力より短いリストを返すためである。
+つまり、{anchorTerm mergeSortNoTerm}`halves.fst`と{anchorTerm mergeSortNoTerm}`halves.snd`の長さは{anchorName mergeSortNoTerm}`xs`の長さより小さい。
+これは{kw}`termination_by`の句で表せる。
 ```anchor mergeSortGottaProveIt
 def mergeSort [Ord α] (xs : List α) : List α :=
   if h : xs.length < 2 then
@@ -116,8 +116,8 @@ def mergeSort [Ord α] (xs : List α) : List α :=
     merge (mergeSort halves.fst) (mergeSort halves.snd)
 termination_by xs.length
 ```
-With this clause, the error message changes.
-Instead of complaining that the function isn't structurally recursive, Lean instead points out that it was unable to automatically prove that {lit}`(splitList xs).fst.length < xs.length`:
+この句を書くと、エラーメッセージが変わる。
+関数が構造的再帰でないと文句を言う代わりに、Leanは{lit}`(splitList xs).fst.length < xs.length`を自動で証明できなかったと指摘する。
 ```anchorError mergeSortGottaProveIt
 failed to prove termination, possible solutions:
   - Use `have`-expressions to prove the remaining goals
@@ -130,23 +130,23 @@ halves : List α × List α := splitList xs
 ⊢ (splitList xs).fst.length < xs.length
 ```
 
-# Splitting a List Makes it Shorter
+# リストを分けると短くなる
 %%%
 tag := "splitting-shortens"
 %%%
 
-It will also be necessary to prove that {lit}`(splitList xs).snd.length < xs.length`.
-Because {anchorName splitList}`splitList` alternates between adding entries to the two lists, it is easiest to prove both statements at once, so the structure of the proof can follow the algorithm used to implement {anchorName splitList}`splitList`.
-In other words, it is easiest to prove that {anchorTerm splitList_shorter_bad_ty}`∀(lst : List α), (splitList lst).fst.length < lst.length ∧ (splitList lst).snd.length < lst.length`.
+{lit}`(splitList xs).snd.length < xs.length`も証明する必要がある。
+{anchorName splitList}`splitList`は二つのリストに交互に要素を加えるので、両方の言明を一度に証明するのが最も簡単であり、証明の構造を{anchorName splitList}`splitList`の実装の算法に合わせられる。
+言い換えれば、{anchorTerm splitList_shorter_bad_ty}`∀(lst : List α), (splitList lst).fst.length < lst.length ∧ (splitList lst).snd.length < lst.length`を証明するのが最も簡単である。
 
-Unfortunately, the statement is false.
-In particular, {anchorTerm splitListEmpty}`splitList []` is {anchorTerm splitListEmpty}`([], [])`. Both output lists have length {anchorTerm ArrayMap (module:=Examples.ProgramsProofs.Arrays)}`0`, which is not less than {anchorTerm ArrayMap (module:=Examples.ProgramsProofs.Arrays)}`0`, the length of the input list.
-Similarly, {anchorTerm splitListOne}`splitList ["basalt"]` evaluates to {anchorTerm splitListOne}`(["basalt"], [])`, and {anchorTerm splitListOne}`["basalt"]` is not shorter than {anchorTerm splitListOne}`["basalt"]`.
-However, {anchorTerm splitListTwo}`splitList ["basalt", "granite"]` evaluates to {anchorTerm splitListTwo}`(["basalt"], ["granite"])`, and both of these output lists are shorter than the input list.
+残念ながら、この言明は偽である。
+特に、{anchorTerm splitListEmpty}`splitList []`は{anchorTerm splitListEmpty}`([], [])`である。どちらの出力リストの長さも{anchorTerm ArrayMap (module:=Examples.ProgramsProofs.Arrays)}`0`であり、入力のリストの長さである{anchorTerm ArrayMap (module:=Examples.ProgramsProofs.Arrays)}`0`より小さくない。
+同様に、{anchorTerm splitListOne}`splitList ["basalt"]`は{anchorTerm splitListOne}`(["basalt"], [])`に評価され、{anchorTerm splitListOne}`["basalt"]`は{anchorTerm splitListOne}`["basalt"]`より短くない。
+しかし、{anchorTerm splitListTwo}`splitList ["basalt", "granite"]`は{anchorTerm splitListTwo}`(["basalt"], ["granite"])`に評価され、どちらの出力リストも入力のリストより短い。
 
-It turns out that the lengths of the output lists are always less than or equal to the length of the input list, but they are only strictly shorter when the input list contains at least two entries.
-It turns out to be easiest to prove the former statement, then extend it to the latter statement.
-Begin with a theorem statement:
+出力リストの長さは常に入力のリストの長さ以下であり、入力のリストが少なくとも二つの要素を含むときにだけ真に短くなることが分かる。
+前者の言明を証明し、それを後者の言明に拡張するのが最も簡単であることが分かる。
+まず定理の言明を書く。
 ```anchor splitList_shorter_le0
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -159,9 +159,9 @@ unsolved goals
 lst : List α
 ⊢ (splitList lst).fst.length ≤ lst.length ∧ (splitList lst).snd.length ≤ lst.length
 ```
-Because {anchorName splitList}`splitList` is structurally recursive on the list, the proof should use induction.
-The structural recursion in {anchorName splitList}`splitList` fits a proof by induction perfectly: the base case of the induction matches the base case of the recursion, and the inductive step matches the recursive call.
-The {kw}`induction` tactic gives two goals:
+{anchorName splitList}`splitList`はリストについて構造的再帰なので、証明には帰納法を使うべきである。
+{anchorName splitList}`splitList`の構造的再帰は帰納法による証明にぴったり合う。帰納法の基底の場合は再帰の基底の場合に一致し、帰納法の段階は再帰呼び出しに一致する。
+{kw}`induction`タクティクは二つのゴールを与える。
 ```anchor splitList_shorter_le1a
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -186,8 +186,8 @@ ih : (splitList xs).fst.length ≤ xs.length ∧ (splitList xs).snd.length ≤ x
 ⊢ (splitList (x :: xs)).fst.length ≤ (x :: xs).length ∧ (splitList (x :: xs)).snd.length ≤ (x :: xs).length
 ```
 
-The goal for the {anchorName splitList_shorter_le2}`nil` case can be proved by invoking the simplifier and instructing it to unfold the definition of {anchorName splitList}`splitList`, because the length of the empty list is less than or equal to the length of the empty list.
-Similarly, simplifying with {anchorName splitList}`splitList` in the {anchorName splitList_shorter_le2}`cons` case places {anchorName various}`Nat.succ` around the lengths in the goal:
+{anchorName splitList_shorter_le2}`nil`の場合のゴールは、単純化器を呼び出し、{anchorName splitList}`splitList`の定義を展開するよう指示すれば証明できる。空のリストの長さは空のリストの長さ以下だからである。
+同様に、{anchorName splitList_shorter_le2}`cons`の場合に{anchorName splitList}`splitList`で単純化すると、ゴールの長さの周りに{anchorName various}`Nat.succ`が付く。
 ```anchor splitList_shorter_le2
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -206,10 +206,10 @@ xs : List α
 ih : (splitList xs).fst.length ≤ xs.length ∧ (splitList xs).snd.length ≤ xs.length
 ⊢ (splitList xs).snd.length ≤ xs.length ∧ (splitList xs).fst.length ≤ xs.length + 1
 ```
-This is because the call to {anchorName various}`List.length` consumes the head of the list {anchorTerm splitList}`x :: xs`, converting it to a {anchorName various}`Nat.succ`, in both the length of the input list and the length of the first output list.
+これは、{anchorName various}`List.length`の呼び出しがリスト{anchorTerm splitList}`x :: xs`の先頭を消費し、入力のリストの長さと最初の出力リストの長さの両方でそれを{anchorName various}`Nat.succ`に変えるためである。
 
-Writing {anchorTerm various}`A ∧ B` in Lean is short for {anchorTerm various}`And A B`.
-{anchorName And}`And` is a structure type in the {anchorTerm And}`Prop` universe:
+Leanで{anchorTerm various}`A ∧ B`と書くのは{anchorTerm various}`And A B`の略である。
+{anchorName And}`And`は{anchorTerm And}`Prop`宇宙の構造体型である。
 
 ```anchor And
 structure And (a b : Prop) : Prop where
@@ -217,14 +217,14 @@ structure And (a b : Prop) : Prop where
   left : a
   right : b
 ```
-In other words, a proof of {anchorTerm various}`A ∧ B` consists of the {anchorName AndUse}`And.intro` constructor applied to a proof of {anchorName AndUse}`A` in the {anchorName And}`left` field and a proof of {anchorName AndUse}`B` in the {anchorName And}`right` field.
+言い換えれば、{anchorTerm various}`A ∧ B`の証明は、{anchorName AndUse}`And.intro`コンストラクタを、{anchorName And}`left`フィールドに{anchorName AndUse}`A`の証明、{anchorName And}`right`フィールドに{anchorName AndUse}`B`の証明とともに適用したものである。
 
-The {kw}`cases` tactic allows a proof to consider each constructor of a datatype or each potential proof of a proposition in turn.
-It corresponds to a {kw}`match` expression without recursion.
-Using {kw}`cases` on a structure results in the structure being broken apart, with an assumption added for each field of the structure, just as a pattern match expression extracts the field of a structure for use in a program.
-Because structures have only one constructor, using {kw}`cases` on a structure does not result in additional goals.
+{kw}`cases`タクティクを使うと、証明でデータ型の各コンストラクタ、または命題の起こりうる各証明を順に考えることができる。
+これは再帰のない{kw}`match`式に相当する。
+構造体に{kw}`cases`を使うと、その構造体が分解され、その構造体の各フィールドに対して前提が加わる。パターンマッチの式がプログラムで使うために構造体のフィールドを取り出すのと同じである。
+構造体にはコンストラクタが一つしかないので、構造体に{kw}`cases`を使ってもゴールは増えない。
 
-Because {anchorName splitList_shorter_le3}`ih` is a proof of {lit}`List.length (splitList xs).fst ≤ List.length xs ∧ List.length (splitList xs).snd ≤ List.length xs`, using {anchorTerm splitList_shorter_le3}`cases ih` results in an assumption that {lit}`List.length (splitList xs).fst ≤ List.length xs` and an assumption that {lit}`List.length (splitList xs).snd ≤ List.length xs`:
+{anchorName splitList_shorter_le3}`ih`は{lit}`List.length (splitList xs).fst ≤ List.length xs ∧ List.length (splitList xs).snd ≤ List.length xs`の証明なので、{anchorTerm splitList_shorter_le3}`cases ih`を使うと、{lit}`List.length (splitList xs).fst ≤ List.length xs`という前提と、{lit}`List.length (splitList xs).snd ≤ List.length xs`という前提が得られる。
 ```anchor splitList_shorter_le3
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -246,7 +246,7 @@ right✝ : (splitList xs).snd.length ≤ xs.length
 ⊢ (splitList xs).snd.length ≤ xs.length ∧ (splitList xs).fst.length ≤ xs.length + 1
 ```
 
-Because the goal of the proof is also an {anchorName AndUse}`And`, the {kw}`constructor` tactic can be used to apply {anchorName AndUse}`And.intro`, resulting in a goal for each argument:
+証明のゴールも{anchorName AndUse}`And`なので、{kw}`constructor`タクティクで{anchorName AndUse}`And.intro`を適用でき、各引数についてのゴールになる。
 ```anchor splitList_shorter_le4
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -277,7 +277,7 @@ right✝ : (splitList xs).snd.length ≤ xs.length
 ⊢ (splitList xs).fst.length ≤ xs.length + 1
 ```
 
-The {anchorTerm splitList_shorter_le5}`left` goal is identical to the {lit}`left✝` assumption, so the {kw}`assumption` tactic dispatches it:
+{anchorTerm splitList_shorter_le5}`left`のゴールは{lit}`left✝`の前提と同一なので、{kw}`assumption`タクティクで片付けられる。
 ```anchor splitList_shorter_le5
 theorem splitList_shorter_le (lst : List α) :
     (splitList lst).fst.length ≤ lst.length ∧
@@ -302,19 +302,19 @@ right✝ : (splitList xs).snd.length ≤ xs.length
 ```
 
 
-The {anchorTerm splitList_shorter_le}`right` goal resembles the {lit}`right✝` assumption, except the goal adds a {anchorTerm le_succ_of_le}`+ 1` only to the length of the input list.
-It's time to prove that the inequality holds.
+{anchorTerm splitList_shorter_le}`right`のゴールは{lit}`right✝`の前提に似ているが、ゴールでは入力のリストの長さにだけ{anchorTerm le_succ_of_le}`+ 1`が加わっている。
+この不等式が成り立つことを証明する時である。
 
-## Adding One to the Greater Side
+## 大きいほうの辺に1を加える
 %%%
 tag := "le-succ-of-le"
 %%%
 
-The inequality needed to prove {anchorName splitList_shorter_le}`splitList_shorter_le` is {anchorTerm le_succ_of_le_statement}`∀(n m : Nat), n ≤ m → n ≤ m + 1`.
-The incoming assumption that {anchorTerm le_succ_of_le_statement}`n ≤ m` essentially tracks the difference between {anchorName le_succ_of_le_statement}`n` and {anchorName le_succ_of_le_statement}`m` in the number of {anchorName le_succ_of_le_apply}`Nat.le.step` constructors.
-Thus, the proof should add an extra {anchorName le_succ_of_le_apply}`Nat.le.step` in the base case.
+{anchorName splitList_shorter_le}`splitList_shorter_le`を証明するのに必要な不等式は{anchorTerm le_succ_of_le_statement}`∀(n m : Nat), n ≤ m → n ≤ m + 1`である。
+入ってくる{anchorTerm le_succ_of_le_statement}`n ≤ m`という前提は、本質的に{anchorName le_succ_of_le_statement}`n`と{anchorName le_succ_of_le_statement}`m`の差を{anchorName le_succ_of_le_apply}`Nat.le.step`コンストラクタの数として追跡している。
+したがって、証明は基底の場合に{anchorName le_succ_of_le_apply}`Nat.le.step`を一つ余分に加えるべきである。
 
-Starting out, the statement reads:
+まず、言明は次のようになる。
 ```anchor le_succ_of_le0
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   skip
@@ -325,7 +325,7 @@ n m : Nat
 ⊢ n ≤ m → n ≤ m + 1
 ```
 
-The first step is to introduce a name for the assumption that {anchorTerm le_succ_of_le1}`n ≤ m`:
+まず、{anchorTerm le_succ_of_le1}`n ≤ m`という前提に名前を導入する。
 ```anchor le_succ_of_le1
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   intro h
@@ -337,7 +337,7 @@ h : n ≤ m
 ⊢ n ≤ m + 1
 ```
 
-The proof is by induction on this assumption:
+証明はこの前提についての帰納法による。
 ```anchor le_succ_of_le2a
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   intro h
@@ -345,14 +345,14 @@ theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   | refl => skip
   | step _ ih => skip
 ```
-In the case for {anchorName le_succ_of_le2a}`refl`, where {lit}`n = m`, the goal is to prove that {lit}`n ≤ n + 1`:
+{anchorName le_succ_of_le2a}`refl`の場合（{lit}`n = m`）では、{lit}`n ≤ n + 1`を証明することがゴールである。
 ```anchorError le_succ_of_le2a
 unsolved goals
 case refl
 n m : Nat
 ⊢ n ≤ n + 1
 ```
-In the case for {anchorName le_succ_of_le2b}`step`, the goal is to prove that {anchorTerm le_succ_of_le2b}`n ≤ m + 1` under the assumption that {anchorTerm le_succ_of_le2b}`n ≤ m`:
+{anchorName le_succ_of_le2b}`step`の場合は、{anchorTerm le_succ_of_le2b}`n ≤ m`という前提の下で{anchorTerm le_succ_of_le2b}`n ≤ m + 1`を証明することがゴールである。
 ```anchorError le_succ_of_le2b
 unsolved goals
 case step
@@ -362,7 +362,7 @@ ih : n ≤ m✝ + 1
 ⊢ n ≤ m✝.succ + 1
 ```
 
-For the {anchorName le_succ_of_le3}`refl` case, the {anchorName le_succ_of_le3}`step` constructor can be applied:
+{anchorName le_succ_of_le3}`refl`の場合は、{anchorName le_succ_of_le3}`step`コンストラクタを適用できる。
 ```anchor le_succ_of_le3
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   intro h
@@ -376,7 +376,7 @@ case refl
 n m : Nat
 ⊢ n.le n
 ```
-After {anchorName Nat.le_ctors}`step`, {anchorName Nat.le_ctors}`refl` can be used, which leaves only the goal for {anchorName le_succ_of_le4}`step`:
+{anchorName Nat.le_ctors}`step`の後に{anchorName Nat.le_ctors}`refl`を使え、{anchorName le_succ_of_le4}`step`のゴールだけが残る。
 ```anchor le_succ_of_le4
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   intro h
@@ -393,7 +393,7 @@ ih : n ≤ m✝ + 1
 ⊢ n ≤ m✝.succ + 1
 ```
 
-For the step, applying the {anchorName Nat.le_ctors}`step` constructor transforms the goal into the induction hypothesis:
+段階の場合は、{anchorName Nat.le_ctors}`step`コンストラクタを適用するとゴールが帰納法の仮定に変わる。
 ```anchor le_succ_of_le5
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   intro h
@@ -410,7 +410,7 @@ ih : n ≤ m✝ + 1
 ⊢ n.le (m✝ + 1)
 ```
 
-The final proof is as follows:
+最終的な証明は次のとおりである。
 
 ```anchor le_succ_of_le
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
@@ -420,8 +420,8 @@ theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   | step => constructor; assumption
 ```
 
-To reveal what's going on behind the scenes, the {kw}`apply` and {kw}`exact` tactics can be used to indicate exactly which constructor is being applied.
-The {kw}`apply` tactic solves the current goal by applying a function or constructor whose return type matches, creating new goals for each argument that was not provided, while {kw}`exact` fails if any new goals would be needed:
+裏で何が起きているかを明らかにするには、{kw}`apply`と{kw}`exact`タクティクを使い、どのコンストラクタが適用されているかを正確に示せる。
+{kw}`apply`タクティクは、戻り値の型が一致する関数やコンストラクタを適用して現在のゴールを解き、与えられなかった引数ごとに新しいゴールを作る。一方{kw}`exact`は、新しいゴールが必要になるなら失敗する。
 
 ```anchor le_succ_of_le_apply
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
@@ -431,24 +431,24 @@ theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1 := by
   | step _ ih => apply Nat.le.step; exact ih
 ```
 
-The proof can be golfed:
+証明はゴルフできる。
 
 ```anchor le_succ_of_le_golf
 theorem Nat.le_succ_of_le (h : n ≤ m) : n ≤ m + 1:= by
   induction h <;> repeat (first | constructor | assumption)
 ```
-In this short tactic script, both goals introduced by {kw}`induction` are addressed using {anchorTerm le_succ_of_le_golf}`repeat (first | constructor | assumption)`.
-The tactic {lit}`first | T1 | T2 | ... | Tn` means to use try {lit}`T1` through {lit}`Tn` in order, using the first tactic that succeeds.
-In other words, {anchorTerm le_succ_of_le_golf}`repeat (first | constructor | assumption)` applies constructors as long as it can, and then attempts to solve the goal using an assumption.
+この短いタクティクの筋書きでは、{kw}`induction`が導入した両方のゴールが{anchorTerm le_succ_of_le_golf}`repeat (first | constructor | assumption)`で扱われる。
+{lit}`first | T1 | T2 | ... | Tn`というタクティクは、{lit}`T1`から{lit}`Tn`まで順に試し、最初に成功したタクティクを使うことを意味する。
+言い換えれば、{anchorTerm le_succ_of_le_golf}`repeat (first | constructor | assumption)`はコンストラクタを適用できるだけ適用し、次に前提を使ってゴールを解こうとする。
 
-The proof can be shortened even further by using {tactic}`grind`, which includes a solver for linear arithmetic:
+{tactic}`grind`を使えば証明をさらに短くできる。これには線形算術の解決器が含まれている。
 
 ```anchor le_succ_of_le_grind
 theorem Nat.le_succ_of_le (h : n ≤ m) : n ≤ m + 1:= by
   grind
 ```
 
-Finally, the proof can be written as a recursive function:
+最後に、証明は再帰関数として書ける。
 
 ```anchor le_succ_of_le_recursive
 theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1
@@ -456,17 +456,17 @@ theorem Nat.le_succ_of_le : n ≤ m → n ≤ m + 1
   | .step h => .step (Nat.le_succ_of_le h)
 ```
 
-Each style of proof can be appropriate to different circumstances.
-The detailed proof script is useful in cases where beginners may be reading the code, or where the steps of the proof provide some kind of insight.
-The short, highly-automated proof script is typically easier to maintain, because automation is frequently both flexible and robust in the face of small changes to definitions and datatypes.
-The recursive function is typically both harder to understand from the perspective of mathematical proofs and harder to maintain, but it can be a useful bridge for programmers who are beginning to work with interactive theorem proving.
+それぞれの証明の流儀は、違う状況に適している。
+詳しい証明の筋書きは、初心者がコードを読むかもしれない場合や、証明の各段階が何らかの洞察を与える場合に役に立つ。
+短く高度に自動化された証明の筋書きは、通常は保守しやすい。自動化はしばしば、定義やデータ型への小さな変更に対して柔軟で頑健だからである。
+再帰関数は通常、数学的な証明の観点からは理解しにくく保守も難しいが、対話的な定理証明を始めたプログラマにとって役に立つ橋渡しになりうる。
 
-## Finishing the Proof
+## 証明の仕上げ
 %%%
 tag := "finishing-splitList-shorter-proof"
 %%%
 
-Now that both helper theorems have been proved, the rest of {anchorName splitList_shorter_le5}`splitList_shorter_le` will be completed quickly.
+両方の補助定理を証明したので、{anchorName splitList_shorter_le5}`splitList_shorter_le`の残りはすぐに完成する。
 The current proof state has one goal remaining:
 ```anchorError splitList_shorter_le5
 unsolved goals
@@ -820,7 +820,7 @@ def div (n k : Nat) (ok : k ≠ 0) : Nat :=
 :::
 
 This definition of {anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`div` terminates because the first argument {anchorName divRecursiveWithProof (module:=Examples.ProgramsProofs.Div)}`n` is smaller on each recursive call.
-This can be expressed using a {kw}`termination_by` clause:
+これは{kw}`termination_by`の句で表せる。
 
 
 ```anchor divRecursiveWithProof (module := Examples.ProgramsProofs.Div)
