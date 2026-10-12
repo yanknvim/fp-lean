@@ -16,24 +16,24 @@ tag := "alternative"
 %%%
 
 
-# Recovery from Failure
+# 失敗からの復帰
 %%%
 tag := "alternative-recovery"
 %%%
 
-{anchorName Validate}`Validate` can also be used in situations where there is more than one way for input to be acceptable.
-For the input form {anchorName RawInput}`RawInput`, an alternative set of business rules that implement conventions from a legacy system might be the following:
+{anchorName Validate}`Validate`は、入力を受け付けられる方法が複数ある場面でも使える。
+入力フォーム{anchorName RawInput}`RawInput`について、旧システムの慣習を実装した別の業務規則は次のようなものになりうる。
 
- 1. All human users must provide a birth year that is four digits.
- 2. Users born prior to 1970 do not need to provide names, due to incomplete older records.
- 3. Users born after 1970 must provide names.
- 4. Companies should enter {anchorTerm checkCompany}`"FIRM"` as their year of birth and provide a company name.
+ 1. 人間の利用者は全員、4桁の生年を提供しなければならない。
+ 2. 1970年より前に生まれた利用者は、古い記録が不完全なため、名前を提供しなくてよい。
+ 3. 1970年より後に生まれた利用者は、名前を提供しなければならない。
+ 4. 企業は生年として{anchorTerm checkCompany}`"FIRM"`を入力し、企業名を提供するべきである。
 
-No particular provision is made for users born in 1970.
-It is expected that they will either give up, lie about their year of birth, or call.
-The company considers this an acceptable cost of doing business.
+1970年生まれの利用者については、特に何も定めていない。
+彼らは諦めるか、生年を偽るか、電話をかけてくるだろうと想定されている。
+企業はこれを、事業を行ううえで受け入れられるコストと考えている。
 
-The following inductive type captures the values that can be produced from these stated rules:
+次の帰納型は、これらの定められた規則から生み出されうる値をとらえている。
 
 ```anchor LegacyCheckedInput
 abbrev NonEmptyString := {s : String // s ≠ ""}
@@ -53,9 +53,9 @@ inductive LegacyCheckedInput where
 deriving Repr
 ```
 
-A validator for these rules is more complicated, however, as it must address all three cases.
-While it can be written as a series of nested {kw}`if` expressions, it's easier to design the three cases independently and then combine them.
-This requires a means of recovering from failure while preserving error messages:
+しかし、これらの規則の検査器は、三つの場合すべてに対応する必要があるので、もっと複雑になる。
+入れ子になった{kw}`if`式の並びとして書くこともできるが、三つの場合を独立に設計してから組み合わせるほうが簡単である。
+そのためには、エラーメッセージを保ったまま失敗から復帰する手段が要る。
 
 ```anchor ValidateorElse
 def Validate.orElse
@@ -70,26 +70,26 @@ def Validate.orElse
     | .errors errs2 => .errors (errs1 ++ errs2)
 ```
 
-This pattern of recovery from failures is common enough that Lean has built-in syntax for it, attached to a type class named {anchorName OrElse}`OrElse`:
+この失敗からの復帰のパターンはよくあるので、Leanには{anchorName OrElse}`OrElse`という型クラスに結び付いた組み込みの構文がある。
 
 ```anchor OrElse
 class OrElse (α : Type) where
   orElse : α → (Unit → α) → α
 ```
-The expression {anchorTerm OrElseSugar}`E1 <|> E2` is short for {anchorTerm OrElseSugar}`OrElse.orElse E1 (fun () => E2)`.
-An instance of {anchorName OrElse}`OrElse` for {anchorName Validate}`Validate` allows this syntax to be used for error recovery:
+式{anchorTerm OrElseSugar}`E1 <|> E2`は{anchorTerm OrElseSugar}`OrElse.orElse E1 (fun () => E2)`の略である。
+{anchorName Validate}`Validate`の{anchorName OrElse}`OrElse`インスタンスがあれば、この構文をエラーからの復帰に使える。
 
 ```anchor OrElseValidate
 instance : OrElse (Validate ε α) where
   orElse := Validate.orElse
 ```
 
-The validator for {anchorName LegacyCheckedInput}`LegacyCheckedInput` can be built from a validator for each constructor.
-The rules for a company state that the birth year should be the string {anchorTerm checkCompany}`"FIRM"` and that the name should be non-empty.
-The constructor {anchorName names1}`LegacyCheckedInput.company`, however, has no representation of the birth year at all, so there's no easy way to carry it out using {anchorTerm checkCompanyProv}`<*>`.
-The key is to use a function with {anchorTerm checkCompanyProv}`<*>` that ignores its argument.
+{anchorName LegacyCheckedInput}`LegacyCheckedInput`の検査器は、各コンストラクタの検査器から組み立てられる。
+企業の規則は、生年が文字列{anchorTerm checkCompany}`"FIRM"`であるべきことと、名前が空でないべきことを述べている。
+しかし、{anchorName names1}`LegacyCheckedInput.company`コンストラクタには生年の表現がまったくないので、{anchorTerm checkCompanyProv}`<*>`を使ってその検査を行う簡単な方法がない。
+鍵は、引数を無視する関数を{anchorTerm checkCompanyProv}`<*>`とともに使うことである。
 
-Checking that a Boolean condition holds without recording any evidence of this fact in a type can be accomplished with {anchorName checkThat}`checkThat`:
+真偽値の条件が成り立つことを、その事実の証拠を型に記録せずに調べるには、{anchorName checkThat}`checkThat`を使う。
 
 ```anchor checkThat
 def checkThat (condition : Bool)
@@ -97,7 +97,7 @@ def checkThat (condition : Bool)
     Validate (Field × String) Unit :=
   if condition then pure () else reportError field msg
 ```
-This definition of {anchorName checkCompanyProv}`checkCompany` uses {anchorName checkCompanyProv}`checkThat`, and then throws away the resulting {anchorName checkThat}`Unit` value:
+この{anchorName checkCompanyProv}`checkCompany`の定義は{anchorName checkCompanyProv}`checkThat`を使い、その結果の{anchorName checkThat}`Unit`の値を捨てる。
 
 ```anchor checkCompanyProv
 def checkCompany (input : RawInput) :
@@ -108,18 +108,18 @@ def checkCompany (input : RawInput) :
     checkName input.name
 ```
 
-However, this definition is quite noisy.
-It can be simplified in two ways.
-The first is to replace the first use of {anchorTerm checkCompanyProv}`<*>` with a specialized version that automatically ignores the value returned by the first argument, called {anchorTerm checkCompany}`*>`.
-This operator is also controlled by a type class, called {anchorName ClassSeqRight}`SeqRight`, and {anchorTerm seqRightSugar}`E1 *> E2` is syntactic sugar for {anchorTerm seqRightSugar}`SeqRight.seqRight E1 (fun () => E2)`:
+しかし、この定義はかなり煩わしい。
+二つの方法で簡単にできる。
+一つ目は、最初の{anchorTerm checkCompanyProv}`<*>`の使用を、一つ目の引数が返す値を自動で無視する専用の版{anchorTerm checkCompany}`*>`に置き換えることである。
+この演算子も{anchorName ClassSeqRight}`SeqRight`という型クラスで制御されており、{anchorTerm seqRightSugar}`E1 *> E2`は{anchorTerm seqRightSugar}`SeqRight.seqRight E1 (fun () => E2)`の糖衣構文である。
 
 ```anchor ClassSeqRight
 class SeqRight (f : Type → Type) where
   seqRight : f α → (Unit → f β) → f β
 ```
-There is a default implementation of {anchorName ClassSeqRight}`seqRight` in terms of {anchorName fakeSeq}`seq`: {lit}`seqRight (a : f α) (b : Unit → f β) : f β := pure (fun _ x => x) <*> a <*> b ()`.
+{anchorName ClassSeqRight}`seqRight`には{anchorName fakeSeq}`seq`を使った既定の実装がある。{lit}`seqRight (a : f α) (b : Unit → f β) : f β := pure (fun _ x => x) <*> a <*> b ()`である。
 
-Using {anchorName ClassSeqRight}`seqRight`, {anchorName checkCompanyProv2}`checkCompany` becomes simpler:
+{anchorName ClassSeqRight}`seqRight`を使うと、{anchorName checkCompanyProv2}`checkCompany`が簡単になる。
 
 ```anchor checkCompanyProv2
 def checkCompany (input : RawInput) :
@@ -128,10 +128,10 @@ def checkCompany (input : RawInput) :
     "birth year" "FIRM if a company" *>
   pure .company <*> checkName input.name
 ```
-One more simplification is possible.
-For every {anchorName ApplicativeExcept}`Applicative`, {anchorTerm ApplicativeLaws}`pure f <*> E` is equivalent to {anchorTerm ApplicativeLaws}`f <$> E`.
-In other words, using {anchorName fakeSeq}`seq` to apply a function that was placed into the {anchorName ApplicativeExtendsFunctorOne}`Applicative` type using {anchorName ApplicativeExtendsFunctorOne}`pure` is overkill, and the function could have just been applied using {anchorName ApplicativeLaws}`Functor.map`.
-This simplification yields:
+もう一段の簡略化ができる。
+どの{anchorName ApplicativeExcept}`Applicative`についても、{anchorTerm ApplicativeLaws}`pure f <*> E`は{anchorTerm ApplicativeLaws}`f <$> E`と等しい。
+言い換えれば、{anchorName ApplicativeExtendsFunctorOne}`pure`で{anchorName ApplicativeExtendsFunctorOne}`Applicative`の型に入れた関数を適用するのに{anchorName fakeSeq}`seq`を使うのは大げさであり、その関数は{anchorName ApplicativeLaws}`Functor.map`で適用すればよかったのである。
+この簡略化により次のようになる。
 
 ```anchor checkCompany
 def checkCompany (input : RawInput) :
@@ -141,8 +141,8 @@ def checkCompany (input : RawInput) :
   .company <$> checkName input.name
 ```
 
-The remaining two constructors of {anchorName LegacyCheckedInput}`LegacyCheckedInput` use subtypes for their fields.
-A general-purpose tool for checking subtypes will make these easier to read:
+{anchorName LegacyCheckedInput}`LegacyCheckedInput`の残り二つのコンストラクタは、フィールドに部分型を使う。
+部分型を調べる汎用の道具があると、これらが読みやすくなる。
 
 ```anchor checkSubtype
 def checkSubtype {α : Type} (v : α) (p : α → Prop) [Decidable (p v)]
@@ -152,11 +152,11 @@ def checkSubtype {α : Type} (v : α) (p : α → Prop) [Decidable (p v)]
   else
     .errors { head := err, tail := [] }
 ```
-In the function's argument list, it's important that the type class {anchorTerm checkSubtype}`[Decidable (p v)]` occur after the specification of the arguments {anchorName checkSubtype}`v` and {anchorName checkSubtype}`p`.
-Otherwise, it would refer to an additional set of automatic implicit arguments, rather than to the manually-provided values.
-The {anchorName checkSubtype}`Decidable` instance is what allows the proposition {anchorTerm checkSubtype}`p v` to be checked using {kw}`if`.
+この関数の引数の並びでは、型クラス{anchorTerm checkSubtype}`[Decidable (p v)]`が引数{anchorName checkSubtype}`v`と{anchorName checkSubtype}`p`の指定より後に来ることが重要である。
+そうでなければ、手で与えた値ではなく、自動の暗黙引数がもう一組あるものを指すことになる。
+{anchorName checkSubtype}`Decidable`インスタンスがあることで、命題{anchorTerm checkSubtype}`p v`を{kw}`if`で調べられる。
 
-The two human cases do not need any additional tools:
+人間の二つの場合は、追加の道具を必要としない。
 
 ```anchor checkHumanBefore1970
 def checkHumanBefore1970 (input : RawInput) :
@@ -178,7 +178,7 @@ def checkHumanAfter1970 (input : RawInput) :
       checkName input.name
 ```
 
-The validators for the three cases can be combined using {anchorTerm OrElseSugar}`<|>`:
+三つの場合の検査器は{anchorTerm OrElseSugar}`<|>`で組み合わせられる。
 
 ```anchor checkLegacyInput
 def checkLegacyInput (input : RawInput) :
@@ -188,7 +188,7 @@ def checkLegacyInput (input : RawInput) :
   checkHumanAfter1970 input
 ```
 
-The successful cases return constructors of {anchorName LegacyCheckedInput}`LegacyCheckedInput`, as expected:
+成功した場合は、予想どおり{anchorName LegacyCheckedInput}`LegacyCheckedInput`のコンストラクタを返す。
 ```anchor trollGroomers
 #eval checkLegacyInput ⟨"Johnny's Troll Groomers", "FIRM"⟩
 ```
@@ -208,7 +208,7 @@ Validate.ok (LegacyCheckedInput.humanBefore1970 1963 "Johnny")
 Validate.ok (LegacyCheckedInput.humanBefore1970 1963 "")
 ```
 
-The worst possible input returns all the possible failures:
+最悪の入力は、起こりうる失敗をすべて返す。
 ```anchor allFailures
 #eval checkLegacyInput ⟨"", "1970"⟩
 ```
@@ -222,30 +222,30 @@ Validate.errors
 ```
 
 
-# The {lit}`Alternative` Class
+# {lit}`Alternative`クラス
 %%%
 tag := "Alternative"
 %%%
 
-Many types support a notion of failure and recovery.
-The {anchorName AlternativeMany}`Many` monad from the section on {ref "nondeterministic-search"}[evaluating arithmetic expressions in a variety of monads] is one such type, as is {anchorName AlternativeOption}`Option`.
-Both support failure without providing a reason (unlike, say, {anchorName ApplicativeExcept}`Except` and {anchorName Validate}`Validate`, which require some indication of what went wrong).
+多くの型が、失敗と復帰という考え方に対応している。
+{ref "nondeterministic-search"}[さまざまなモナドで算術式を評価する]節の{anchorName AlternativeMany}`Many`モナドもそうした型の一つであり、{anchorName AlternativeOption}`Option`も同様である。
+どちらも理由を示さずに失敗に対応する（たとえば{anchorName ApplicativeExcept}`Except`や{anchorName Validate}`Validate`は、何が問題だったかの示唆を要求するが、それとは違う）。
 
-The {anchorName FakeAlternative}`Alternative` class describes applicative functors that have additional operators for failure and recovery:
+{anchorName FakeAlternative}`Alternative`クラスは、失敗と復帰のための演算子が増えたアプリカティブファンクタを記述する。
 
 ```anchor FakeAlternative
 class Alternative (f : Type → Type) extends Applicative f where
   failure : f α
   orElse : f α → (Unit → f α) → f α
 ```
-Just as implementors of {anchorTerm misc}`Add α` get {anchorTerm misc}`HAdd α α α` instances for free, implementors of {anchorName FakeAlternative}`Alternative` get {anchorName OrElse}`OrElse` instances for free:
+{anchorTerm misc}`Add α`の実装者が{anchorTerm misc}`HAdd α α α`のインスタンスをただで得るのと同じように、{anchorName FakeAlternative}`Alternative`の実装者は{anchorName OrElse}`OrElse`のインスタンスをただで得る。
 
 ```anchor AltOrElse
 instance [Alternative f] : OrElse (f α) where
   orElse := Alternative.orElse
 ```
 
-The implementation of {anchorName FakeAlternative}`Alternative` for {anchorName ApplicativeOption}`Option` keeps the first non-{anchorName ApplicativeOption}`none` argument:
+{anchorName ApplicativeOption}`Option`の{anchorName FakeAlternative}`Alternative`の実装は、{anchorName ApplicativeOption}`none`でない最初の引数を保つ。
 
 ```anchor AlternativeOption
 instance : Alternative Option where
@@ -254,7 +254,7 @@ instance : Alternative Option where
     | some x, _ => some x
     | none, y => y ()
 ```
-Similarly, the implementation for {anchorName AlternativeMany}`Many` follows the general structure of {moduleName (module := Examples.Monads.Many)}`Many.union`, with minor differences due to the laziness-inducing {anchorName guard}`Unit` parameters being placed differently:
+同様に、{anchorName AlternativeMany}`Many`の実装は{moduleName (module := Examples.Monads.Many)}`Many.union`の全体的な構造に従うが、遅延を生む{anchorName guard}`Unit`の引数の置き場所が違うため細かな違いがある。
 
 ```anchor AlternativeMany
 def Many.orElse : Many α → (Unit → Many α) → Many α
@@ -266,8 +266,8 @@ instance : Alternative Many where
   orElse := Many.orElse
 ```
 
-Like other type classes, {anchorName FakeAlternative}`Alternative` enables the definition of a variety of operations that work for _any_ applicative functor that implements {anchorName FakeAlternative}`Alternative`.
-One of the most important is {anchorName guard}`guard`, which causes {anchorName guard}`failure` when a decidable proposition is false:
+他の型クラスと同じく、{anchorName FakeAlternative}`Alternative`があれば、{anchorName FakeAlternative}`Alternative`を実装する*どの*アプリカティブファンクタでも働くさまざまな操作を定義できる。
+最も重要なものの一つが{anchorName guard}`guard`で、決定可能な命題が偽のときに{anchorName guard}`failure`を起こす。
 
 ```anchor guard
 def guard [Alternative f] (p : Prop) [Decidable p] : f Unit :=
@@ -275,8 +275,8 @@ def guard [Alternative f] (p : Prop) [Decidable p] : f Unit :=
     pure ()
   else failure
 ```
-It is very useful in monadic programs to terminate execution early.
-In {anchorName evenDivisors}`Many`, it can be used to filter out a whole branch of a search, as in the following program that computes all even divisors of a natural number:
+モナドを使うプログラムでは、実行を早期に終わらせられるととても役に立つ。
+{anchorName evenDivisors}`Many`では、探索の枝を丸ごとふるい落とすのに使える。次のプログラムは自然数の偶数である約数をすべて計算する。
 
 ```anchor evenDivisors
 def Many.countdown : Nat → Many Nat
@@ -289,7 +289,7 @@ def evenDivisors (n : Nat) : Many Nat := do
   guard (n % k = 0)
   pure k
 ```
-Running it on {anchorTerm evenDivisors20}`20` yields the expected results:
+{anchorTerm evenDivisors20}`20`で実行すると期待どおりの結果になる。
 ```anchor evenDivisors20
 #eval (evenDivisors 20).takeAll
 ```
@@ -298,23 +298,23 @@ Running it on {anchorTerm evenDivisors20}`20` yields the expected results:
 ```
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "Alternative-exercises"
 %%%
 
-## Improve Validation Friendliness
+## 検査の分かりやすさを改善する
 %%%
 tag := none
 %%%
 
-The errors returned from {anchorName Validate}`Validate` programs that use {anchorTerm OrElseSugar}`<|>` can be difficult to read, because inclusion in the list of errors simply means that the error can be reached through _some_ code path.
-A more structured error report can be used to guide the user through the process more accurately:
+{anchorTerm OrElseSugar}`<|>`を使う{anchorName Validate}`Validate`のプログラムが返すエラーは読みにくいことがある。エラーの一覧に入っているということは、*何らかの*コードの道筋を通ればそのエラーに到達しうる、というだけの意味だからである。
+より構造化されたエラーの報告を使えば、利用者をより正確に手順へ導ける。
 
- * Replace the {anchorName Validate}`NonEmptyList` in {anchorName misc}`Validate.errors` with a bare type variable, and then update the definitions of the {anchorTerm ApplicativeValidate}`Applicative (Validate ε)` and {anchorTerm OrElseValidate}`OrElse (Validate ε α)` instances to require only that there be an {anchorTerm misc}`Append ε` instance available.
- * Define a function {anchorTerm misc}`Validate.mapErrors : Validate ε α → (ε → ε') → Validate ε' α` that transforms all the errors in a validation run.
- * Using the datatype {anchorName TreeError}`TreeError` to represent errors, rewrite the legacy validation system to track its path through the three alternatives.
- * Write a function {anchorTerm misc}`report : TreeError → String` that outputs a user-friendly view of the {anchorName TreeError}`TreeError`'s accumulated warnings and errors.
+ * {anchorName misc}`Validate.errors`の{anchorName Validate}`NonEmptyList`を裸の型変数に置き換え、{anchorTerm ApplicativeValidate}`Applicative (Validate ε)`と{anchorTerm OrElseValidate}`OrElse (Validate ε α)`のインスタンスの定義を、{anchorTerm misc}`Append ε`インスタンスがあることだけを要求するように直す。
+ * 検査の実行で生じたエラーをすべて変換する関数{anchorTerm misc}`Validate.mapErrors : Validate ε α → (ε → ε') → Validate ε' α`を定義する。
+ * エラーを表すのに{anchorName TreeError}`TreeError`データ型を使い、三つの選択肢を通る経路を追跡するように旧システムの検査を書き直す。
+ * {anchorName TreeError}`TreeError`が蓄積した警告とエラーを利用者に分かりやすく出力する関数{anchorTerm misc}`report : TreeError → String`を書く。
 
 ```anchor TreeError
 inductive TreeError where
