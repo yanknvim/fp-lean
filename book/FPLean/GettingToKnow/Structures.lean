@@ -17,17 +17,17 @@ set_option verso.exampleModule "Examples.Intro"
 tag := "structures"
 %%%
 
-The first step in writing a program is usually to identify the problem domain's concepts, and then find suitable representations for them in code.
-Sometimes, a domain concept is a collection of other, simpler, concepts.
-In that case, it can be convenient to group these simpler components together into a single “package”, which can then be given a meaningful name.
-In Lean, this is done using _structures_, which are analogous to {c}`struct`s in C or Rust and {CSharp}`record`s in C#.
+プログラムを書くときの最初の一歩は、たいてい、対象とする問題領域の概念を見つけ出し、それをコードでどう表すかを決めることである。
+ある概念が、いくつかのより単純な概念の集まりであることもある。
+そのような場合は、単純な部品を一つの「まとまり」にまとめ、意味のある名前を付けておくと便利である。
+Leanではこれを*構造体*で行う。CやRustの{c}`struct`、C#の{CSharp}`record`に相当する。
 
-Defining a structure introduces a completely new type to Lean that can't be reduced to any other type.
-This is useful because multiple structures might represent different concepts that nonetheless contain the same data.
-For instance, a point might be represented using either Cartesian or polar coordinates, each being a pair of floating-point numbers.
-Defining separate structures prevents API clients from confusing one for another.
+構造体を定義すると、他のどの型にも還元できない新しい型がLeanに導入される。
+複数の構造体が、同じデータを持ちながら別の概念を表すことがあるため、これは役に立つ。
+たとえば点は、直交座標でも極座標でも表せる。どちらも浮動小数点数の組である。
+別々の構造体として定義しておけば、APIの利用者が両者を取り違えることを防げる。
 
-Lean's floating-point number type is called {anchorName zeroFloat}`Float`, and floating-point numbers are written in the usual notation.
+Leanの浮動小数点数の型は{anchorName zeroFloat}`Float`といい、普通の表記で書ける。
 
 ```anchorTerm onePointTwo
 #check 1.2
@@ -58,7 +58,7 @@ Lean's floating-point number type is called {anchorName zeroFloat}`Float`, and f
 0.0 : Float
 ```
 
-When floating point numbers are written with the decimal point, Lean will infer the type {anchorName zeroFloat}`Float`. If they are written without it, then a type annotation may be necessary.
+小数点を付けて書いた浮動小数点数なら、Leanは型を{anchorName zeroFloat}`Float`と推論する。小数点を付けない場合は、型注釈が必要になることがある。
 
 ```anchorTerm zeroNat
 #check 0
@@ -82,8 +82,8 @@ When floating point numbers are written with the decimal point, Lean will infer 
 
 
 
-A Cartesian point is a structure with two {anchorName zeroFloat}`Float` fields, called {anchorName Point}`x` and {anchorName Point}`y`.
-This is declared using the {kw}`structure` keyword.
+直交座標の点は、{anchorName Point}`x`と{anchorName Point}`y`という二つの{anchorName zeroFloat}`Float`のフィールドを持つ構造体である。
+これは{kw}`structure`キーワードで宣言する。
 
 
 ```anchor Point
@@ -92,23 +92,23 @@ structure Point where
   y : Float
 ```
 
-After this declaration, {anchorName Point}`Point` is a new structure type.
-The typical way to create a value of a structure type is to provide values for all of its fields inside of curly braces.
-The origin of a Cartesian plane is where {anchorName Point}`x` and {anchorName Point}`y` are both zero:
+この宣言により、{anchorName Point}`Point`という新しい構造体の型ができる。
+構造体の型の値を作るには、淡括弧の中にすべてのフィールドの値を書くのが普通である。
+直交座標平面の原点は、{anchorName Point}`x`と{anchorName Point}`y`がどちらも0である点である。
 
 ```anchor origin
 def origin : Point := { x := 0.0, y := 0.0 }
 ```
 
-The result of {anchorTerm originEval}`#eval origin` looks very much like the definition of {anchorName origin}`origin`.
+{anchorTerm originEval}`#eval origin`の結果は、{anchorName origin}`origin`の定義とよく似ている。
 
 ```anchorInfo originEval
 { x := 0.000000, y := 0.000000 }
 ```
 
 
-Because structures exist to “bundle up” a collection of data, naming it and treating it as a single unit, it is also important to be able to extract the individual fields of a structure.
-This is done using dot notation, as in C, Python, Rust, or JavaScript.
+構造体は、データの集まりを一つにまとめ、名前を付けて一つの単位として扱うためのものなので、個々のフィールドを取り出せることも重要である。
+取り出しには、C、Python、Rust、JavaScriptと同じようにドット記法を使う。
 
 ```anchorTerm originx
 #eval origin.x
@@ -128,23 +128,23 @@ This is done using dot notation, as in C, Python, Rust, or JavaScript.
 ```
 
 :::paragraph
-This can be used to define functions that take structures as arguments.
-For instance, addition of points is performed by adding the underlying coordinate values.
-It should be the case that
+これを使って、構造体を引数に取る関数を定義できる。
+たとえば、点の足し算は、対応する座標の値を足し合わせて行う。
+次のようになるはずである。
 
 ```anchorTerm addPointsEx
 #eval addPoints { x := 1.5, y := 32 } { x := -8, y := 0.2 }
 ```
 
-yields
+これは次のようになる。
 
 ```anchorInfo addPointsEx
 { x := -6.500000, y := 32.200000 }
 ```
 :::
 
-The function itself takes two {anchorName Point}`Point`s as arguments, called {anchorName addPoints}`p1` and {anchorName addPoints}`p2`.
-The resulting point is based on the {anchorName addPoints}`x` and {anchorName addPoints}`y` fields of both {anchorName addPoints}`p1` and {anchorName addPoints}`p2`:
+この関数は二つの{anchorName Point}`Point`を引数に取り、それぞれ{anchorName addPoints}`p1`と{anchorName addPoints}`p2`と呼ぶ。
+結果の点は、{anchorName addPoints}`p1`と{anchorName addPoints}`p2`の{anchorName addPoints}`x`と{anchorName addPoints}`y`の各フィールドから作られる。
 
 ```anchor addPoints
 def addPoints (p1 : Point) (p2 : Point) : Point :=
@@ -152,14 +152,14 @@ def addPoints (p1 : Point) (p2 : Point) : Point :=
 ```
 
 
-Similarly, the distance between two points, which is the square root of the sum of the squares of the differences in their {anchorName Point}`x` and {anchorName Point}`y` components, can be written:
+同様に、二点間の距離（それぞれの{anchorName Point}`x`と{anchorName Point}`y`の差を二乗して足し、平方根を取ったもの）は次のように書ける。
 
 ```anchor distance
 def distance (p1 : Point) (p2 : Point) : Float :=
   Float.sqrt (((p2.x - p1.x) ^ 2.0) + ((p2.y - p1.y) ^ 2.0))
 ```
 
-For example, the distance between $`(1, 2)` and $`(5, -1)` is $`5`:
+たとえば$`(1, 2)`と$`(5, -1)`の距離は$`5`である。
 
 ```anchorTerm evalDistance
 #eval distance { x := 1.0, y := 2.0 } { x := 5.0, y := -1.0 }
@@ -171,8 +171,8 @@ For example, the distance between $`(1, 2)` and $`(5, -1)` is $`5`:
 
 
 
-Multiple structures may have fields with the same names.
-A three-dimensional point datatype may share the fields {anchorName Point3D}`x` and {anchorName Point3D}`y`, and be instantiated with the same field names:
+複数の構造体が同じ名前のフィールドを持つこともある。
+三次元の点を表すデータ型が{anchorName Point3D}`x`と{anchorName Point3D}`y`というフィールドを共有し、同じフィールド名で値を作ることもある。
 
 ```anchor Point3D
 structure Point3D where
@@ -185,22 +185,22 @@ structure Point3D where
 def origin3D : Point3D := { x := 0.0, y := 0.0, z := 0.0 }
 ```
 
-This means that the structure's expected type must be known in order to use the curly-brace syntax.
-If the type is not known, Lean will not be able to instantiate the structure.
-For example,
+つまり、淡括弧の記法を使うには、どの構造体の型なのかが分かっていなければならない。
+型が分からないと、Leanは構造体の値を組み立てられない。
+たとえば、
 
 ```anchorTerm originNoType
 #check { x := 0.0, y := 0.0 }
 ```
 
-leads to the error
+とすると、次のエラーになる。
 
 ```anchorError originNoType
 invalid {...} notation, expected type is not known
 ```
 
 
-As usual, the situation can be remedied by providing a type annotation.
+いつもどおり、型注釈を付ければ解決する。
 
 ```anchorTerm originWithAnnot
 #check ({ x := 0.0, y := 0.0 } : Point)
@@ -212,7 +212,7 @@ As usual, the situation can be remedied by providing a type annotation.
 ```
 
 
-To make programs more concise, Lean also allows the structure type annotation inside the curly braces.
+プログラムを簡潔にするため、Leanでは淡括弧の中に構造体の型注釈を書くこともできる。
 
 ```anchorTerm originWithAnnot2
 #check { x := 0.0, y := 0.0 : Point}
@@ -224,46 +224,46 @@ To make programs more concise, Lean also allows the structure type annotation in
 ```
 
 
-# Updating Structures
+# 構造体の更新
 %%%
 tag := "updating-structures"
 %%%
 
-Imagine a function {anchorName zeroXBad}`zeroX` that replaces the {anchorName zeroXBad}`x` field of a {anchorName zeroXBad}`Point` with {anchorTerm zeroX}`0`.
-In most programming language communities, this sentence would mean that the memory location pointed to by {anchorName Point}`x` was to be overwritten with a new value.
-However, Lean is a functional programming language.
-In functional programming communities, what is almost always meant by this kind of statement is that a fresh {anchorName Point}`Point` is allocated with the {anchorName Point}`x` field pointing to the new value, and all other fields pointing to the original values from the input.
-One way to write {anchorName zeroXBad}`zeroX` is to follow this description literally, filling out the new value for {anchorName Point}`x` and manually transferring {anchorName Point}`y`:
+{anchorName zeroXBad}`Point`の{anchorName zeroXBad}`x`フィールドを{anchorTerm zeroX}`0`に置き換える関数{anchorName zeroXBad}`zeroX`を考える。
+多くのプログラミング言語の世界では、この文は{anchorName Point}`x`が指すメモリ上の場所を新しい値で上書きするという意味になる。
+しかしLeanは関数型プログラミング言語である。
+関数型プログラミングの世界でこの種の文がほぼ常に意味するのは、新しい{anchorName Point}`Point`を割り当て、その{anchorName Point}`x`フィールドに新しい値を指させ、他のフィールドは入力の元の値を指させる、ということである。
+{anchorName zeroXBad}`zeroX`を書く一つの方法は、この説明に文字どおり従い、{anchorName Point}`x`に新しい値を書き、{anchorName Point}`y`は元の値を手で引き継ぐことである。
 
 ```anchor zeroXBad
 def zeroX (p : Point) : Point :=
   { x := 0, y := p.y }
 ```
 
-This style of programming has drawbacks, however.
-First off, if a new field is added to a structure, then every site that updates any field at all must be updated, causing maintenance difficulties.
-Secondly, if the structure contains multiple fields with the same type, then there is a real risk of copy-paste coding leading to field contents being duplicated or switched.
-Finally, the program becomes long and bureaucratic.
+ただし、この書き方には難点がある。
+第一に、構造体にフィールドを追加すると、どのフィールドであれ更新している箇所をすべて直さなければならず、保守が難しくなる。
+第二に、同じ型のフィールドが複数あると、コピー＆ペーストによってフィールドの中身を取り違えたり重複させたりする危険が現実にある。
+第三に、プログラムが長くなり、事務的になる。
 
-Lean provides a convenient syntax for replacing some fields in a structure while leaving the others alone.
-This is done by using the {kw}`with` keyword in a structure initialization.
-The source of unchanged fields occurs before the {kw}`with`, and the new fields occur after.
-For example, {anchorName zeroX}`zeroX` can be written with only the new {anchorName Point}`x` value:
+Leanには、一部のフィールドだけを置き換え、残りはそのままにする便利な記法がある。
+構造体の初期化で{kw}`with`キーワードを使う。
+変更しないフィールドの元になる値は{kw}`with`の前に書き、新しいフィールドは後ろに書く。
+たとえば{anchorName zeroX}`zeroX`は、新しい{anchorName Point}`x`の値だけで書ける。
 
 ```anchor zeroX
 def zeroX (p : Point) : Point :=
   { p with x := 0 }
 ```
 
-Remember that this structure update syntax does not modify existing values—it creates new values that share some fields with old values.
-Given the point {anchorName fourAndThree}`fourAndThree`:
+この更新記法は既存の値を書き換えるものではない。古い値といくつかのフィールドを共有する新しい値を作るのである。
+次の点{anchorName fourAndThree}`fourAndThree`を考える。
 
 ```anchor fourAndThree
 def fourAndThree : Point :=
   { x := 4.3, y := 3.4 }
 ```
 
-evaluating it, then evaluating an update of it using {anchorName zeroX}`zeroX`, then evaluating it again yields the original value:
+これを評価し、次に{anchorName zeroX}`zeroX`で更新したものを評価し、もう一度これを評価すると、元の値が得られる。
 
 ```anchorTerm fourAndThreeEval
 #eval fourAndThree
@@ -295,42 +295,42 @@ evaluating it, then evaluating an update of it using {anchorName zeroX}`zeroX`, 
 ```
 
 
-One consequence of the fact that structure updates do not modify the original structure is that it becomes easier to reason about cases where the new value is computed from the old one.
-All references to the old structure continue to refer to the same field values in all of the new values provided.
+構造体の更新が元の構造体を書き換えないという事実には、新しい値を古い値から計算する場合の推論が楽になるという利点がある。
+古い構造体への参照は、作られたどの新しい値においても、同じフィールドの値を指し続ける。
 
 
 
 
-# Behind the Scenes
+# 舞台裏
 %%%
 tag := "behind-the-scenes"
 %%%
 
-Every structure has a _constructor_.
-Here, the term “constructor” may be a source of confusion.
-Unlike constructors in languages such as Java or Python, constructors in Lean are not arbitrary code to be run when a datatype is initialized.
-Instead, constructors simply gather the data to be stored in the newly-allocated data structure.
-It is not possible to provide a custom constructor that pre-processes data or rejects invalid arguments.
-This is really a case of the word “constructor” having different, but related, meanings in the two contexts.
+すべての構造体には*コンストラクタ*がある。
+ここで「コンストラクタ」という語は混乱のもとになりうる。
+JavaやPythonなどの言語のコンストラクタと違い、Leanのコンストラクタは、データ型の初期化時に走る任意のコードではない。
+コンストラクタは、新しく割り当てるデータ構造に格納するデータをまとめるだけのものである。
+データを前処理したり、不正な引数を拒否したりする独自のコンストラクタを用意することはできない。
+この語は、二つの文脈で似てはいるが異なる意味を持つのである。
 
 
-By default, the constructor for a structure named {lit}`S` is named {lit}`S.mk`.
-Here, {lit}`S` is a namespace qualifier, and {lit}`mk` is the name of the constructor itself.
-Instead of using curly-brace initialization syntax, the constructor can also be applied directly.
+既定では、{lit}`S`という名前の構造体のコンストラクタは{lit}`S.mk`という名前になる。
+ここで{lit}`S`は名前空間の修飾子であり、{lit}`mk`がコンストラクタ自身の名前である。
+淡括弧による初期化の記法を使わず、コンストラクタを直接適用することもできる。
 
 ```anchorTerm checkPointMk
 #check Point.mk 1.5 2.8
 ```
 
-However, this is not generally considered to be good Lean style, and Lean even returns its feedback using the standard structure initializer syntax.
+ただし、これは一般に良いLeanのスタイルとは見なされていない。Lean自身も、標準の構造体初期化の記法でフィードバックを返す。
 
 ```anchorInfo checkPointMk
 { x := 1.5, y := 2.8 } : Point
 ```
 
 
-Constructors have function types, which means they can be used anywhere that a function is expected.
-For instance, {anchorName Pointmk}`Point.mk` is a function that accepts two {anchorName Point}`Float`s (respectively {anchorName Point}`x` and {anchorName Point}`y`) and returns a new {anchorName Point}`Point`.
+コンストラクタは関数の型を持つので、関数が期待される場所ならどこでも使える。
+たとえば{anchorName Pointmk}`Point.mk`は、二つの{anchorName Point}`Float`（それぞれ{anchorName Point}`x`と{anchorName Point}`y`）を受け取り、新しい{anchorName Point}`Point`を返す関数である。
 
 ```anchorTerm Pointmk
 #check (Point.mk)
@@ -340,8 +340,8 @@ For instance, {anchorName Pointmk}`Point.mk` is a function that accepts two {anc
 Point.mk : Float → Float → Point
 ```
 
-To override a structure's constructor name, write it with two colons at the beginning.
-For instance, to use {anchorName PointCtorNameName}`Point.point` instead of {anchorName Pointmk}`Point.mk`, write:
+構造体のコンストラクタの名前を変えるには、先頭にコロンを二つ書く。
+たとえば{anchorName Pointmk}`Point.mk`の代わりに{anchorName PointCtorNameName}`Point.point`を使うには、次のように書く。
 
 ```anchor PointCtorName
 structure Point where
@@ -350,9 +350,9 @@ structure Point where
   y : Float
 ```
 
-In addition to the constructor, an accessor function is defined for each field of a structure.
-These have the same name as the field, in the structure's namespace.
-For {anchorName Point}`Point`, accessor functions {anchorName Pointx}`Point.x` and {anchorName Pointy}`Point.y` are generated.
+コンストラクタに加えて、構造体のフィールドごとにアクセサ関数が定義される。
+アクセサは、構造体の名前空間の中でフィールドと同じ名前を持つ。
+{anchorName Point}`Point`では、アクセサ関数{anchorName Pointx}`Point.x`と{anchorName Pointy}`Point.y`が生成される。
 
 ```anchorTerm Pointx
 #check (Point.x)
@@ -371,20 +371,20 @@ Point.y : Point → Float
 ```
 
 
-In fact, just as the curly-braced structure construction syntax is converted to a call to the structure's constructor behind the scenes, the syntax {anchorName addPoints}`x` in the prior definition of {anchorName addPoints}`addPoints` is converted into a call to the {anchorName addPoints}`x` accessor.
-That is, {anchorTerm originx}`#eval origin.x` and {anchorTerm originx1}`#eval Point.x origin` both yield
+実際、淡括弧による構造体の構築が舞台裏ではコンストラクタの呼び出しに変換されるのと同じように、先ほどの{anchorName addPoints}`addPoints`の定義にある{anchorName addPoints}`x`という記法は、{anchorName addPoints}`x`アクセサの呼び出しに変換される。
+つまり、{anchorTerm originx}`#eval origin.x`と{anchorTerm originx1}`#eval Point.x origin`はどちらも次の値を返す。
 
 ```anchorInfo originx1
 0.000000
 ```
 
 
-Accessor dot notation is usable with more than just structure fields.
-It can also be used for functions that take any number of arguments.
-More generally, accessor notation has the form {lit}`TARGET.f ARG1 ARG2 ...`.
-If {lit}`TARGET` has type {lit}`T`, the function named {lit}`T.f` is called.
-{lit}`TARGET` becomes its leftmost argument of type {lit}`T`, which is often but not always the first one, and {lit}`ARG1 ARG2 ...` are provided in order as the remaining arguments.
-For instance, {anchorName stringAppend}`String.append` can be invoked from a string with accessor notation, even though {anchorName Inline}`String` is not a structure with an {anchorName stringAppendDot}`append` field.
+アクセサのドット記法は、構造体のフィールド以外にも使える。
+任意の個数の引数を取る関数にも使える。
+より一般に、アクセサ記法は{lit}`TARGET.f ARG1 ARG2 ...`という形をしている。
+{lit}`TARGET`の型が{lit}`T`なら、{lit}`T.f`という名前の関数が呼ばれる。
+{lit}`TARGET`は、型{lit}`T`を持つ最も左の引数になる。多くの場合は最初の引数だが、常にそうとは限らない。{lit}`ARG1 ARG2 ...`は、残りの引数として順に渡される。
+たとえば{anchorName stringAppend}`String.append`は、文字列からアクセサ記法で呼び出せる。{anchorName Inline}`String`が{anchorName stringAppendDot}`append`フィールドを持つ構造体であるわけではないのに、である。
 
 ```anchorTerm stringAppendDot
 #eval "one string".append " and another"
@@ -394,16 +394,16 @@ For instance, {anchorName stringAppend}`String.append` can be invoked from a str
 "one string and another"
 ```
 
-In that example, {lit}`TARGET` represents {anchorTerm stringAppendDot}`"one string"` and {lit}`ARG1` represents {anchorTerm stringAppendDot}`" and another"`.
+この例では、{lit}`TARGET`が{anchorTerm stringAppendDot}`"one string"`、{lit}`ARG1`が{anchorTerm stringAppendDot}`" and another"`にあたる。
 
-The function {anchorName modifyBoth}`Point.modifyBoth` (that is, {anchorName modifyBothTest}`modifyBoth` defined in the {lit}`Point` namespace) applies a function to both fields in a {anchorName Point}`Point`:
+関数{anchorName modifyBoth}`Point.modifyBoth`（{lit}`Point`名前空間で定義された{anchorName modifyBothTest}`modifyBoth`）は、{anchorName Point}`Point`の両方のフィールドに関数を適用する。
 
 ```anchor modifyBoth
 def Point.modifyBoth (f : Float → Float) (p : Point) : Point :=
   { x := f p.x, y := f p.y }
 ```
 
-Even though the {anchorName Point}`Point` argument comes after the function argument, it can be used with dot notation as well:
+{anchorName Point}`Point`の引数が関数の引数より後ろにあっても、これもドット記法で使える。
 
 ```anchorTerm modifyBothTest
 #eval fourAndThree.modifyBoth Float.floor
@@ -413,19 +413,19 @@ Even though the {anchorName Point}`Point` argument comes after the function argu
 { x := 4.000000, y := 3.000000 }
 ```
 
-In this case, {lit}`TARGET` represents {anchorName fourAndThree}`fourAndThree`, while {lit}`ARG1` is {anchorName modifyBothTest}`Float.floor`.
-This is because the target of the accessor notation is used as the first argument in which the type matches, not necessarily the first argument.
+この場合、{lit}`TARGET`が{anchorName fourAndThree}`fourAndThree`、{lit}`ARG1`が{anchorName modifyBothTest}`Float.floor`である。
+アクセサ記法の対象は、型が一致する最初の引数として使われるのであって、必ずしも最初の引数とは限らないためである。
 
-# Exercises
+# 練習問題
 %%%
 tag := "structure-exercises"
 %%%
 
- * Define a structure named {anchorName RectangularPrism}`RectangularPrism` that contains the height, width, and depth of a rectangular prism, each as a {anchorName RectangularPrism}`Float`.
- * Define a function named {anchorTerm RectangularPrism}`volume : RectangularPrism → Float` that computes the volume of a rectangular prism.
- * Define a structure named {anchorName RectangularPrism}`Segment` that represents a line segment by its endpoints, and define a function {lit}`length : Segment → Float` that computes the length of a line segment. {anchorName RectangularPrism}`Segment` should have at most two fields.
- * Which names are introduced by the declaration of {anchorName RectangularPrism}`RectangularPrism`?
- * Which names are introduced by the following declarations of {anchorName Hamster}`Hamster` and {anchorName Book}`Book`? What are their types?
+ * 直方体の高さ、幅、奥行きをそれぞれ{anchorName RectangularPrism}`Float`として持つ、{anchorName RectangularPrism}`RectangularPrism`という名前の構造体を定義せよ。
+ * 直方体の体積を計算する{anchorTerm RectangularPrism}`volume : RectangularPrism → Float`という名前の関数を定義せよ。
+ * 線分を両端の点で表す{anchorName RectangularPrism}`Segment`という名前の構造体を定義し、線分の長さを計算する関数{lit}`length : Segment → Float`を定義せよ。{anchorName RectangularPrism}`Segment`のフィールドは二つ以下とする。
+ * {anchorName RectangularPrism}`RectangularPrism`の宣言によって導入される名前はどれか。
+ * 次の{anchorName Hamster}`Hamster`と{anchorName Book}`Book`の宣言によって導入される名前はどれか。それぞれの型は何か。
 
     ```anchor Hamster
     structure Hamster where

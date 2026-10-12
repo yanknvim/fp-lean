@@ -143,7 +143,7 @@ String.append "it is " "no"
 :::
 
 
-# 評価中に現れるメッセージ
+# 出会うかもしれないメッセージ
 %%%
 tag := "evaluating-messages"
 %%%

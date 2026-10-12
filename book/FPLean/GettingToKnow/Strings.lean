@@ -19,13 +19,13 @@ set_option verso.exampleModule "Examples.Strings"
 tag := "chars-strings-slices"
 %%%
 
-In Lean, strings contain Unicode text.
-Specifically, they are sequences of characters, and characters are Unicode code points.
-Strings are written in double quotes, and individual characters are written in single quotes.
-The type of strings is {anchorName names}`String` and the type of characters is {anchorName names}`Char`.
+Leanでは、文字列はUnicodeのテキストを入れる。
+正確には、文字列は文字の並びであり、文字はUnicodeのコードポイントである。
+文字列は二重引用符で、個々の文字は単一引用符で書く。
+文字列の型は{anchorName names}`String`、文字の型は{anchorName names}`Char`である。
 
 :::paragraph
-Strings can be appended with the {anchorTerm helloWorld}`++` operator:
+文字列は{anchorTerm helloWorld}`++`演算子で連結できる。
 ```anchor helloWorld
 #eval "Hello, " ++ "world"
 ```
@@ -33,7 +33,7 @@ Strings can be appended with the {anchorTerm helloWorld}`++` operator:
 "Hello, world"
 ```
 
-A character can be added to the end of a string using {anchorName pushExplicit}`String.push`:
+文字列の末尾に文字を追加するには{anchorName pushExplicit}`String.push`を使う。
 ```anchor pushExplicit
 #eval String.push "Hello" '!'
 ```
@@ -41,7 +41,7 @@ A character can be added to the end of a string using {anchorName pushExplicit}`
 "Hello!"
 ```
 
-This function can also be called using the {ref "behind-the-scenes"}[dot notation] that is used with structure accessors:
+この関数は、構造体のアクセサで使う{ref "behind-the-scenes"}[ドット記法]でも呼び出せる。
 ```anchor push
 #eval "Hello".push '!'
 ```
@@ -51,75 +51,75 @@ This function can also be called using the {ref "behind-the-scenes"}[dot notatio
 :::
 
 
-# Slices
+# スライス
 %%%
 tag := "string-slices"
 %%%
 
-Strings are represented by their UTF-8 encoding as an array of bytes paired with a cached character count.
-This means that removing even a single character from a string can result in copying the remaining characters to a new string.
+文字列は、UTF-8エンコーディングによるバイト列と、キャッシュされた文字数の組として表される。
+そのため、文字を一つ削るだけでも、残りの文字を新しい文字列にコピーすることになりうる。
 
-To allow string-processing code to be written from small, composable pieces, many string operations return {deftech}_string slices_, which are regions of some other string.
-String slices have the type {anchorName names}`String.Slice`.
-A slice contains a reference to a string along with the start and end positions of the slice, and multiple slices can share the same string.
-Operations such as dropping prefixes of strings return slices rather than allocating new strings, and large parts of the string API are also implemented for slices.
+文字列を扱うコードを、組み合わせやすい小さな部品から書けるようにするため、多くの文字列操作は{deftech}*文字列スライス*を返す。文字列スライスは、別の文字列の一部分を指すものである。
+文字列スライスの型は{anchorName names}`String.Slice`である。
+スライスは、ある文字列への参照と、スライスの開始位置と終了位置を保持する。複数のスライスが同じ文字列を共有できる。
+文字列の先頭を落とすような操作は、新しい文字列を割り当てずにスライスを返す。文字列APIの大部分はスライス向けにも実装されている。
 
-Operations that return slices include {anchorName names}`String.trimAscii`, which returns a slice that drops leading and trailing space, tab, newline, and carriage return characters from a string; {anchorName names}`String.drop` and {anchorName names}`String.dropEnd`, which drop the specified number of characters from the start or end of a string; and {anchorName names}`String.dropWhile` and {anchorName names}`String.dropEndWhile`, which respectively remove all the characters that match a pattern from the beginning or end of a string.
-The patterns used to search in strings are distinct from those used for {ref "pattern-matching"}[pattern matching]; in the string API, they are function arguments that specify characters or specific substrings to match.
-The string slice API includes all the slice-producing string functions as well, which makes it possible to write string manipulations as a series of incremental steps without risking intermediate string copying.
+スライスを返す操作には、次のものがある。{anchorName names}`String.trimAscii`は、文字列の先頭と末尾から空白、タブ、改行、復帰の各文字を落としたスライスを返す。{anchorName names}`String.drop`と{anchorName names}`String.dropEnd`は、文字列の先頭または末尾から指定した数の文字を落とす。{anchorName names}`String.dropWhile`と{anchorName names}`String.dropEndWhile`は、それぞれパターンに一致する文字を先頭または末尾からすべて取り除く。
+文字列の検索に使うパターンは、{ref "pattern-matching"}[パターンマッチング]のパターンとは別物である。文字列APIでは、一致させる文字や部分文字列を指定する関数の引数である。
+文字列スライス向けのAPIにも、スライスを返す文字列関数が一通り用意されている。おかげで、途中で文字列をコピーしてしまう心配をせずに、文字列の操作を小さな手順の積み重ねとして書ける。
 
 :::paragraph
-This code removes characters from the beginning and end of a string without allocating an intermediate string:
+次のコードは、途中で文字列を割り当てずに、文字列の先頭と末尾から文字を削る。
 ```anchor copy
 #eval (("small tortoiseshell".drop 6).dropEnd 5).copy
 ```
 ```anchorInfo copy
 "tortoise"
 ```
-The function {anchorName names}`String.Slice.copy` returns a copy of the region of the underlying string that the slice indicates.
-The initial call to {anchorName names}`String.drop` returns a slice, and the call to {anchorName names}`String.Slice.dropEnd` returns an adjusted slice.
-The final call to {anchorName copy}`copy` creates a string once more.
+関数{anchorName names}`String.Slice.copy`は、スライスが指す範囲を元の文字列からコピーして返す。
+最初の{anchorName names}`String.drop`の呼び出しはスライスを返し、{anchorName names}`String.Slice.dropEnd`の呼び出しは調整後のスライスを返す。
+最後の{anchorName copy}`copy`の呼び出しで、再び文字列が作られる。
 :::
 
-Unlike strings, slices do not cache a character count.
-Because the UTF-8 encoding of characters may occupy multiple bytes, there's no efficient way to check the length of a string slice.
-However, checking whether it is empty can be accomplished with {anchorName names}`String.Slice.isEmpty`.
+文字列と違い、スライスは文字数をキャッシュしない。
+文字のUTF-8エンコーディングが複数バイトになることがあるため、文字列スライスの長さを効率よく調べる方法はない。
+ただし、空かどうかの判定は{anchorName names}`String.Slice.isEmpty`で行える。
 
-# Matching
+# マッチング
 %%%
 tag := "string-matching"
 %%%
 
 
-Functions that match parts of strings, such as {anchorName names}`String.dropWhile` and {anchorName names}`String.dropEndWhile`, are overloaded.
-They can be called with a variety of different _patterns_, each of which matches substrings in its own way.
+{anchorName names}`String.dropWhile`や{anchorName names}`String.dropEndWhile`のように文字列の一部を照合する関数は、オーバーロードされている。
+さまざまな*パターン*を渡して呼び出せ、それぞれが独自の方法で部分文字列に一致する。
 
 :::paragraph
-The pattern can be a character, in which case runs of the character are removed:
+パターンには文字を指定できる。その場合は、その文字が連続している部分が取り除かれる。
 ```anchor dropEndWhileChar
 #eval "red admiral".dropEndWhile 'l'
 ```
 ```anchorInfo dropEndWhileChar
 red admira
 ```
-The output is not in quotes because it is a string slice, and string slices are displayed without surrounding quotes.
-The pattern may also be a string, in which case runs of the complete string are removed:
+文字列スライスなので、出力に引用符は付かない。文字列スライスは引用符なしで表示される。
+パターンには文字列も指定でき、その場合はその文字列が連続している部分が取り除かれる。
 ```anchor dropWhileString
 #eval "the the butterfly".dropWhile "the "
 ```
 ```anchorInfo dropWhileString
 butterfly
 ```
-Incomplete matches are not removed:
+一部分だけの一致は取り除かれない。
 ```anchor dropWhileString2
 #eval ("a gray grayling".drop 2).dropWhile "gray "
 ```
 ```anchorInfo dropWhileString2
 grayling
 ```
-The pattern may also be a function that returns {anchorName names}`true` or {anchorName names}`false`.
-Characters are removed until the function returns {anchorName names}`false`.
-The slice is converted to a string in order to illustrate that the trailing space remains:
+パターンには、{anchorName names}`true`か{anchorName names}`false`を返す関数も指定できる。
+関数が{anchorName names}`false`を返すまで、文字が取り除かれる。
+末尾の空白が残ることを示すために、スライスを文字列に変換している。
 ```anchor dropEndWhileFun
 #eval ("red admiral".dropEndWhile Char.isAlpha).copy
 ```
@@ -129,16 +129,16 @@ The slice is converted to a string in order to illustrate that the trailing spac
 :::
 
 
-# Messages You May Meet
+# 出会うかもしれないメッセージ
 %%%
 tag := "string-messages-you-may-meet"
 %%%
 
-The overloaded string-matching functions are implemented using features that are explained later in the book, namely {ref "type-classes"}[type classes] and {ref "dependent-types"}[dependent types].
-There are two error messages in particular that are useful to learn to read before learning about those features of Lean.
+オーバーロードされた文字列照合の関数は、本書の後半で説明する機能、すなわち{ref "type-classes"}[型クラス]と{ref "dependent-types"}[依存型]を使って実装されている。
+とくに、これらの機能を学ぶ前に読めるようになっておくと役立つエラーメッセージが二つある。
 
 :::paragraph
-Calling the functions without a pattern results in an error:
+パターンを渡さずにこれらの関数を呼ぶと、エラーになる。
 ```anchor dropEndWhileNoArg
 #eval "red admiral".dropEndWhile
 ```
@@ -148,13 +148,13 @@ don't know how to synthesize implicit argument `ρ`
 context:
 ⊢ Type
 ```
-This error is stating that Lean can't determine which pattern type to use, because no pattern was provided.
-It can be fixed by providing a pattern.
+このエラーは、パターンが与えられていないため、Leanがどのパターンの型を使えばよいか決められない、と言っている。
+パターンを渡せば直る。
 :::
 
 
 :::paragraph
-When the functions are called with an argument that isn't a valid pattern, there is a compile-time error:
+有効なパターンでない引数を渡して呼び出すと、コンパイル時のエラーになる。
 ```anchor dropEndWhileListArg
 #eval "12345abcde".dropEndWhile [12]
 ```
@@ -164,6 +164,6 @@ failed to synthesize instance of type class
 
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
-This error message means that {anchorName names}`String.dropEndWhile` is not overloaded for the pattern {anchorTerm dropEndWhileListArg}`[12]`.
-It can be fixed by providing a meaningful pattern, such as a function, character, or string.
+このエラーメッセージは、パターン{anchorTerm dropEndWhileListArg}`[12]`に対して{anchorName names}`String.dropEndWhile`がオーバーロードされていない、という意味である。
+関数、文字、文字列など、意味のあるパターンを渡せば直る。
 :::
