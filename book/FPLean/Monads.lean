@@ -23,34 +23,34 @@ set_option verso.exampleModule "Examples.Monads"
 tag := "monads"
 %%%
 
-In C# and Kotlin, the {CSharp}`?.` operator is a way to look up a property or call a method on a potentially-null value.
-If the receiver is {CSharp}`null`, the whole expression is null.
-Otherwise, the underlying non-{CSharp}`null` value receives the call.
-Uses of {CSharp}`?.` can be chained, in which case the first {Kotlin}`null` result terminates the chain of lookups.
-Chaining null-checks like this is much more convenient than writing and maintaining deeply nested {kw}`if`s.
+C#とKotlinでは、{CSharp}`?.`演算子は、nullかもしれない値のプロパティを参照したりメソッドを呼び出したりする手段である。
+レシーバが{CSharp}`null`なら、式全体がnullになる。
+そうでなければ、その下にある非{CSharp}`null`の値が呼び出しを受け取る。
+{CSharp}`?.`は連鎖させられ、その場合、最初の{Kotlin}`null`の結果で参照の連鎖が終わる。
+このようにnullチェックを連鎖させるのは、深く入れ子になった{kw}`if`を書いて保守するよりずっと便利である。
 
-Similarly, exceptions are significantly more convenient than manually checking and propagating error codes.
-At the same time, logging is easiest to accomplish by having a dedicated logging framework, rather than having each function return both its log results and its return value.
-Chained null checks and exceptions typically require language designers to anticipate this use case, while logging frameworks typically make use of side effects to decouple code that logs from the accumulation of the logs.
+同様に、例外は、エラーコードを手で調べて伝播させるよりずっと便利である。
+同時に、ログは、各関数がログの結果と戻り値の両方を返すのではなく、ログ専用のフレームワークを用意するのが最も簡単である。
+連鎖するnullチェックと例外は通常、言語の設計者がこの用途をあらかじめ想定している必要があるが、ログのフレームワークは通常、副作用を利用して、ログを出すコードとログの蓄積を切り離す。
 
-# One API, Many Applications
+# 一つのAPI、多くの用途
 %%%
 tag := "monad-api-examples"
 %%%
 
-All these features and more can be implemented in library code as instances of a common API called {moduleName}`Monad`.
-Lean provides dedicated syntax that makes this API convenient to use, but can also get in the way of understanding what is going on behind the scenes.
-This chapter begins with the nitty-gritty presentation of manually nesting null checks, and builds from there to the convenient, general API.
-Please suspend your disbelief in the meantime.
+これらの機能もそれ以外もすべて、{moduleName}`Monad`という共通のAPIのインスタンスとして、ライブラリのコードで実装できる。
+LeanにはこのAPIを使いやすくする専用の記法があり、それが裏で何が起きているかの理解を妨げることもある。
+この章は、nullチェックを手で入れ子にする泥臭い説明から始め、そこから便利で一般的なAPIへと進む。
+その間は、多少強引でも話を信じて読み進めてほしい。
 
-## Checking for {lit}`none`: Don't Repeat Yourself
+## {lit}`none`のチェック: 繰り返しを避ける
 %%%
 tag := "example-option-monad"
 %%%
 
 :::paragraph
-In Lean, pattern matching can be used to chain checks for null.
-Getting the first entry from a list can just use the optional indexing notation:
+Leanでは、パターンマッチングでnullのチェックを連鎖させられる。
+リストの最初の要素を取り出すには、オプションの参照記法を使えばよい。
 
 ```anchor first
 def first (xs : List α) : Option α :=
@@ -59,8 +59,8 @@ def first (xs : List α) : Option α :=
 :::
 
 :::paragraph
-The result must be an {anchorName first}`Option` because empty lists have no first entry.
-Extracting the first and third entries requires a check that each is not {moduleName}`none`:
+空のリストには最初の要素がないので、結果は{anchorName first}`Option`でなければならない。
+最初と三番目の要素を取り出すには、それぞれが{moduleName}`none`でないことを調べる必要がある。
 
 ```anchor firstThird
 def firstThird (xs : List α) : Option (α × α) :=
@@ -72,7 +72,7 @@ def firstThird (xs : List α) : Option (α × α) :=
     | some third =>
       some (first, third)
 ```
-Similarly, extracting the first, third, and fifth entries requires more checks that the values are not {moduleName}`none`:
+同様に、最初と三番目と五番目の要素を取り出すには、値が{moduleName}`none`でないことをさらに調べる必要がある。
 
 ```anchor firstThirdFifth
 def firstThirdFifth (xs : List α) : Option (α × α × α) :=
@@ -87,7 +87,7 @@ def firstThirdFifth (xs : List α) : Option (α × α × α) :=
       | some fifth =>
         some (first, third, fifth)
 ```
-And adding the seventh entry to this sequence begins to become quite unmanageable:
+そしてこの列に七番目の要素を加えると、かなり手に負えなくなってくる。
 
 ```anchor firstThirdFifthSeventh
 def firstThirdFifthSeventh (xs : List α) : Option (α × α × α × α) :=
@@ -108,9 +108,9 @@ def firstThirdFifthSeventh (xs : List α) : Option (α × α × α × α) :=
 :::
 
 :::paragraph
-The fundamental problem with this code is that it addresses two concerns: extracting the numbers and checking that all of them are present.
-The second concern is addressed by copying and pasting the code that handles the {moduleName}`none` case.
-It is often good style to lift a repetitive segment into a helper function:
+このコードの根本的な問題は、二つの関心事を同時に扱っていることである。要素を取り出すことと、それらがすべて存在することを調べることだ。
+二つ目の関心事は、{moduleName}`none`の場合を扱うコードをコピーして貼り付けることで処理している。
+繰り返し現れる部分を補助関数に切り出すのは、よくあるよい書き方である。
 
 ```anchor andThenOption
 def andThen (opt : Option α) (next : α → Option β) : Option β :=
@@ -118,14 +118,14 @@ def andThen (opt : Option α) (next : α → Option β) : Option β :=
   | none => none
   | some x => next x
 ```
-This helper, which is used similarly to {CSharp}`?.` in C# and Kotlin, takes care of propagating {moduleName}`none` values.
-It takes two arguments: an optional value and a function to apply when the value is not {moduleName}`none`.
-If the first argument is {moduleName}`none`, then the helper returns {moduleName}`none`.
-If the first argument is not {moduleName}`none`, then the function is applied to the contents of the {moduleName}`some` constructor.
+この補助関数は、C#やKotlinの{CSharp}`?.`と同じように使うもので、{moduleName}`none`の値の伝播を引き受ける。
+引数を二つ取る。オプションの値と、その値が{moduleName}`none`でないときに適用する関数である。
+一つ目の引数が{moduleName}`none`なら、補助関数は{moduleName}`none`を返す。
+一つ目の引数が{moduleName}`none`でなければ、{moduleName}`some`コンストラクタの中身に関数が適用される。
 :::
 
 :::paragraph
-Now, {anchorName firstThirdandThen}`firstThird` can be rewritten to use {anchorName firstThirdandThen}`andThen` instead of pattern matching:
+そこで{anchorName firstThirdandThen}`firstThird`は、パターンマッチングの代わりに{anchorName firstThirdandThen}`andThen`を使う形に書き換えられる。
 
 ```anchor firstThirdandThen
 def firstThird (xs : List α) : Option (α × α) :=
@@ -133,8 +133,8 @@ def firstThird (xs : List α) : Option (α × α) :=
   andThen xs[2]? fun third =>
   some (first, third)
 ```
-In Lean, functions don't need to be enclosed in parentheses when passed as arguments.
-The following equivalent definition uses more parentheses and indents the bodies of functions:
+Leanでは、関数を引数として渡すときに括弧で囲む必要はない。
+次の同等な定義は、括弧を多く使い、関数の本体を字下げしている。
 
 ```anchor firstThirdandThenExpl
 def firstThird (xs : List α) : Option (α × α) :=
@@ -142,42 +142,42 @@ def firstThird (xs : List α) : Option (α × α) :=
     andThen xs[2]? (fun third =>
       some (first, third)))
 ```
-The {anchorName firstThirdandThenExpl}`andThen` helper provides a sort of “pipeline” through which values flow, and the version with the somewhat unusual indentation is more suggestive of this fact.
-Improving the syntax used to write {anchorName firstThirdandThenExpl}`andThen` can make these computations even easier to understand.
+{anchorName firstThirdandThenExpl}`andThen`補助関数は、値が流れる一種の「パイプライン」を提供しており、やや変わった字下げの版のほうがこのことをよく表している。
+{anchorName firstThirdandThenExpl}`andThen`を書くための構文をよくすれば、これらの計算はさらに理解しやすくなる。
 :::
 
-### Infix Operators
+### 中置演算子
 %%%
 tag := "defining-infix-operators"
 %%%
 
 
-In Lean, infix operators can be declared using the {kw}`infix`, {kw}`infixl`, and {kw}`infixr` commands, which create (respectively) non-associative, left-associative, and right-associative operators.
-When used multiple times in a row, a {deftech}_left associative_ operator stacks up the opening parentheses on the left side of the expression.
-The addition operator {lit}`+` is left associative, so {anchorTerm plusFixity}`w + x + y + z` is equivalent to {anchorTerm plusFixity}`(((w + x) + y) + z)`.
-The exponentiation operator {lit}`^` is right associative, so {anchorTerm powFixity}`w ^ x ^ y ^ z` is equivalent to {anchorTerm powFixity}`w ^ (x ^ (y ^ z))`.
-Comparison operators such as {lit}`<` are non-associative, so {lit}`x < y < z` is a syntax error and requires manual parentheses.
+Leanでは、{kw}`infix`、{kw}`infixl`、{kw}`infixr`のコマンドで中置演算子を宣言できる。それぞれ非結合、左結合、右結合の演算子を作る。
+{deftech}*左結合*の演算子を続けて複数回使うと、開き括弧が式の左側に積み重なる。
+加算演算子{lit}`+`は左結合なので、{anchorTerm plusFixity}`w + x + y + z`は{anchorTerm plusFixity}`(((w + x) + y) + z)`と等しい。
+累乗演算子{lit}`^`は右結合なので、{anchorTerm powFixity}`w ^ x ^ y ^ z`は{anchorTerm powFixity}`w ^ (x ^ (y ^ z))`と等しい。
+{lit}`<`のような比較演算子は非結合なので、{lit}`x < y < z`は構文エラーになり、手で括弧を付ける必要がある。
 
 :::paragraph
-The following declaration makes {anchorName andThenOptArr}`andThen` into an infix operator:
+次の宣言は{anchorName andThenOptArr}`andThen`を中置演算子にする。
 
 ```anchor andThenOptArr
 infixl:55 " ~~> " => andThen
 ```
-The number following the colon declares the {deftech}_precedence_ of the new infix operator.
-In ordinary mathematical notation, {anchorTerm plusTimesPrec}`x + y * z` is equivalent to {anchorTerm plusTimesPrec}`x + (y * z)` even though both {lit}`+` and {lit}`*` are left associative.
-In Lean, {lit}`+` has precedence 65 and {lit}`*` has precedence 70.
-Higher-precedence operators are applied before lower-precedence operators.
-According to the declaration of {lit}`~~>`, both {lit}`+` and {lit}`*` have higher precedence, and thus apply first.
-Typically, figuring out the most convenient precedences for a group of operators requires some experimentation and a large collection of examples.
+コロンの後に続く数が、新しい中置演算子の{deftech}*優先度*を宣言する。
+普通の数学の記法では、{lit}`+`も{lit}`*`も左結合であるにもかかわらず、{anchorTerm plusTimesPrec}`x + y * z`は{anchorTerm plusTimesPrec}`x + (y * z)`と等しい。
+Leanでは{lit}`+`の優先度は65、{lit}`*`の優先度は70である。
+優先度の高い演算子が、優先度の低い演算子より先に適用される。
+{lit}`~~>`の宣言によれば、{lit}`+`も{lit}`*`も優先度が高いので、先に適用される。
+ふつう、ある一群の演算子にとって最も便利な優先度を決めるには、試行錯誤と多数の例が必要である。
 :::
 
-Following the new infix operator is a double arrow {lit}`=>`, which specifies the named function to be used for the infix operator.
-Lean's standard library uses this feature to define {lit}`+` and {lit}`*` as infix operators that point at {moduleName}`HAdd.hAdd` and {moduleName}`HMul.hMul`, respectively, allowing type classes to be used to overload the infix operators.
-Here, however, {anchorName firstThirdandThen}`andThen` is just an ordinary function.
+新しい中置演算子の後には二重矢印{lit}`=>`があり、その中置演算子に使う名前付きの関数を指定する。
+Leanの標準ライブラリはこの機能を使い、{lit}`+`と{lit}`*`をそれぞれ{moduleName}`HAdd.hAdd`と{moduleName}`HMul.hMul`を指す中置演算子として定義し、型クラスで中置演算子をオーバーロードできるようにしている。
+しかしここでは、{anchorName firstThirdandThen}`andThen`はただの普通の関数である。
 
 :::paragraph
-Having defined an infix operator for {anchorName andThenOptArr}`andThen`, {anchorName firstThirdInfix (show := firstThird)}`firstThirdInfix` can be rewritten in a way that brings the “pipeline” feeling of {moduleName}`none`-checks front and center:
+{anchorName andThenOptArr}`andThen`の中置演算子を定義したので、{anchorName firstThirdInfix (show := firstThird)}`firstThirdInfix`は、{moduleName}`none`のチェックの「パイプライン」らしさが前面に出る形に書き換えられる。
 
 ```anchor firstThirdInfix
 def firstThirdInfix (xs : List α) : Option (α × α) :=
@@ -185,7 +185,7 @@ def firstThirdInfix (xs : List α) : Option (α × α) :=
   xs[2]? ~~> fun third =>
   some (first, third)
 ```
-This style is much more concise when writing larger functions:
+この書き方は、大きな関数を書くときにはるかに簡潔である。
 ```anchor firstThirdFifthSeventInfix
 def firstThirdFifthSeventh (xs : List α) : Option (α × α × α × α) :=
   xs[0]? ~~> fun first =>
@@ -196,17 +196,17 @@ def firstThirdFifthSeventh (xs : List α) : Option (α × α × α × α) :=
 ```
 :::
 
-## Propagating Error Messages
+## エラーメッセージの伝播
 %%%
 tag := "example-except-monad"
 %%%
 
-Pure functional languages such as Lean have no built-in exception mechanism for error handling, because throwing or catching an exception is outside of the step-by-step evaluation model for expressions.
-However, functional programs certainly need to handle errors.
-In the case of {anchorName firstThirdFifthSeventInfix}`firstThirdFifthSeventh`, it is likely relevant for a user to know just how long the list was and where the lookup failed.
+Leanのような純粋な関数型言語には、エラー処理のための例外の仕組みが組み込まれていない。例外を投げたり捕まえたりするのは、式を一段ずつ評価するモデルの外にあるためである。
+しかし、関数型のプログラムにもエラー処理は当然必要である。
+{anchorName firstThirdFifthSeventInfix}`firstThirdFifthSeventh`の場合、リストがどれだけの長さで、どこで参照に失敗したかを利用者が知れるのは役に立つはずである。
 
 :::paragraph
-This is typically accomplished by defining a datatype that can be either an error or a result, and translating functions with exceptions into functions that return this datatype:
+これは通常、エラーか結果のどちらかになるデータ型を定義し、例外を使う関数をそのデータ型を返す関数に置き換えることで実現する。
 
 ```anchor Except
 inductive Except (ε : Type) (α : Type) where
@@ -214,13 +214,13 @@ inductive Except (ε : Type) (α : Type) where
   | ok : α → Except ε α
 deriving BEq, Hashable, Repr
 ```
-The type variable {anchorName Except}`ε` stands for the type of errors that can be produced by the function.
-Callers are expected to handle both errors and successes, which makes the type variable {anchorName Except}`ε` play a role that is a bit like that of a list of checked exceptions in Java.
+型変数{anchorName Except}`ε`は、その関数が生み出しうるエラーの型を表す。
+呼び出し側はエラーと成功の両方を扱うことが期待され、そのため型変数{anchorName Except}`ε`はJavaの検査例外の一覧に少し似た役割を果たす。
 :::
 
 :::paragraph
-Similarly to {anchorName first}`Option`, {anchorName Except}`Except` can be used to indicate a failure to find an entry in a list.
-In this case, the error type is a {moduleName}`String`:
+{anchorName first}`Option`と同様に、{anchorName Except}`Except`はリストの要素が見つからなかったことを示すのに使える。
+この場合、エラーの型は{moduleName}`String`である。
 
 ```anchor getExcept
 def get (xs : List α) (i : Nat) : Except String α :=
@@ -228,7 +228,7 @@ def get (xs : List α) (i : Nat) : Except String α :=
   | none => Except.error s!"Index {i} not found (maximum is {xs.length - 1})"
   | some x => Except.ok x
 ```
-Looking up an in-bounds value yields an {anchorName ExceptExtra}`Except.ok`:
+範囲内の値を参照すると{anchorName ExceptExtra}`Except.ok`になる。
 ```anchor ediblePlants
 def ediblePlants : List String :=
   ["ramsons", "sea plantain", "sea buckthorn", "garden nasturtium"]
@@ -239,7 +239,7 @@ def ediblePlants : List String :=
 ```anchorInfo success
 Except.ok "sea buckthorn"
 ```
-Looking up an out-of-bounds value yields an {anchorName ExceptExtra}`Except.error`:
+範囲外の値を参照すると{anchorName ExceptExtra}`Except.error`になる。
 ```anchor failure
 #eval get ediblePlants 4
 ```
@@ -249,12 +249,12 @@ Except.error "Index 4 not found (maximum is 3)"
 :::
 
 :::paragraph
-A single list lookup can conveniently return a value or an error:
+リストの参照が一回だけなら、値かエラーを返せばよく、便利である。
 ```anchor firstExcept
 def first (xs : List α) : Except String α :=
   get xs 0
 ```
-However, performing two list lookups requires handling potential failures:
+しかし、リストの参照を二回行うと、起こりうる失敗を扱う必要がある。
 ```anchor firstThirdExcept
 def firstThird (xs : List α) : Except String (α × α) :=
   match get xs 0 with
@@ -265,7 +265,7 @@ def firstThird (xs : List α) : Except String (α × α) :=
     | Except.ok third =>
       Except.ok (first, third)
 ```
-Adding another list lookup to the function requires still more error handling:
+この関数にリストの参照をもう一つ加えると、さらに多くのエラー処理が必要になる。
 ```anchor firstThirdFifthExcept
 def firstThirdFifth (xs : List α) : Except String (α × α × α) :=
   match get xs 0 with
@@ -279,7 +279,7 @@ def firstThirdFifth (xs : List α) : Except String (α × α × α) :=
       | Except.ok fifth =>
         Except.ok (first, third, fifth)
 ```
-And one more list lookup begins to become quite unmanageable:
+そしてリストの参照をもう一つ加えると、かなり手に負えなくなってくる。
 ```anchor firstThirdFifthSeventhExcept
 def firstThirdFifthSeventh (xs : List α) : Except String (α × α × α × α) :=
   match get xs 0 with
@@ -299,9 +299,9 @@ def firstThirdFifthSeventh (xs : List α) : Except String (α × α × α × α)
 :::
 
 :::paragraph
-Once again, a common pattern can be factored out into a helper.
-Each step through the function checks for an error, and only proceeds with the rest of the computation if the result was a success.
-A new version of {anchorName andThenExcept}`andThen` can be defined for {anchorName andThenExcept}`Except`:
+ここでもまた、共通のパターンを補助関数としてくくり出せる。
+この関数の各段階ではエラーを調べ、結果が成功だったときにだけ残りの計算に進む。
+{anchorName andThenExcept}`Except`用に{anchorName andThenExcept}`andThen`の新しい版を定義できる。
 
 ```anchor andThenExcept
 def andThen (attempt : Except e α) (next : α → Except e β) : Except e β :=
@@ -309,7 +309,7 @@ def andThen (attempt : Except e α) (next : α → Except e β) : Except e β :=
   | Except.error msg => Except.error msg
   | Except.ok x => next x
 ```
-Just as with {anchorName first}`Option`, this version of {anchorName andThenExcept}`andThen` allows a more concise definition of {anchorName firstThirdAndThenExcept}`firstThird'`:
+{anchorName first}`Option`のときと同じように、この版の{anchorName andThenExcept}`andThen`を使えば{anchorName firstThirdAndThenExcept}`firstThird'`をより簡潔に定義できる。
 
 ```anchor firstThirdAndThenExcept
 def firstThird' (xs : List α) : Except String (α × α) :=
@@ -320,18 +320,18 @@ def firstThird' (xs : List α) : Except String (α × α) :=
 :::
 
 :::paragraph
-In both the {anchorName first}`Option` and {anchorName andThenExcept}`Except` case, there are two repeating patterns: there is the checking of intermediate results at each step, which has been factored out into {anchorName andThenExcept}`andThen`, and there is the final successful result, which is {moduleName}`some` or {anchorName andThenExcept}`Except.ok`, respectively.
-For the sake of convenience, success can be factored out into a helper called {anchorName okExcept}`ok`:
+{anchorName first}`Option`の場合も{anchorName andThenExcept}`Except`の場合も、繰り返し現れるパターンが二つある。各段階で中間結果を調べる部分は{anchorName andThenExcept}`andThen`にくくり出し、最後の成功の結果はそれぞれ{moduleName}`some`と{anchorName andThenExcept}`Except.ok`である。
+便宜上、成功のほうも{anchorName okExcept}`ok`という補助関数にくくり出せる。
 
 ```anchor okExcept
 def ok (x : α) : Except ε α := Except.ok x
 ```
-Similarly, failure can be factored out into a helper called {anchorName failExcept}`fail`:
+同様に、失敗のほうも{anchorName failExcept}`fail`という補助関数にくくり出せる。
 
 ```anchor failExcept
 def fail (err : ε) : Except ε α := Except.error err
 ```
-Using {anchorName okExcept}`ok` and {anchorName failExcept}`fail` makes {anchorName getExceptEffects}`get` a little more readable:
+{anchorName okExcept}`ok`と{anchorName failExcept}`fail`を使うと、{anchorName getExceptEffects}`get`が少し読みやすくなる。
 
 ```anchor getExceptEffects
 def get (xs : List α) (i : Nat) : Except String α :=
@@ -342,7 +342,7 @@ def get (xs : List α) (i : Nat) : Except String α :=
 :::
 
 :::paragraph
-After adding the infix declaration for {anchorName andThenExceptInfix}`andThen`, {anchorName firstThirdInfixExcept}`firstThird` can be just as concise as the version that returns an {anchorName first}`Option`:
+{anchorName andThenExceptInfix}`andThen`の中置宣言を加えれば、{anchorName firstThirdInfixExcept}`firstThird`は{anchorName first}`Option`を返す版と同じくらい簡潔になる。
 
 ```anchor andThenExceptInfix
 infixl:55 " ~~> " => andThen
@@ -354,7 +354,7 @@ def firstThird (xs : List α) : Except String (α × α) :=
   get xs 2 ~~> fun third =>
   ok (first, third)
 ```
-The technique scales similarly to larger functions:
+このやり方は、大きな関数にも同じように当てはまる。
 
 ```anchor firstThirdFifthSeventInfixExcept
 def firstThirdFifthSeventh (xs : List α) : Except String (α × α × α × α) :=
@@ -367,18 +367,18 @@ def firstThirdFifthSeventh (xs : List α) : Except String (α × α × α × α)
 
 :::
 
-## Logging
+## ログ
 %%%
 tag := "logging"
 %%%
 
 :::paragraph
-A number is even if dividing it by 2 leaves no remainder:
+数を2で割って余りが出ないとき、その数は偶数である。
 ```anchor isEven
 def isEven (i : Int) : Bool :=
   i % 2 == 0
 ```
-The function {anchorName sumAndFindEvensDirect}`sumAndFindEvens` computes the sum of a list while remembering the even numbers encountered along the way:
+{anchorName sumAndFindEvensDirect}`sumAndFindEvens`関数は、リストの和を計算しつつ、途中で出会った偶数を覚えておく。
 ```anchor sumAndFindEvensDirect
 def sumAndFindEvens : List Int → List Int × Int
   | [] => ([], 0)
@@ -389,10 +389,10 @@ def sumAndFindEvens : List Int → List Int × Int
 :::
 
 :::paragraph
-This function is a simplified example of a common pattern.
-Many programs need to traverse a data structure once, while both computing a main result and accumulating some kind of tertiary extra result.
-One example of this is logging: a program that is an {moduleName}`IO` action can always log to a file on disk, but because the disk is outside of the mathematical world of Lean functions, it becomes much more difficult to prove things about logs based on {moduleName}`IO`.
-Another example is a function that computes the sum of all the nodes in a tree with an inorder traversal, while simultaneously recording each nodes visited:
+この関数は、よくあるパターンを単純化した例である。
+多くのプログラムは、データ構造を一度だけたどりながら、主たる結果を計算すると同時に、副次的な追加の結果を蓄積する必要がある。
+その一例がログである。{moduleName}`IO`の動作であるプログラムはいつでもディスク上のファイルにログを書けるが、ディスクはLeanの関数の数学的な世界の外にあるので、{moduleName}`IO`に基づいてログについて何かを証明するのはずっと難しくなる。
+もう一つの例は、木のすべての節点の和を中間順のたどり方で計算しつつ、訪れた節点を同時に記録する関数である。
 
 ```anchor inorderSum
 def inorderSum : BinTree Int → List Int × Int
@@ -406,10 +406,10 @@ def inorderSum : BinTree Int → List Int × Int
 ```
 :::
 
-Both {anchorName sumAndFindEvensDirect}`sumAndFindEvens` and {anchorName inorderSum}`inorderSum` have a common repetitive structure.
-Each step of computation returns a pair that consists of a list of data that have been saved along with the primary result.
-The lists are then appended, and the primary result is computed and paired with the appended lists.
-The common structure becomes more apparent with a small rewrite of {anchorName sumAndFindEvensDirectish}`sumAndFindEvens` that more cleanly separates the concerns of saving even numbers and computing the sum:
+{anchorName sumAndFindEvensDirect}`sumAndFindEvens`も{anchorName inorderSum}`inorderSum`も、共通する繰り返しの構造を持つ。
+計算の各段階は、保存しておくデータのリストと、主たる結果を組にして返す。
+そしてリストを連結し、主たる結果を計算して連結したリストと組にする。
+{anchorName sumAndFindEvensDirectish}`sumAndFindEvens`を少し書き換えて、偶数の保存と和の計算という関心事をよりきれいに分けると、共通の構造がはっきりしてくる。
 
 ```anchor sumAndFindEvensDirectish
 def sumAndFindEvens : List Int → List Int × Int
@@ -420,14 +420,14 @@ def sumAndFindEvens : List Int → List Int × Int
     (evenHere ++ moreEven, sum + i)
 ```
 
-For the sake of clarity, a pair that consists of an accumulated result together with a value can be given its own name:
+分かりやすさのために、蓄積した結果と値の組に独自の名前を付けられる。
 
 ```anchor WithLog
 structure WithLog (logged : Type) (α : Type) where
   log : List logged
   val : α
 ```
-Similarly, the process of saving a list of accumulated results while passing a value on to the next step of a computation can be factored out into a helper, once again named {anchorName andThenWithLog}`andThen`:
+同様に、蓄積した結果のリストを保存しつつ、値を計算の次の段階に渡す処理も、ここでも{anchorName andThenWithLog}`andThen`という名前の補助関数にくくり出せる。
 
 ```anchor andThenWithLog
 def andThen (result : WithLog α β) (next : β → WithLog α γ) : WithLog α γ :=
@@ -435,21 +435,21 @@ def andThen (result : WithLog α β) (next : β → WithLog α γ) : WithLog α 
   let {log := nextOut, val := nextRes} := next thisRes
   {log := thisOut ++ nextOut, val := nextRes}
 ```
-In the case of errors, {anchorName okWithLog}`ok` represents an operation that always succeeds.
-Here, however, it is an operation that simply returns a value without logging anything:
+エラーの場合、{anchorName okWithLog}`ok`は常に成功する操作を表していた。
+しかしここでは、何も記録せずに値を返すだけの操作である。
 
 ```anchor okWithLog
 def ok (x : β) : WithLog α β := {log := [], val := x}
 ```
-Just as {anchorName Except}`Except` provides {anchorName failExcept}`fail` as a possibility, {anchorName WithLog}`WithLog` should allow items to be added to a log.
-This has no interesting return value associated with it, so it returns {anchorName save}`Unit`:
+{anchorName Except}`Except`が{anchorName failExcept}`fail`という可能性を用意しているのと同じように、{anchorName WithLog}`WithLog`でも項目をログに追加できるべきである。
+これには取り立てて意味のある戻り値がないので、{anchorName save}`Unit`を返す。
 
 ```anchor save
 def save (data : α) : WithLog α Unit :=
   {log := [data], val := ()}
 ```
 
-{anchorName WithLog}`WithLog`, {anchorName andThenWithLog}`andThen`, {anchorName okWithLog}`ok`, and {anchorName save}`save` can be used to separate the logging concern from the summing concern in both programs:
+{anchorName WithLog}`WithLog`、{anchorName andThenWithLog}`andThen`、{anchorName okWithLog}`ok`、{anchorName save}`save`を使うと、どちらのプログラムでもログの関心事を和の計算の関心事から分離できる。
 
 ```anchor sumAndFindEvensAndThen
 def sumAndFindEvens : List Int → WithLog Int Int
@@ -469,7 +469,7 @@ def inorderSum : BinTree Int → WithLog Int Int
     andThen (inorderSum r) fun rightSum =>
     ok (leftSum + x + rightSum)
 ```
-And, once again, the infix operator helps put focus on the correct steps:
+そしてここでもまた、中置演算子が正しい段取りに目を向けやすくする。
 
 ```anchor infixAndThenLog
 infixl:55 " ~~> " => andThen
@@ -492,13 +492,13 @@ def inorderSum : BinTree Int → WithLog Int Int
     ok (leftSum + x + rightSum)
 ```
 
-## Numbering Tree Nodes
+## 木の節点への番号付け
 %%%
 tag := "numbering-tree-nodes"
 %%%
 
-An {deftech}_inorder numbering_ of a tree associates each data point in the tree with the step it would be visited at in an inorder traversal of the tree.
-For example, consider {anchorName aTree}`aTree`:
+木の{deftech}*中間順の番号付け*とは、木の各データに、その木を中間順でたどったときに訪れる順番を対応させることである。
+たとえば{anchorName aTree}`aTree`を考える。
 
 ```anchor aTree
 open BinTree in
@@ -511,7 +511,7 @@ def aTree :=
     "d"
     (branch leaf "e" leaf)
 ```
-Its inorder numbering is:
+その中間順の番号付けは次のようになる。
 ```anchorInfo numberATree
 BinTree.branch
   (BinTree.branch
@@ -523,10 +523,10 @@ BinTree.branch
 ```
 
 :::paragraph
-Trees are most naturally processed with recursive functions, but the usual pattern of recursion on trees makes it difficult to compute an inorder numbering.
-This is because the highest number assigned anywhere in the left subtree is used to determine the numbering of a node's data value, and then again to determine the starting point for numbering the right subtree.
-In an imperative language, this issue can be worked around by using a mutable variable that contains the next number to be assigned.
-The following Python program computes an inorder numbering using a mutable variable:
+木は再帰関数で処理するのが最も自然だが、木に対する普通の再帰の形では中間順の番号付けを計算しにくい。
+左部分木のどこかで割り当てられた最大の数が、その節点のデータの番号を決めるのに使われ、さらに右部分木の番号付けの開始点を決めるのにも使われるためである。
+命令型言語では、次に割り当てる番号を入れた可変変数を使えばこの問題を避けられる。
+次のPythonのプログラムは、可変変数を使って中間順の番号付けを計算する。
 ```includePython "../examples/inorder_python/inordernumbering.py" (anchor := code)
 class Branch:
     def __init__(self, value, left=None, right=None):
@@ -551,7 +551,7 @@ def number(tree):
 
     return helper(tree)
 ```
-The numbering of the Python equivalent of {anchorName aTree}`aTree` is:
+{anchorName aTree}`aTree`に相当するPythonの木は次のとおりである。
 ```includePython "../examples/inorder_python/inordernumbering.py" (anchor := a_tree)
 a_tree = Branch("d",
                 left=Branch("c",
@@ -559,7 +559,7 @@ a_tree = Branch("d",
                             right=None),
                 right=Branch("e"))
 ```
-and its numbering is:
+その番号付けは次のようになる。
 ```command inorderpy "inorder_python" (prompt := ">>> ") (show := "number(a_tree)")
 python3 inordernumbering.py
 ```
@@ -569,13 +569,13 @@ Branch((3, 'd'), left=Branch((2, 'c'), left=Branch((0, 'a'), left=None, right=Br
 :::
 
 
-Even though Lean does not have mutable variables, a workaround exists.
-From the point of view of the rest of the world, the mutable variable can be thought of as having two relevant aspects: its value when the function is called, and its value when the function returns.
-In other words, a function that uses a mutable variable can be seen as a function that takes the mutable variable's starting value as an argument, returning a pair of the variable's final value and the function's result.
-This final value can then be passed as an argument to the next step.
+Leanには可変変数がないが、回避策はある。
+外から見れば、可変変数には関わりのある側面が二つあると考えられる。関数を呼び出したときの値と、関数が戻るときの値である。
+言い換えれば、可変変数を使う関数は、その可変変数の初期値を引数に取り、変数の最終値と関数の結果の組を返す関数と見なせる。
+この最終値は、次の段階に引数として渡せる。
 
 :::paragraph
-Just as the Python example uses an outer function that establishes a mutable variable and an inner helper function that changes the variable, a Lean version of the function uses an outer function that provides the variable's starting value and explicitly returns the function's result along with an inner helper function that threads the variable's value while computing the numbered tree:
+Pythonの例が、可変変数を用意する外側の関数と、その変数を変更する内側の補助関数を使っているのと同じように、Lean版の関数では、変数の初期値を与えて関数の結果を明示的に返す外側の関数と、変数の値を受け渡しながら番号を振った木を計算する内側の補助関数を使う。
 
 ```anchor numberDirect
 def number (t : BinTree α) : BinTree (Nat × α) :=
@@ -587,9 +587,9 @@ def number (t : BinTree α) : BinTree (Nat × α) :=
       (i, BinTree.branch numberedLeft (k, x) numberedRight)
   (helper 0 t).snd
 ```
-This code, like the {moduleName}`none`-propagating {anchorName first}`Option` code, the {anchorName exceptNames (show := error)}`Except.error`-propagating {anchorName exceptNames}`Except` code, and the log-accumulating {moduleName}`WithLog` code, commingles two concerns: propagating the value of the counter, and actually traversing the tree to find the result.
-Just as in those cases, an {anchorName andThenState}`andThen` helper can be defined to propagate state from one step of a computation to another.
-The first step is to give a name to the pattern of taking an input state as an argument and returning an output state together with a value:
+このコードは、{moduleName}`none`を伝播させる{anchorName first}`Option`のコード、{anchorName exceptNames (show := error)}`Except.error`を伝播させる{anchorName exceptNames}`Except`のコード、ログを蓄積する{moduleName}`WithLog`のコードと同じく、二つの関心事を混ぜ合わせている。カウンタの値を伝播させることと、実際に木をたどって結果を求めることである。
+それらの場合と同じく、計算のある段階から次の段階へ状態を伝播させる{anchorName andThenState}`andThen`補助関数を定義できる。
+まず、入力の状態を引数に取り、出力の状態と値を組にして返すパターンに名前を付ける。
 
 ```anchor State
 def State (σ : Type) (α : Type) : Type :=
@@ -598,7 +598,7 @@ def State (σ : Type) (α : Type) : Type :=
 :::
 
 :::paragraph
-In the case of {anchorName State}`State`, {anchorName okState}`ok` is a function that returns the input state unchanged, along with the provided value:
+{anchorName State}`State`の場合、{anchorName okState}`ok`は、入力の状態を変えずに、与えられた値と一緒に返す関数である。
 ```anchor okState
 def ok (x : α) : State σ α :=
   fun s => (s, x)
@@ -606,13 +606,13 @@ def ok (x : α) : State σ α :=
 :::
 
 :::paragraph
-When working with a mutable variable, there are two fundamental operations: reading the value and replacing it with a new one.
-Reading the current value is accomplished with a function that places the input state unmodified into the output state, and also places it into the value field:
+可変変数を扱うときには、基本的な操作が二つある。値を読み出すことと、新しい値に置き換えることである。
+現在の値を読み出すには、入力の状態をそのまま出力の状態に入れ、同時に値のフィールドにも入れる関数を使う。
 ```anchor get
 def get : State σ σ :=
   fun s => (s, s)
 ```
-Writing a new value consists of ignoring the input state, and placing the provided new value into the output state:
+新しい値を書き込むには、入力の状態を無視し、与えられた新しい値を出力の状態に入れる。
 ```anchor set
 def set (s : σ) : State σ Unit :=
   fun _ => (s, ())
@@ -620,7 +620,7 @@ def set (s : σ) : State σ Unit :=
 :::
 
 :::paragraph
-Finally, two computations that use state can be sequenced by finding both the output state and return value of the first function, then passing them both into the next function:
+最後に、状態を使う二つの計算は、一つ目の関数の出力の状態と戻り値の両方を求め、それらを両方とも次の関数に渡すことで順につなげられる。
 
 ```anchor andThenState
 def andThen (first : State σ α) (next : α → State σ β) : State σ β :=
@@ -633,7 +633,7 @@ infixl:55 " ~~> " => andThen
 :::
 
 :::paragraph
-Using {anchorName State}`State` and its helpers, local mutable state can be simulated:
+{anchorName State}`State`とその補助関数を使えば、局所的な可変状態をまねられる。
 
 ```anchor numberMonadicish
 def number (t : BinTree α) : BinTree (Nat × α) :=
@@ -647,24 +647,24 @@ def number (t : BinTree α) : BinTree (Nat × α) :=
       ok (BinTree.branch numberedLeft (n, x) numberedRight)
   (helper t 0).snd
 ```
-Because {anchorName State}`State` simulates only a single local variable, {anchorName get}`get` and {anchorName set}`set` don't need to refer to any particular variable name.
+{anchorName State}`State`は一つの局所変数しかまねないので、{anchorName get}`get`と{anchorName set}`set`は特定の変数名を指す必要がない。
 :::
 
-## Monads: A Functional Design Pattern
+## モナド: 関数型の設計パターン
 %%%
 tag := "monad-as-design-pattern"
 %%%
 
-Each of these examples has consisted of:
- * A polymorphic type, such as {anchorName first}`Option`, {anchorTerm okExcept}`Except ε`, {anchorTerm save}`WithLog α`, or {anchorTerm andThenState}`State σ`
- * An operator {lit}`andThen` that takes care of some repetitive aspect of sequencing programs that have this type
- * An operator {lit}`ok` that is (in some sense) the most boring way to use the type
- * A collection of other operations, such as {moduleName}`none`, {anchorName failExcept}`fail`, {anchorName save}`save`, and {anchorName get}`get`, that name ways of using the type
+これらの例はいずれも、次のものから成っていた。
+ * {anchorName first}`Option`、{anchorTerm okExcept}`Except ε`、{anchorTerm save}`WithLog α`、{anchorTerm andThenState}`State σ`のような多相型
+ * この型を持つプログラムをつなげる際の繰り返しの部分を引き受ける{lit}`andThen`演算子
+ * その型を使う最も退屈な方法（の一種）である{lit}`ok`演算子
+ * {moduleName}`none`、{anchorName failExcept}`fail`、{anchorName save}`save`、{anchorName get}`get`など、その型の使い方に名前を付けたその他の操作
 
-This style of API is called a {deftech}_monad_.
-While the idea of monads is derived from a branch of mathematics called category theory, no understanding of category theory is needed in order to use them for programming.
-The key idea of monads is that each monad encodes a particular kind of side effect using the tools provided by the pure functional language Lean.
-For example, {anchorName first}`Option` represents programs that can fail by returning {moduleName}`none`, {moduleName}`Except` represents programs that can throw exceptions, {moduleName}`WithLog` represents programs that accumulate a log while running, and {anchorName State}`State` represents programs with a single mutable variable.
+この形のAPIを{deftech}*モナド*と呼ぶ。
+モナドの考え方は圏論と呼ばれる数学の分野に由来するが、プログラミングに使うのに圏論の理解は要らない。
+モナドの要点は、純粋な関数型言語であるLeanの備える道具を使って、それぞれのモナドが特定の種類の副作用を符号化することである。
+たとえば{anchorName first}`Option`は{moduleName}`none`を返して失敗しうるプログラムを表し、{moduleName}`Except`は例外を投げうるプログラムを、{moduleName}`WithLog`は実行中にログを蓄積するプログラムを、{anchorName State}`State`は一つの可変変数を持つプログラムを表す。
 
 {include 1 FPLean.Monads.Class}
 
