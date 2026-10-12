@@ -18,17 +18,17 @@ set_option pp.rawOnError true
 tag := "type-class-conveniences"
 %%%
 
-# Constructor Syntax for Instances
+# インスタンスのコンストラクタ記法
 %%%
 tag := "instance-constructor-syntax"
 %%%
 
-Behind the scenes, type classes are structure types and instances are values of these types.
-The only differences are that Lean stores additional information about type classes, such as which parameters are output parameters, and that instances are registered for searching.
-While values that have structure types are typically defined using either {lit}`⟨...⟩` syntax or with braces and fields, and instances are typically defined using {kw}`where`, both syntaxes work for both kinds of definition.
+舞台裏では、型クラスは構造体型であり、インスタンスはその型の値である。
+違いは、Leanが型クラスについて追加の情報（どの引数が出力パラメータか、など）を保存することと、インスタンスが検索用に登録されることだけである。
+構造体型の値は通常{lit}`⟨...⟩`の記法か、淡括弧とフィールドで定義し、インスタンスは通常{kw}`where`で定義するが、どちらの記法もどちらの種類の定義にも使える。
 
 :::paragraph
-For example, a forestry application might represent trees as follows:
+たとえば、林業のアプリケーションで木を次のように表すとする。
 
 ```anchor trees
 structure Tree : Type where
@@ -47,11 +47,11 @@ def sloe : Tree where
   latinName := "Prunus spinosa"
   commonNames := ["sloe", "blackthorn"]
 ```
-All three syntaxes are equivalent.
+三つの記法はすべて同等である。
 :::
 
 :::paragraph
-Similarly, type class instances can be defined using all three syntaxes:
+同様に、型クラスのインスタンスも三つの記法すべてで定義できる。
 
 ```anchor Display
 class Display (α : Type) where
@@ -67,29 +67,29 @@ instance : Display Tree where
   displayName t := t.latinName
 ```
 
-The {kw}`where` syntax is typically used for instances, while structures use either the curly-brace syntax or the {kw}`where` syntax.
-The {lit}`⟨...⟩` syntax can be useful when emphasizing that a structure type is very much like a tuple in which the fields happen to be named, but the names are not important at the moment.
-However, there are situations where it can make sense to use other alternatives.
-In particular, a library might provide a function that constructs an instance value.
-Placing a call to this function after {lit}`:=` in an instance declaration is the easiest way to use such a function.
+{kw}`where`の記法は通常インスタンスに使い、構造体には淡括弧の記法か{kw}`where`の記法を使う。
+{lit}`⟨...⟩`の記法は、構造体型が、たまたまフィールドに名前が付いたタプルのようなものであり、今はその名前が重要でない、という点を強調したいときに役に立つ。
+ただし、別の書き方を使う方が妥当な場面もある。
+とくに、ライブラリがインスタンスの値を作る関数を提供していることがある。
+インスタンスの宣言で{lit}`:=`の後にその関数の呼び出しを置くのが、そうした関数を使う最も簡単な方法である。
 :::
 
-# Examples
+# example宣言
 %%%
 tag := "example-command"
 %%%
 
-When experimenting with Lean code, definitions can be more convenient to use than {kw}`#eval` or {kw}`#check` commands.
-First off, definitions don't produce any output, which can help keep the reader's focus on the most interesting output.
-Secondly, it's easiest to write most Lean programs by starting with a type signature, allowing Lean to provide more assistance and better error messages while writing the program itself.
-On the other hand, {kw}`#eval` and {kw}`#check` are easiest to use in contexts where Lean is able to determine the type from the provided expression.
-Thirdly, {kw}`#eval` cannot be used with expressions whose types don't have {moduleName}`ToString` or {moduleName}`Repr` instances, such as functions.
-Finally, multi-step {kw}`do` blocks, {kw}`let`-expressions, and other syntactic forms that take multiple lines are particularly difficult to write with a type annotation in {kw}`#eval` or {kw}`#check`, simply because the required parenthesization can be difficult to predict.
+Leanのコードを試すときには、{kw}`#eval`や{kw}`#check`のコマンドより定義の方が便利なことがある。
+第一に、定義は何も出力しないので、読み手の注意を本当に見たい出力に保ちやすい。
+第二に、ほとんどのLeanのプログラムは型シグネチャから書き始めるのが最も楽であり、そうすればプログラムを書いている間にLeanからより多くの支援と良いエラーメッセージが得られる。
+一方、{kw}`#eval`や{kw}`#check`は、与えられた式からLeanが型を決められる場面で最も使いやすい。
+第三に、{kw}`#eval`は、型に{moduleName}`ToString`や{moduleName}`Repr`のインスタンスがない式（関数など）には使えない。
+最後に、複数手順の{kw}`do`ブロックや{kw}`let`式など、複数行にわたる構文は、{kw}`#eval`や{kw}`#check`に型注釈を付けて書くのがとくに難しい。必要な括弧の付け方を予想しにくいためである。
 
 :::paragraph
-To work around these issues, Lean supports the explicit indication of examples in a source file.
-An example is like a definition without a name.
-For instance, a non-empty list of birds commonly found in Copenhagen's green spaces can be written:
+これらの問題を避けるために、Leanはソースファイル中で例を明示できるようにしている。
+exampleは、名前のない定義のようなものである。
+たとえば、コペンハーゲンの緑地でよく見られる鳥の空でないリストは次のように書ける。
 
 ```anchor birdExample
 example : NonEmptyList String :=
@@ -100,13 +100,13 @@ example : NonEmptyList String :=
 :::
 
 :::paragraph
-Examples may define functions by accepting arguments:
+exampleは引数を受け取って関数を定義することもできる。
 
 ```anchor commAdd
 example (n : Nat) (k : Nat) : Bool :=
   n + k == k + n
 ```
-While this creates a function behind the scenes, this function has no name and cannot be called.
-Nonetheless, this is useful for demonstrating how a library can be used with arbitrary or unknown values of some given type.
-In source files, {kw}`example` declarations are best paired with comments that explain how the example illustrates the concepts of the library.
+舞台裏では関数が作られるが、その関数には名前がなく、呼び出せない。
+それでも、ある型の任意の値や未知の値に対してライブラリをどう使えるかを示すのに役に立つ。
+ソースファイルでは、{kw}`example`の宣言には、その例がライブラリの概念をどう示しているかを説明するコメントを添えるのがよい。
 :::
