@@ -15,32 +15,32 @@ set_option verso.exampleModule "Examples.Monads.Do"
 tag := "monad-do-notation"
 %%%
 
-While APIs based on monads are very powerful, the explicit use of {lit}`>>=` with anonymous functions is still somewhat noisy.
-Just as infix operators are used instead of explicit calls to {anchorName names}`HAdd.hAdd`, Lean provides a syntax for monads called _{kw}`do`-notation_ that can make programs that use monads easier to read and write.
-This is the very same {kw}`do`-notation that is used to write programs in {anchorName names}`IO`, and {anchorName names}`IO` is also a monad.
+モナドに基づくAPIはとても強力だが、{lit}`>>=`を無名関数と組み合わせて明示的に使うのはまだ少し煩わしい。
+{anchorName names}`HAdd.hAdd`を明示的に呼び出す代わりに中置演算子を使うのと同じように、Leanには*{kw}`do`記法*と呼ばれるモナドのための構文があり、モナドを使うプログラムを読み書きしやすくできる。
+これは{anchorName names}`IO`でプログラムを書くのに使うのとまったく同じ{kw}`do`記法であり、{anchorName names}`IO`もモナドである。
 
-In {ref "hello-world"}[Hello, World!], the {kw}`do` syntax is used to combine {anchorName names}`IO` actions, but the meaning of these programs is explained directly.
-Understanding how to program with monads means that {kw}`do` can now be explained in terms of how it translates into uses of the underlying monad operators.
+{ref "hello-world"}[Hello, World!]では、{kw}`do`構文を使って{anchorName names}`IO`の動作を組み合わせたが、それらのプログラムの意味は直接説明した。
+モナドを使ったプログラミングを理解した今は、{kw}`do`がその下にあるモナドの演算子の使用へとどのように変換されるかという形で説明できる。
 
-The first translation of {kw}`do` is used when the only statement in the {kw}`do` is a single expression {anchorName doSugar1a}`E`.
-In this case, the {kw}`do` is removed, so
+{kw}`do`の最初の変換は、{kw}`do`の中の文が単一の式{anchorName doSugar1a}`E`だけのときに使う。
+この場合、{kw}`do`は取り除かれ、次のようになる。
 ```anchor doSugar1a
 do E
 ```
-translates to
+次のように変換される。
 ```anchor doSugar1b
 E
 ```
 
-The second translation is used when the first statement of the {kw}`do` is a {kw}`let` with an arrow, binding a local variable.
-This translates to a use of {lit}`>>=` together with a function that binds that very same variable, so
+二つ目の変換は、{kw}`do`の最初の文が矢印付きの{kw}`let`でローカル変数を束縛するときに使う。
+これは{lit}`>>=`と、まさにその変数を束縛する関数を組み合わせた形に変換される。したがって、
 ```anchor doSugar2a
  do let x ← E₁
     Stmt
     …
     Eₙ
 ```
-translates to
+次のように変換される。
 ```anchor doSugar2b
 E₁ >>= fun x =>
   do Stmt
@@ -48,14 +48,14 @@ E₁ >>= fun x =>
      Eₙ
 ```
 
-When the first statement of the {kw}`do` block is an expression, then it is considered to be a monadic action that returns {anchorName names}`Unit`, so the function matches the {anchorName names}`Unit` constructor and
+{kw}`do`ブロックの最初の文が式なら、それは{anchorName names}`Unit`を返すモナドの動作と見なされるので、関数は{anchorName names}`Unit`のコンストラクタにマッチする。したがって、
 ```anchor doSugar3a
   do E₁
      Stmt
      …
      Eₙ
 ```
-translates to
+次のように変換される。
 ```anchor doSugar3b
 E₁ >>= fun () =>
   do Stmt
@@ -63,14 +63,14 @@ E₁ >>= fun () =>
      Eₙ
 ```
 
-Finally, when the first statement of the {kw}`do` block is a {kw}`let` that uses {lit}`:=`, the translated form is an ordinary let expression, so
+最後に、{kw}`do`ブロックの最初の文が{lit}`:=`を使う{kw}`let`なら、変換した形は普通のlet式である。したがって、
 ```anchor doSugar4a
 do let x := E₁
    Stmt
    …
    Eₙ
 ```
-translates to
+次のように変換される。
 ```anchor doSugar4b
 let x := E₁
 do Stmt
@@ -79,7 +79,7 @@ do Stmt
 ```
 
 :::paragraph
-The definition of {anchorName firstThirdFifthSeventhMonad (module := Examples.Monads.Class)}`firstThirdFifthSeventh` that uses the {anchorName firstThirdFifthSeventhMonad (module := Examples.Monads.Class)}`Monad` class looks like this:
+{anchorName firstThirdFifthSeventhMonad (module := Examples.Monads.Class)}`Monad`クラスを使う{anchorName firstThirdFifthSeventhMonad (module := Examples.Monads.Class)}`firstThirdFifthSeventh`の定義は次のとおりである。
 
 ```anchor firstThirdFifthSeventhMonad (module := Examples.Monads.Class)
 def firstThirdFifthSeventh [Monad m] (lookup : List α → Nat → m α)
@@ -90,7 +90,7 @@ def firstThirdFifthSeventh [Monad m] (lookup : List α → Nat → m α)
   lookup xs 6 >>= fun seventh =>
   pure (first, third, fifth, seventh)
 ```
-Using {kw}`do`-notation, it becomes significantly more readable:
+{kw}`do`記法を使うと、ずっと読みやすくなる。
 ```anchor firstThirdFifthSeventhDo
 def firstThirdFifthSeventh [Monad m] (lookup : List α → Nat → m α)
     (xs : List α) : m (α × α × α × α) := do
@@ -103,7 +103,7 @@ def firstThirdFifthSeventh [Monad m] (lookup : List α → Nat → m α)
 :::
 
 :::paragraph
-Without the {anchorName mapM}`Monad` type class, the function {anchorName numberMonadicish (module := Examples.Monads)}`number` that numbers the nodes of a tree was written:
+{anchorName mapM}`Monad`型クラスを使わない場合、木の節点に番号を振る{anchorName numberMonadicish (module := Examples.Monads)}`number`関数は次のように書いていた。
 
 ```anchor numberMonadicish (module := Examples.Monads)
 def number (t : BinTree α) : BinTree (Nat × α) :=
@@ -117,7 +117,7 @@ def number (t : BinTree α) : BinTree (Nat × α) :=
       ok (BinTree.branch numberedLeft (n, x) numberedRight)
   (helper t 0).snd
 ```
-With {anchorName mapM}`Monad` and {kw}`do`, its definition is much less noisy:
+{anchorName mapM}`Monad`と{kw}`do`を使うと、その定義はずっと煩わしくない。
 
 ```anchor numberDo
 def number (t : BinTree α) : BinTree (Nat × α) :=
@@ -133,9 +133,9 @@ def number (t : BinTree α) : BinTree (Nat × α) :=
 ```
 :::
 
-All of the conveniences from {kw}`do` with {anchorName names}`IO` are also available when using it with other monads.
-For example, nested actions also work in any monad.
-The original definition of {anchorName mapM (module:=Examples.Monads.Class)}`mapM` was:
+{anchorName names}`IO`で{kw}`do`を使うときの便利さは、他のモナドで使うときにもすべて得られる。
+たとえば、入れ子にした動作もどのモナドでも働く。
+{anchorName mapM (module:=Examples.Monads.Class)}`mapM`の元の定義は次のとおりだった。
 
 ```anchor mapM (module := Examples.Monads.Class)
 def mapM [Monad m] (f : α → m β) : List α → m (List β)
@@ -145,7 +145,7 @@ def mapM [Monad m] (f : α → m β) : List α → m (List β)
     mapM f xs >>= fun tl =>
     pure (hd :: tl)
 ```
-With {kw}`do`-notation, it can be written:
+{kw}`do`記法を使うと次のように書ける。
 
 ```anchor mapM
 def mapM [Monad m] (f : α → m β) : List α → m (List β)
@@ -155,7 +155,7 @@ def mapM [Monad m] (f : α → m β) : List α → m (List β)
     let tl ← mapM f xs
     pure (hd :: tl)
 ```
-Using nested actions makes it almost as short as the original non-monadic {anchorName names}`map`:
+入れ子にした動作を使うと、元のモナドでない{anchorName names}`map`とほとんど同じ長さになる。
 
 ```anchor mapMNested
 def mapM [Monad m] (f : α → m β) : List α → m (List β)
@@ -163,7 +163,7 @@ def mapM [Monad m] (f : α → m β) : List α → m (List β)
   | x :: xs => do
     pure ((← f x) :: (← mapM f xs))
 ```
-Using nested actions, {anchorName numberDoShort}`number` can be made much more concise:
+入れ子にした動作を使うと、{anchorName numberDoShort}`number`をずっと簡潔にできる。
 
 ```anchor numberDoShort
 def increment : State Nat Nat := do
@@ -185,10 +185,10 @@ def number (t : BinTree α) : BinTree (Nat × α) :=
 
 
 
-# Exercises
+# 練習問題
 %%%
 tag := "monad-do-notation-exercises"
 %%%
 
- * Rewrite {anchorName evaluateM (module:=Examples.Monads.Class)}`evaluateM`, its helpers, and the different specific use cases using {kw}`do`-notation instead of explicit calls to {lit}`>>=`.
- * Rewrite {anchorName firstThirdFifthSeventhDo}`firstThirdFifthSeventh` using nested actions.
+ * {anchorName evaluateM (module:=Examples.Monads.Class)}`evaluateM`とその補助関数、および個々の利用例を、{lit}`>>=`の明示的な呼び出しの代わりに{kw}`do`記法を使って書き直せ。
+ * {anchorName firstThirdFifthSeventhDo}`firstThirdFifthSeventh`を入れ子にした動作を使って書き直せ。
