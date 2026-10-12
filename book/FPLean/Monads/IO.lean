@@ -15,26 +15,26 @@ set_option verso.exampleModule "Examples.Monads.IO"
 tag := "io-monad"
 %%%
 
-{anchorName names}`IO` as a monad can be understood from two perspectives, which were described in the section on {ref "running-a-program"}[running programs].
-Each can help to understand the meanings of {anchorName names}`pure` and {anchorName names}`bind` for {anchorName names}`IO`.
+モナドとしての{anchorName names}`IO`は二つの観点から理解できる。それらは{ref "running-a-program"}[プログラムの実行]の節で述べた。
+どちらの観点も、{anchorName names}`IO`の{anchorName names}`pure`と{anchorName names}`bind`の意味を理解する助けになる。
 
-From the first perspective, an {anchorName names}`IO` action is an instruction to Lean's run-time system.
-For example, the instruction might be “read a string from this file descriptor, then re-invoke the pure Lean code with the string”.
-This perspective is an _exterior_ one, viewing the program from the perspective of the operating system.
-In this case, {anchorName names}`pure` is an {anchorName names}`IO` action that does not request any effects from the RTS, and {anchorName names}`bind` instructs the RTS to first carry out one potentially-effectful operation and then invoke the rest of the program with the resulting value.
+一つ目の観点では、{anchorName names}`IO`の動作はLeanの実行時システムへの指示である。
+たとえば、「このファイル記述子から文字列を読み、その文字列を持って純粋なLeanのコードを呼び直せ」という指示になりうる。
+この観点は*外側*からのもので、オペレーティングシステムからプログラムを見る。
+この場合、{anchorName names}`pure`は実行時システムに何の副作用も求めない{anchorName names}`IO`の動作であり、{anchorName names}`bind`は、まず副作用を持ちうる操作を一つ実行し、その結果の値を持ってプログラムの残りを呼び出すよう実行時システムに指示する。
 
-From the second perspective, an {anchorName names}`IO` action transforms the whole world.
-{anchorName names}`IO` actions are actually pure, because they receive a unique world as an argument and then return the changed world.
-This perspective is an _interior_ one that matches how {anchorName names}`IO` is represented inside of Lean.
-The world is represented in Lean as a token, and the {anchorName names}`IO` monad is structured to make sure that each token is used exactly once.
+二つ目の観点では、{anchorName names}`IO`の動作は世界全体を変換する。
+{anchorName names}`IO`の動作は実際には純粋である。唯一の世界を引数として受け取り、変化した世界を返すためである。
+この観点は*内側*からのもので、Leanの内部で{anchorName names}`IO`がどう表されるかに一致する。
+世界はLeanではトークンとして表され、{anchorName names}`IO`モナドは、各トークンがちょうど一度だけ使われるように組み立てられている。
 
-To see how this works, it can be helpful to peel back one definition at a time.
-The {kw}`#print` command reveals the internals of Lean datatypes and definitions.
-For example,
+これがどう働くかを見るには、定義を一つずつはがしていくとよい。
+The {kw}`#print`コマンドはLeanのデータ型と定義の中身を明らかにする。
+たとえば、
 ```anchor printNat
 #print Nat
 ```
-results in
+次の結果になる。
 ```anchorInfo printNat
 inductive Nat : Type
 number of parameters: 0
@@ -42,22 +42,22 @@ constructors:
 Nat.zero : Nat
 Nat.succ : Nat → Nat
 ```
-and
+また、
 ```anchor printStringToLower
 #print String.toLower
 ```
-results in
+次の結果になる。
 ```anchorInfo printStringToLower
 def String.toLower : String → String :=
 fun s => String.map Char.toLower s
 ```
 
-Sometimes, the output of {kw}`#print` includes Lean features that have not yet been presented in this book.
-For example,
+{kw}`#print`の出力には、この本でまだ紹介していないLeanの機能が含まれることがある。
+たとえば、
 ```anchor printListHeadHuh
 #print List.head?
 ```
-produces
+次の出力になる。
 ```anchorInfo printListHeadHuh
 def List.head?.{u} : {α : Type u} → List α → Option α :=
 fun {α} x =>
@@ -65,10 +65,10 @@ fun {α} x =>
   | [] => none
   | a :: tail => some a
 ```
-which includes a {lit}`.{u}` after the definition's name, and annotates types as {anchorTerm names}`Type u` rather than just {anchorTerm names}`Type`.
-This can be safely ignored for now.
+定義の名前の後に{lit}`.{u}`が付き、型が単なる{anchorTerm names}`Type`ではなく{anchorTerm names}`Type u`と注記されている。
+今は気にしなくてよい。
 
-Printing the definition of {anchorName names}`IO` shows that it's defined in terms of simpler structures:
+{anchorName names}`IO`の定義を表示すると、より単純な構造で定義されていることが分かる。
 ```anchor printIO
 #print IO
 ```
@@ -76,7 +76,7 @@ Printing the definition of {anchorName names}`IO` shows that it's defined in ter
 @[reducible] def IO : Type → Type :=
 EIO IO.Error
 ```
-{anchorName printIOError}`IO.Error` represents all the errors that could be thrown by an {anchorName names}`IO` action:
+{anchorName printIOError}`IO.Error`は、{anchorName names}`IO`の動作が投げうるすべてのエラーを表す。
 ```anchor printIOError
 #print IO.Error
 ```
@@ -104,10 +104,10 @@ IO.Error.noSuchThing : Option String → UInt32 → String → IO.Error
 IO.Error.unexpectedEof : IO.Error
 IO.Error.userError : String → IO.Error
 ```
-{anchorTerm names}`EIO ε α` represents {anchorName names}`IO` actions that will either terminate with an error of type {anchorName names}`ε` or succeed with a value of type {anchorName names}`α`.
-This means that, like the {anchorTerm names}`Except ε` monad, the {anchorName names}`IO` monad includes the ability to define error handling and exceptions.
+{anchorTerm names}`EIO ε α`は、型{anchorName names}`ε`のエラーで終わるか、型{anchorName names}`α`の値で成功する{anchorName names}`IO`の動作を表す。
+つまり、{anchorTerm names}`Except ε`モナドと同じく、{anchorName names}`IO`モナドにはエラー処理と例外を定義する能力がある。
 
-Peeling back another layer, {anchorName names}`EIO` is itself defined in terms of a simpler structure:
+もう一段はがすと、{anchorName names}`EIO`自体がより単純な構造で定義されている。
 ```anchor printEIO
 #print EIO
 ```
@@ -115,8 +115,8 @@ Peeling back another layer, {anchorName names}`EIO` is itself defined in terms o
 def EIO : Type → Type → Type :=
 fun ε α => EST ε IO.RealWorld α
 ```
-The {anchorName printEStateM}`EST` monad includes both errors and state—it's similar to a combination of {anchorName names}`Except` and {anchorName State (module := Examples.Monads)}`State`.
-It is defined using another type, {anchorName printEStateMResult}`EST.Out`:
+{anchorName printEStateM}`EST`モナドはエラーと状態の両方を含む。{anchorName names}`Except`と{anchorName State (module := Examples.Monads)}`State`を組み合わせたものに似ている。
+これは別の型{anchorName printEStateMResult}`EST.Out`を使って定義されている。
 ```anchor printEStateM
 #print EST
 ```
@@ -124,10 +124,10 @@ It is defined using another type, {anchorName printEStateMResult}`EST.Out`:
 def EST : Type → Type → Type → Type :=
 fun ε σ α => Void σ → EST.Out ε σ α
 ```
-In other words, a program with type {anchorTerm EStateMNames}`EST ε σ α` is a function that accepts an initial state of type {anchorName EStateMNames}`σ` and returns an {anchorTerm EStateMNames}`EST.Out ε σ α`.
-The state is wrapped in the type {anchorName VoidSigma}`Void`, which is an internal primitive that causes a value to be erased from compiled code; {anchorTerm VoidSigma}`Void σ` has the same representation as {anchorName save (module:=Examples.Monads)}`Unit`.
+言い換えれば、型{anchorTerm EStateMNames}`EST ε σ α`のプログラムは、型{anchorName EStateMNames}`σ`の初期状態を受け取り、{anchorTerm EStateMNames}`EST.Out ε σ α`を返す関数である。
+状態は{anchorName VoidSigma}`Void`型で包まれている。これは内部的な原始型で、コンパイルされたコードから値を消し去る。{anchorTerm VoidSigma}`Void σ`は{anchorName save (module:=Examples.Monads)}`Unit`と同じ表現を持つ。
 
-{anchorName EStateMNames}`EST.Out` is very much like the definition of {anchorName names}`Except`, with one constructor that indicates a successful termination and one constructor that indicates an error:
+{anchorName EStateMNames}`EST.Out`は{anchorName names}`Except`の定義とよく似ており、成功した終了を示すコンストラクタとエラーを示すコンストラクタがある。
 ```anchor printEStateMResult
 #print EST.Out
 ```
@@ -138,11 +138,11 @@ constructors:
 EST.Out.ok : {ε σ α : Type} → α → Void σ → EST.Out ε σ α
 EST.Out.error : {ε σ α : Type} → ε → Void σ → EST.Out ε σ α
 ```
-Just like {anchorTerm Except (module:=Examples.Monads)}`Except ε α`, the {anchorName names (show := ok)}`EST.Out.ok` constructor includes a result of type {anchorName Except (module:=Examples.Monads)}`α`, and the {anchorName names (show := error)}`EST.Out.error` constructor includes an exception of type {anchorName Except (module:=Examples.Monads)}`ε`.
-Unlike {anchorName names}`Except`, both constructors have an additional state field that includes the final state of the computation.
+{anchorTerm Except (module:=Examples.Monads)}`Except ε α`と同じく、{anchorName names (show := ok)}`EST.Out.ok`コンストラクタは型{anchorName Except (module:=Examples.Monads)}`α`の結果を含み、{anchorName names (show := error)}`EST.Out.error`コンストラクタは型{anchorName Except (module:=Examples.Monads)}`ε`の例外を含む。
+{anchorName names}`Except`と違い、どちらのコンストラクタにも計算の最終状態を含む追加のフィールドがある。
 
-The {anchorName names}`Monad` instance for {anchorTerm names}`EST ε σ` requires {anchorName names}`pure` and {anchorName names}`bind`.
-Just as with {anchorName State (module:=Examples.Monads)}`State`, the implementation of {anchorName names}`pure` for {anchorName names}`EST` accepts an initial state and returns it unchanged, and just as with {anchorName names}`Except`, it returns its argument in the {anchorName names (show := ok)}`EST.Out.ok` constructor:
+{anchorTerm names}`EST ε σ`の{anchorName names}`Monad`インスタンスには{anchorName names}`pure`と{anchorName names}`bind`が要る。
+{anchorName State (module:=Examples.Monads)}`State`と同じく、{anchorName names}`EST`の{anchorName names}`pure`の実装は初期状態を受け取ってそのまま返し、{anchorName names}`Except`と同じく、引数を{anchorName names (show := ok)}`EST.Out.ok`コンストラクタに入れて返す。
 ```anchor printEStateMpure
 #print EST.pure
 ```
@@ -150,13 +150,13 @@ Just as with {anchorName State (module:=Examples.Monads)}`State`, the implementa
 protected def EST.pure : {α ε σ : Type} → α → EST ε σ α :=
 fun {α ε σ} a s => EST.Out.ok a s
 ```
-{kw}`protected` means that the full name {anchorName printEStateMpure}`EST.pure` is needed even if the {anchorName names}`EST` namespace has been opened.
+{kw}`protected`は、{anchorName names}`EST`名前空間を開いていても完全な名前{anchorName printEStateMpure}`EST.pure`が必要であることを意味する。
 
-Similarly, {anchorName names}`bind` for {anchorName names}`EST` takes an initial state as an argument.
-It passes this initial state to its first action.
-Like {anchorName names}`bind` for {anchorName names}`Except`, it then checks whether the result is an error.
-If so, the error is returned unchanged and the second argument to {anchorName names}`bind` remains unused.
-If the result was a success, then the second argument is applied to both the returned value and to the resulting state.
+同様に、{anchorName names}`EST`の{anchorName names}`bind`は初期状態を引数に取る。
+この初期状態を一つ目の動作に渡す。
+{anchorName names}`Except`の{anchorName names}`bind`と同じく、次に結果がエラーかどうかを調べる。
+エラーなら、そのエラーをそのまま返し、{anchorName names}`bind`の二つ目の引数は使われない。
+結果が成功なら、二つ目の引数を返された値と結果の状態の両方に適用する。
 ```anchor printEStateMbind
 #print EST.bind
 ```
@@ -168,12 +168,12 @@ fun {ε σ α β} x f s =>
   | EST.Out.error e s => EST.Out.error e s
 ```
 
-Putting all of this together, {anchorName names}`IO` is a monad that tracks state and errors at the same time.
-The collection of available errors is that given by the datatype {anchorName printIOError}`IO.Error`, which has constructors that describe many things that can go wrong in a program.
-The state is a type that represents the real world, called {anchorTerm RealWorld}`IO.RealWorld`.
-Each basic {anchorName names}`IO` action receives this real world and returns another one, paired either with an error or a result.
-In {anchorName names}`IO`, {anchorName names}`pure` returns the world unchanged, while {anchorName names}`bind` passes the modified world from one action into the next action.
+これらをまとめると、{anchorName names}`IO`は状態とエラーを同時に扱うモナドである。
+扱えるエラーの集合は{anchorName printIOError}`IO.Error`データ型で与えられ、プログラムで起こりうる多くの問題を記述するコンストラクタを持つ。
+状態は実世界を表す型で、{anchorTerm RealWorld}`IO.RealWorld`という。
+{anchorName names}`IO`の基本的な動作はそれぞれこの実世界を受け取り、別の世界を、エラーか結果と組にして返す。
+{anchorName names}`IO`では、{anchorName names}`pure`は世界を変えずに返し、{anchorName names}`bind`は変更された世界をある動作から次の動作へ渡す。
 
-Because the entire universe doesn't fit in a computer's memory, the world being passed around is just a representation.
-So long as world tokens are not re-used, the representation is safe.
-The type {anchorTerm RealWorld}`IO.RealWorld` is a trivial primitive type that does not need any representation at all, because it is only used inside of {anchorName VoidSigma}`Void`.
+宇宙全体はコンピュータのメモリに収まらないので、受け渡される世界は単なる表現である。
+世界のトークンが再利用されない限り、その表現は安全である。
+{anchorTerm RealWorld}`IO.RealWorld`型はごく単純な原始型で、表現をまったく必要としない。{anchorName VoidSigma}`Void`の内側でしか使われないためである。
