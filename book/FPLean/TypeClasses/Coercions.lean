@@ -18,23 +18,23 @@ tag := "coercions"
 %%%
 
 
-In mathematics, it is common to use the same symbol to stand for different aspects of some object in different contexts.
-For example, if a ring is referred to in a context where a set is expected, then it is understood that the ring's underlying set is what's intended.
-In programming languages, it is common to have rules to automatically translate values of one type into values of another type.
-Java allows a {java}`byte` to be automatically promoted to an {java}`int`, and Kotlin allows a non-nullable type to be used in a context that expects a nullable version of the type.
+数学では、同じ記号を文脈に応じてある対象の異なる側面に使うことがよくある。
+たとえば、集合が期待される文脈で環に言及するときは、その環の台集合を指していると解釈される。
+プログラミング言語では、ある型の値を別の型の値に自動で変換する規則があるのが普通である。
+Javaでは{java}`byte`を自動で{java}`int`に昇格でき、Kotlinではnull非許容型を、その型のnull許容版が期待される文脈で使える。
 
-In Lean, both purposes are served by a mechanism called {deftech}_coercions_.
-When Lean encounters an expression of one type in a context that expects a different type, it will attempt to coerce the expression before reporting a type error.
-Unlike Java, C, and Kotlin, the coercions are extensible by defining instances of type classes.
+Leanでは、どちらの目的も{deftech}*型強制*という仕組みが担う。
+Leanは、ある型の式を、別の型が期待される文脈で見つけると、型エラーを報告する前にその式を型強制しようとする。
+Java、C、Kotlinと違い、型強制は型クラスのインスタンスを定義して拡張できる。
 
-# Strings and Paths
+# 文字列とパス
 %%%
 tag := "string-path-coercion"
 %%%
 
-In the {ref "handling-input"}[source code to {lit}`feline`], a {moduleName}`String` is converted to a {moduleName}`FilePath` using the anonymous constructor syntax.
-In fact, this was not necessary: Lean defines a coercion from {moduleName}`String` to {moduleName}`FilePath`, so a string can be used in a position where a path is expected.
-Even though the function {anchorTerm readFile}`IO.FS.readFile` has type {anchorTerm readFile}`System.FilePath → IO String`, the following code is accepted by Lean:
+{ref "handling-input"}[{lit}`feline`のソースコード]では、{moduleName}`String`を無名コンストラクタの記法で{moduleName}`FilePath`に変換していた。
+実際にはこれは不要だった。Leanは{moduleName}`String`から{moduleName}`FilePath`への型強制を定義しているので、パスが期待される位置に文字列を使える。
+関数{anchorTerm readFile}`IO.FS.readFile`の型は{anchorTerm readFile}`System.FilePath → IO String`だが、次のコードはLeanに受け入れられる。
 
 ```anchor fileDumper
 def fileDumper : IO Unit := do
@@ -46,24 +46,24 @@ def fileDumper : IO Unit := do
   stdout.putStrLn s!"'The file {f}' contains:"
   stdout.putStrLn (← IO.FS.readFile f)
 ```
-{moduleName}`String.trimAscii` removes leading and trailing whitespace from a string, returning a {tech}[string slice] that is converted back to a string using {moduleName}`String.Slice.copy`.
-On the last line of {anchorName fileDumper}`fileDumper`, the coercion from {moduleName}`String` to {moduleName}`FilePath` automatically converts {anchorName fileDumper}`f`, so it is not necessary to write {lit}`IO.FS.readFile ⟨f⟩`.
+{moduleName}`String.trimAscii`は文字列の先頭と末尾の空白を取り除き、{tech}[文字列スライス]を返す。そのスライスは{moduleName}`String.Slice.copy`で再び文字列に変換される。
+{anchorName fileDumper}`fileDumper`の最後の行では、{moduleName}`String`から{moduleName}`FilePath`への型強制が{anchorName fileDumper}`f`を自動で変換するので、{lit}`IO.FS.readFile ⟨f⟩`と書く必要はない。
 
-# Positive Numbers
+# 正の数
 %%%
 tag := "positive-number-coercion"
 %%%
 
-Every positive number corresponds to a natural number.
-The function {anchorName posToNat}`Pos.toNat` that was defined earlier converts a {moduleName}`Pos` to the corresponding {moduleName}`Nat`:
+すべての正の数には対応する自然数がある。
+先ほど定義した関数{anchorName posToNat}`Pos.toNat`は{moduleName}`Pos`を対応する{moduleName}`Nat`に変換する。
 
 ```anchor posToNat
 def Pos.toNat : Pos → Nat
   | Pos.one => 1
   | Pos.succ n => n.toNat + 1
 ```
-The function {anchorName drop}`List.drop`, with type {anchorTerm drop}`{α : Type} → Nat → List α → List α`, removes a prefix of a list.
-Applying {anchorName drop}`List.drop` to a {moduleName}`Pos`, however, leads to a type error:
+型{anchorTerm drop}`{α : Type} → Nat → List α → List α`を持つ関数{anchorName drop}`List.drop`は、リストの先頭を取り除く。
+しかし、{anchorName drop}`List.drop`に{moduleName}`Pos`を渡すと型エラーになる。
 ```anchorTerm dropPos
 [1, 2, 3, 4].drop (2 : Pos)
 ```
@@ -77,16 +77,16 @@ but is expected to have type
 in the application
   List.drop 2
 ```
-Because the author of {anchorName drop}`List.drop` did not make it a method of a type class, it can't be overridden by defining a new instance.
+{anchorName drop}`List.drop`の作者がこれを型クラスのメソッドにしなかったので、新しいインスタンスを定義して上書きすることはできない。
 
 :::paragraph
-The type class {moduleName}`Coe` describes overloaded ways of coercing from one type to another:
+{moduleName}`Coe`型クラスは、ある型から別の型への型強制をオーバーロードする方法を記述する。
 
 ```anchor Coe
 class Coe (α : Type) (β : Type) where
   coe : α → β
 ```
-An instance of {anchorTerm CoePosNat}`Coe Pos Nat` is enough to allow the prior code to work:
+{anchorTerm CoePosNat}`Coe Pos Nat`のインスタンスがあれば、先ほどのコードが動くようになる。
 
 ```anchor CoePosNat
 instance : Coe Pos Nat where
@@ -98,7 +98,7 @@ instance : Coe Pos Nat where
 ```anchorInfo dropPosCoe
 [3, 4]
 ```
-Using {kw}`#check` shows the result of the instance search that was used behind the scenes:
+{kw}`#check`を使うと、舞台裏で使われたインスタンス探索の結果が分かる。
 ```anchor checkDropPosCoe
 #check [1, 2, 3, 4].drop (2 : Pos)
 ```
@@ -107,22 +107,22 @@ List.drop (Pos.toNat 2) [1, 2, 3, 4] : List Nat
 ```
 :::
 
-# Chaining Coercions
+# 型強制の連鎖
 %%%
 tag := "chaining-coercions"
 %%%
 
-When searching for coercions, Lean will attempt to assemble a coercion out of a chain of smaller coercions.
-For example, there is already a coercion from {anchorName chapterIntro}`Nat` to {anchorName chapterIntro}`Int`.
-Because of that instance, combined with the {anchorTerm CoePosNat}`Coe Pos Nat` instance, the following code is accepted:
+型強制を探すとき、Leanはより小さな型強制の連鎖から一つの型強制を組み立てようとする。
+たとえば、{anchorName chapterIntro}`Nat`から{anchorName chapterIntro}`Int`への型強制はすでにある。
+そのインスタンスと{anchorTerm CoePosNat}`Coe Pos Nat`のインスタンスを組み合わせることで、次のコードが受け入れられる。
 
 ```anchor posInt
 def oneInt : Int := Pos.one
 ```
-This definition uses two coercions: from {anchorTerm CoePosNat}`Pos` to {anchorTerm CoePosNat}`Nat`, and then from {anchorTerm CoePosNat}`Nat` to {anchorTerm chapterIntro}`Int`.
+この定義は二つの型強制を使っている。{anchorTerm CoePosNat}`Pos`から{anchorTerm CoePosNat}`Nat`へ、次に{anchorTerm CoePosNat}`Nat`から{anchorTerm chapterIntro}`Int`へである。
 
-The Lean compiler does not get stuck in the presence of circular coercions.
-For example, even if two types {anchorName CoercionCycle}`A` and {anchorName CoercionCycle}`B` can be coerced to one another, their mutual coercions can be used to find a path:
+Leanコンパイラは、循環する型強制があっても行き詰まらない。
+たとえば、二つの型{anchorName CoercionCycle}`A`と{anchorName CoercionCycle}`B`が互いに型強制できるとしても、その相互の型強制を使って経路を見つけられる。
 
 ```anchor CoercionCycle
 inductive A where
@@ -142,21 +142,21 @@ instance : Coe Unit A where
 
 def coercedToB : B := ()
 ```
-Remember: the double parentheses {anchorTerm CoercionCycle}`()` is short for the constructor {anchorName chapterIntro}`Unit.unit`.
-After deriving a {anchorTerm ReprBTm}`Repr B` instance with {anchorTerm ReprB}`deriving instance Repr for B`,
+念のため、二重の括弧{anchorTerm CoercionCycle}`()`はコンストラクタ{anchorName chapterIntro}`Unit.unit`の略である。
+{anchorTerm ReprB}`deriving instance Repr for B`で{anchorTerm ReprBTm}`Repr B`のインスタンスを導出すると、
 ```anchor coercedToBEval
 #eval coercedToB
 ```
-results in:
+次のようになる。
 ```anchorInfo coercedToBEval
 B.b
 ```
 
 :::paragraph
-The {anchorName CoeOption}`Option` type can be used similarly to nullable types in C# and Kotlin: the {anchorName NEListGetHuh}`none` constructor represents the absence of a value.
-The Lean standard library defines a coercion from any type {anchorName CoeOption}`α` to {anchorTerm CoeOption}`Option α` that wraps the value in {anchorName CoeOption}`some`.
-This allows option types to be used in a manner even more similar to nullable types, because {anchorName CoeOption}`some` can be omitted.
-For instance, the function {anchorName lastHuh}`List.last?` that finds the last entry in a list can be written without a {anchorName CoeOption}`some` around the return value {anchorName lastHuh}`x`:
+{anchorName CoeOption}`Option`型は、C#やKotlinのnull許容型と同じように使える。コンストラクタ{anchorName NEListGetHuh}`none`が値の欠如を表す。
+Leanの標準ライブラリは、任意の型{anchorName CoeOption}`α`から{anchorTerm CoeOption}`Option α`への型強制を定義しており、値が{anchorName CoeOption}`some`で包まれる。
+これにより、{anchorName CoeOption}`some`を省略できるので、オプション型をnull許容型にさらに近い形で使える。
+たとえば、リストの最後の要素を求める関数{anchorName lastHuh}`List.last?`は、戻り値{anchorName lastHuh}`x`を{anchorName CoeOption}`some`で包まずに書ける。
 
 ```anchor lastHuh
 def List.last? : List α → Option α
@@ -164,8 +164,8 @@ def List.last? : List α → Option α
   | [x] => x
   | _ :: x :: xs => last? (x :: xs)
 ```
-Instance search finds the coercion, and inserts a call to {anchorName Coe}`coe`, which wraps the argument in {anchorName CoeOption}`some`.
-These coercions can be chained, so that nested uses of {anchorName CoeOption}`Option` don't require nested {anchorName CoeOption}`some` constructors:
+インスタンス探索がその型強制を見つけ、引数を{anchorName CoeOption}`some`で包む{anchorName Coe}`coe`の呼び出しを挿入する。
+この型強制は連鎖できるので、{anchorName CoeOption}`Option`を入れ子に使っても{anchorName CoeOption}`some`を入れ子に書かなくてよい。
 
 ```anchor perhapsPerhapsPerhaps
 def perhapsPerhapsPerhaps : Option (Option (Option String)) :=
@@ -174,9 +174,9 @@ def perhapsPerhapsPerhaps : Option (Option (Option String)) :=
 :::
 
 :::paragraph
-Coercions are only activated automatically when Lean encounters a mismatch between an inferred type and a type that is imposed from the rest of the program.
-In cases with other errors, coercions are not activated.
-For example, if the error is that an instance is missing, coercions will not be used:
+型強制が自動で働くのは、Leanが推論した型と、プログラムの残りの部分から課される型が食い違ったときだけである。
+他の種類のエラーの場合は、型強制は働かない。
+たとえば、エラーがインスタンスの欠如である場合は、型強制は使われない。
 ```anchor ofNatBeforeCoe
 def perhapsPerhapsPerhapsNat : Option (Option (Option Nat)) :=
   392
@@ -193,66 +193,66 @@ Hint: Type class instance resolution failures can be inspected with the `set_opt
 :::
 
 :::paragraph
-This can be worked around by manually indicating the desired type to be used for {moduleName}`OfNat`:
+これは、{moduleName}`OfNat`に使う型を手で指定すれば避けられる。
 
 ```anchor perhapsPerhapsPerhapsNat
 def perhapsPerhapsPerhapsNat : Option (Option (Option Nat)) :=
   (392 : Nat)
 ```
-Additionally, coercions can be manually inserted using an up arrow:
+さらに、上矢印を使って型強制を手で挿入できる。
 
 ```anchor perhapsPerhapsPerhapsNatUp
 def perhapsPerhapsPerhapsNat : Option (Option (Option Nat)) :=
   ↑(392 : Nat)
 ```
-In some cases, this can be used to ensure that Lean finds the right instances.
-It can also make the programmer's intentions more clear.
+場合によっては、Leanが正しいインスタンスを見つけるようにするのに使える。
+プログラマの意図も伝わりやすくなる。
 :::
 
-# Non-Empty Lists and Dependent Coercions
+# 空でないリストと依存型強制
 %%%
 tag := "CoeDep"
 %%%
 
-An instance of {anchorTerm chapterIntro}`Coe α β` makes sense when the type {anchorName chapterIntro}`β` has a value that can represent each value from the type {anchorName chapterIntro}`α`.
-Coercing from {moduleName}`Nat` to {moduleName}`Int` makes sense, because the type {moduleName}`Int` contains all the natural numbers, but a coercion from {moduleName}`Int` to {moduleName}`Nat` is a poor idea because {moduleName}`Nat` does not contain the negative numbers.
-Similarly, a coercion from non-empty lists to ordinary lists makes sense because the {moduleName}`List` type can represent every non-empty list:
+{anchorTerm chapterIntro}`Coe α β`のインスタンスは、型{anchorName chapterIntro}`β`が、型{anchorName chapterIntro}`α`のどの値も表せる値を持つときに意味をなす。
+{moduleName}`Nat`から{moduleName}`Int`への型強制は意味をなす。型{moduleName}`Int`がすべての自然数を含むためである。しかし{moduleName}`Int`から{moduleName}`Nat`への型強制はよくない。{moduleName}`Nat`が負の数を含まないためである。
+同様に、空でないリストから普通のリストへの型強制は意味をなす。{moduleName}`List`型がすべての空でないリストを表せるためである。
 
 ```anchor CoeNEList
 instance : Coe (NonEmptyList α) (List α) where
   coe
     | { head := x, tail := xs } => x :: xs
 ```
-This allows non-empty lists to be used with the entire {moduleName}`List` API.
+これにより、空でないリストを{moduleName}`List`のAPI全体で使える。
 
-On the other hand, it is impossible to write an instance of {anchorTerm coeNope}`Coe (List α) (NonEmptyList α)`, because there's no non-empty list that can represent the empty list.
-This limitation can be worked around by using another version of coercions, which are called _dependent coercions_.
-Dependent coercions can be used when the ability to coerce from one type to another depends on which particular value is being coerced.
-Just as the {anchorName OfNat}`OfNat` type class takes the particular {moduleName}`Nat` being overloaded as a parameter, dependent coercion takes the value being coerced as a parameter:
+一方、{anchorTerm coeNope}`Coe (List α) (NonEmptyList α)`のインスタンスは書けない。空のリストを表せる空でないリストは存在しないためである。
+この制限は、*依存型強制*と呼ばれる別の種類の型強制を使えば避けられる。
+依存型強制は、ある型から別の型へ型強制できるかどうかが、型強制する具体的な値に依存するときに使える。
+{anchorName OfNat}`OfNat`型クラスがオーバーロードする具体的な{moduleName}`Nat`を引数に取るのと同じように、依存型強制は型強制する値を引数に取る。
 
 ```anchor CoeDep
 class CoeDep (α : Type) (x : α) (β : Type) where
   coe : β
 ```
-This is a chance to select only certain values, either by imposing further type class constraints on the value or by writing certain constructors directly.
-For example, any {moduleName}`List` that is not actually empty can be coerced to a {moduleName}`NonEmptyList`:
+これは、値にさらに型クラスの制約を課すか、特定のコンストラクタを直接書くことで、特定の値だけを選ぶ機会である。
+たとえば、実際には空でない{moduleName}`List`は{moduleName}`NonEmptyList`に型強制できる。
 
 ```anchor CoeDepListNEList
 instance : CoeDep (List α) (x :: xs) (NonEmptyList α) where
   coe := { head := x, tail := xs }
 ```
 
-# Coercing to Types
+# 型への型強制
 %%%
 tag := "CoeSort"
 %%%
 
-In mathematics, it is common to have a concept that consists of a set equipped with additional structure.
-For example, a monoid is some set $`S`, an element $`s` of $`S`, and an associative binary operator on $`S`, such that $`s` is neutral on the left and right of the operator.
-$`S` is referred to as the “carrier set” of the monoid.
-The natural numbers with zero and addition form a monoid, because addition is associative and adding zero to any number is the identity.
-Similarly, the natural numbers with one and multiplication also form a monoid.
-Monoids are also widely used in functional programming: lists, the empty list, and the append operator form a monoid, as do strings, the empty string, and string append:
+数学では、集合にさらに構造を加えたものから成る概念がよくある。
+たとえばモノイドは、ある集合$`S`、$`S`の要素$`s`、$`S`上の結合的な二項演算子から成り、$`s`がその演算子の左右で中立である。
+$`S`をそのモノイドの「台集合」と呼ぶ。
+自然数と0と加法はモノイドになる。加法が結合的で、どの数に0を足しても変わらないためである。
+同様に、自然数と1と乗法もモノイドになる。
+モノイドは関数型プログラミングでも広く使われる。リスト、空のリスト、連結演算子がモノイドになり、文字列、空文字列、文字列の連結もそうである。
 
 ```anchor Monoid
 structure Monoid where
@@ -272,8 +272,8 @@ def stringMonoid : Monoid :=
 def listMonoid (α : Type) : Monoid :=
   { Carrier := List α, neutral := [], op := List.append }
 ```
-Given a monoid, it is possible to write the {anchorName firstFoldMap}`foldMap` function that, in a single pass, transforms the entries in a list into a monoid's carrier set and then combines them using the monoid's operator.
-Because monoids have a neutral element, there is a natural result to return when the list is empty, and because the operator is associative, clients of the function don't have to care whether the recursive function combines elements from left to right or from right to left.
+モノイドが与えられれば、リストの要素を一度の走査でモノイドの台集合の値に変換し、モノイドの演算子でまとめる{anchorName firstFoldMap}`foldMap`関数を書ける。
+モノイドには中立元があるので、リストが空のときに返す自然な結果があり、演算子が結合的なので、その関数の利用者は再帰関数が要素を左から右にまとめるか右から左にまとめるかを気にしなくてよい。
 
 ```anchor firstFoldMap
 def foldMap (M : Monoid) (f : α → M.Carrier) (xs : List α) : M.Carrier :=
@@ -283,21 +283,21 @@ def foldMap (M : Monoid) (f : α → M.Carrier) (xs : List α) : M.Carrier :=
   go M.neutral xs
 ```
 
-Even though a monoid consists of three separate pieces of information, it is common to just refer to the monoid's name in order to refer to its set.
-Instead of saying “Let A be a monoid and let _x_ and _y_ be elements of its carrier set”, it is common to say “Let _A_ be a monoid and let _x_ and _y_ be elements of _A_”.
-This practice can be encoded in Lean by defining a new kind of coercion, from the monoid to its carrier set.
+モノイドが三つの別々の情報から成っていても、その集合を指すのにモノイドの名前を使うのが普通である。
+「*A*をモノイドとし、*x*と*y*をその台集合の要素とする」と言う代わりに、「*A*をモノイドとし、*x*と*y*を*A*の要素とする」と言うのが普通である。
+この習慣は、モノイドからその台集合への新しい種類の型強制を定義することでLeanに表せる。
 
-The {anchorName CoeMonoid}`CoeSort` class is just like the {anchorName CoePosNat}`Coe` class, with the exception that the target of the coercion must be a _sort_, namely {anchorTerm chapterIntro}`Type` or {anchorTerm chapterIntro}`Prop`.
-The term _sort_ in Lean refers to these types that classify other types—{anchorTerm Coe}`Type` classifies types that themselves classify data, and {anchorTerm chapterIntro}`Prop` classifies propositions that themselves classify evidence of their truth.
-Just as {anchorName CoePosNat}`Coe` is checked when a type mismatch occurs, {anchorName CoeMonoid}`CoeSort` is used when something other than a sort is provided in a context where a sort would be expected.
+{anchorName CoeMonoid}`CoeSort`クラスは{anchorName CoePosNat}`Coe`クラスとほぼ同じだが、型強制の対象が*ソート*、つまり{anchorTerm chapterIntro}`Type`か{anchorTerm chapterIntro}`Prop`でなければならない点が異なる。
+Leanで*ソート*とは、他の型を分類するこれらの型を指す。{anchorTerm Coe}`Type`はデータを分類する型を分類し、{anchorTerm chapterIntro}`Prop`は真理の証拠を分類する命題を分類する。
+型の食い違いが起きたときに{anchorName CoePosNat}`Coe`が調べられるのと同じように、ソートが期待される文脈でソート以外のものが与えられたときに{anchorName CoeMonoid}`CoeSort`が使われる。
 
-The coercion from a monoid into its carrier set extracts the carrier:
+モノイドからその台集合への型強制は、台を取り出す。
 
 ```anchor CoeMonoid
 instance : CoeSort Monoid Type where
   coe m := m.Carrier
 ```
-With this coercion, the type signatures become less bureaucratic:
+この型強制により、型シグネチャが簡潔になる。
 
 ```anchor foldMap
 def foldMap (M : Monoid) (f : α → M) (xs : List α) : M :=
@@ -307,50 +307,50 @@ def foldMap (M : Monoid) (f : α → M) (xs : List α) : M :=
   go M.neutral xs
 ```
 
-Another useful example of {anchorName CoeMonoid}`CoeSort` is used to bridge the gap between {anchorName types}`Bool` and {anchorTerm chapterIntro}`Prop`.
-As discussed in {ref "equality-and-ordering"}[the section on ordering and equality], Lean's {kw}`if` expression expects the condition to be a decidable proposition rather than a {anchorName types}`Bool`.
-Programs typically need to be able to branch based on Boolean values, however.
-Rather than have two kinds of {kw}`if` expression, the Lean standard library defines a coercion from {anchorName types}`Bool` to the proposition that the {anchorName types}`Bool` in question is equal to {anchorName types}`true`:
+{anchorName CoeMonoid}`CoeSort`のもう一つの役に立つ例は、{anchorName types}`Bool`と{anchorTerm chapterIntro}`Prop`の隔たりを埋めるのに使う。
+{ref "equality-and-ordering"}[順序と等価性の節]で述べたように、Leanの{kw}`if`式は条件が{anchorName types}`Bool`ではなく決定可能な命題であることを期待する。
+しかし、プログラムは通常、真偽値に基づいて分岐できる必要がある。
+二種類の{kw}`if`式を用意する代わりに、Leanの標準ライブラリは、{anchorName types}`Bool`から、その{anchorName types}`Bool`が{anchorName types}`true`に等しいという命題への型強制を定義している。
 
 ```anchor CoeBoolProp
 instance : CoeSort Bool Prop where
   coe b := b = true
 ```
-In this case, the sort in question is {anchorTerm chapterIntro}`Prop` rather than {anchorTerm chapterIntro}`Type`.
+この場合のソートは{anchorTerm chapterIntro}`Type`ではなく{anchorTerm chapterIntro}`Prop`である。
 
-# Coercing to Functions
+# 関数への型強制
 %%%
 tag := "CoeFun"
 %%%
 
-Many datatypes that occur regularly in programming consist of a function along with some extra information about it.
-For example, a function might be accompanied by a name to show in logs or by some configuration data.
-Additionally, putting a type in a field of a structure, similarly to the {anchorName Monoid}`Monoid` example, can make sense in contexts where there is more than one way to implement an operation and more manual control is needed than type classes would allow.
-For example, the specific details of values emitted by a JSON serializer may be important because another application expects a particular format.
-Sometimes, the function itself may be derivable from just the configuration data.
+プログラミングでよく現れるデータ型の多くは、関数と、それについての追加情報から成る。
+たとえば、関数にログに出す名前や設定データが添えられることがある。
+さらに、{anchorName Monoid}`Monoid`の例のように構造体のフィールドに型を入れるのは、ある操作の実装方法が複数あり、型クラスでできる以上の手動の制御が要る場面で意味をなす。
+たとえば、JSONシリアライザが出力する値の細かい点は、別のアプリケーションが特定の形式を期待するため重要になることがある。
+関数自体が設定データだけから導けることもある。
 
-A type class called {anchorName CoeFun}`CoeFun` can transform values from non-function types to function types.
-{anchorName CoeFun}`CoeFun` has two parameters: the first is the type whose values should be transformed into functions, and the second is an output parameter that determines exactly which function type is being targeted.
+{anchorName CoeFun}`CoeFun`という型クラスは、関数でない型の値を関数型に変換できる。
+{anchorName CoeFun}`CoeFun`は二つの引数を取る。一つ目は値を関数に変換する対象の型、二つ目は対象となる関数型を決める出力パラメータである。
 
 ```anchor CoeFun
 class CoeFun (α : Type) (makeFunctionType : outParam (α → Type)) where
   coe : (x : α) → makeFunctionType x
 ```
-The second parameter is itself a function that computes a type.
-In Lean, types are first-class and can be passed to functions or returned from them, just like anything else.
+二つ目の引数は、型を計算する関数そのものである。
+Leanでは型は第一級であり、他のものと同じように関数に渡したり関数から返したりできる。
 
-For example, a function that adds a constant amount to its argument can be represented as a wrapper around the amount to add, rather than by defining an actual function:
+たとえば、引数に一定量を足す関数は、実際の関数を定義する代わりに、足す量を包んだものとして表せる。
 
 ```anchor Adder
 structure Adder where
   howMuch : Nat
 ```
-A function that adds five to its argument has a {anchorTerm add5}`5` in the {anchorName Adder}`howMuch` field:
+引数に5を足す関数は、{anchorName Adder}`howMuch`フィールドに{anchorTerm add5}`5`を入れる。
 
 ```anchor add5
 def add5 : Adder := ⟨5⟩
 ```
-This {anchorName Adder}`Adder` type is not a function, and applying it to an argument results in an error:
+この{anchorName Adder}`Adder`型は関数ではないので、引数に適用するとエラーになる。
 ```anchor add5notfun
 #eval add5 3
 ```
@@ -363,7 +363,7 @@ but this term has type
 Note: Expected a function because this term is being applied to the argument
   3
 ```
-Defining a {anchorName CoeFunAdder}`CoeFun` instance causes Lean to transform the adder into a function with type {anchorTerm CoeFunAdder}`Nat → Nat`:
+{anchorName CoeFunAdder}`CoeFun`のインスタンスを定義すると、Leanがその加算器を{anchorTerm CoeFunAdder}`Nat → Nat`型の関数に変換する。
 
 ```anchor CoeFunAdder
 instance : CoeFun Adder (fun _ => Nat → Nat) where
@@ -375,11 +375,11 @@ instance : CoeFun Adder (fun _ => Nat → Nat) where
 ```anchorInfo add53
 8
 ```
-Because all {anchorName CoeFunAdder}`Adder`s should be transformed into {anchorTerm CoeFunAdder}`Nat → Nat` functions, the argument to {anchorName CoeFunAdder}`CoeFun`'s second parameter was ignored.
+どの{anchorName CoeFunAdder}`Adder`も{anchorTerm CoeFunAdder}`Nat → Nat`の関数に変換すべきなので、{anchorName CoeFunAdder}`CoeFun`の二つ目の引数の引数は無視された。
 
 :::paragraph
-When the value itself is needed to determine the right function type, then {anchorName CoeFunAdder}`CoeFun`'s second parameter is no longer ignored.
-For example, given the following representation of JSON values:
+適切な関数型を決めるのに値そのものが要る場合は、{anchorName CoeFunAdder}`CoeFun`の二つ目の引数は無視できない。
+たとえば、JSONの値を次のように表すとする。
 
 ```anchor JSON
 inductive JSON where
@@ -391,14 +391,14 @@ inductive JSON where
   | object : List (String × JSON) → JSON
   | array : List JSON → JSON
 ```
-a JSON serializer is a structure that tracks the type it knows how to serialize along with the serialization code itself:
+JSONシリアライザは、シリアライズできる型と、シリアライズのコード自体を組にした構造体である。
 
 ```anchor Serializer
 structure Serializer where
   Contents : Type
   serialize : Contents → JSON
 ```
-A serializer for strings need only wrap the provided string in the {anchorName StrSer}`JSON.string` constructor:
+文字列のシリアライザは、与えられた文字列を{anchorName StrSer}`JSON.string`コンストラクタで包むだけでよい。
 
 ```anchor StrSer
 def Str : Serializer :=
@@ -409,13 +409,13 @@ def Str : Serializer :=
 :::
 
 :::paragraph
-Viewing JSON serializers as functions that serialize their argument requires extracting the inner type of serializable data:
+JSONシリアライザを、引数をシリアライズする関数として見るには、シリアライズできるデータの内側の型を取り出す必要がある。
 
 ```anchor CoeFunSer
 instance : CoeFun Serializer (fun s => s.Contents → JSON) where
   coe s := s.serialize
 ```
-Given this instance, a serializer can be applied directly to an argument:
+このインスタンスがあれば、シリアライザを引数に直接適用できる。
 
 ```anchor buildResponse
 def buildResponse (title : String) (R : Serializer)
@@ -426,7 +426,7 @@ def buildResponse (title : String) (R : Serializer)
     ("record", R record)
   ]
 ```
-The serializer can be passed directly to {anchorName buildResponseOut}`buildResponse`:
+シリアライザは{anchorName buildResponseOut}`buildResponse`に直接渡せる。
 ```anchor buildResponseOut
 #eval buildResponse "Functional Programming in Lean" Str "Programming is fun!"
 ```
@@ -438,23 +438,23 @@ JSON.object
 ```
 :::
 
-## Aside: JSON as a String
+## 補足: JSONを文字列として見る
 %%%
 tag := "json-string"
 %%%
 
-It can be a bit difficult to understand JSON when encoded as Lean objects.
-To help make sure that the serialized response was what was expected, it can be convenient to write a simple converter from {anchorName JSON}`JSON` to {anchorName dropDecimals}`String`.
-The first step is to simplify the display of numbers.
-{anchorName JSON}`JSON` doesn't distinguish between integers and floating point numbers, and the type {anchorName JSON}`Float` is used to represent both.
-In Lean, {anchorName chapterIntro}`Float.toString` includes a number of trailing zeros:
+JSONをLeanのオブジェクトとして符号化したものは、少し分かりにくいことがある。
+シリアライズした応答が期待どおりかを確かめるには、{anchorName JSON}`JSON`から{anchorName dropDecimals}`String`への単純な変換器があると便利である。
+まず、数の表示を簡単にする。
+{anchorName JSON}`JSON`は整数と浮動小数点数を区別せず、どちらも{anchorName JSON}`Float`型で表す。
+Leanでは、{anchorName chapterIntro}`Float.toString`が末尾に0をいくつも付ける。
 ```anchor fiveZeros
 #eval (5 : Float).toString
 ```
 ```anchorInfo fiveZeros
 "5.000000"
 ```
-The solution is to write a little function that cleans up the presentation by dropping all trailing zeros, followed by a trailing decimal point:
+解決策は、末尾の0をすべて取り除き、その後に残る小数点も取り除く小さな関数を書くことである。
 
 ```anchor dropDecimals
 def dropDecimals (numString : String) : String :=
@@ -463,9 +463,9 @@ def dropDecimals (numString : String) : String :=
     (noTrailingZeros.dropEndWhile (· == '.')).copy
   else numString
 ```
-With this definition, {anchorTerm dropDecimalExample}`dropDecimals (5 : Float).toString` yields {anchorTerm dropDecimalExample}`5`, and {anchorTerm dropDecimalExample2}`dropDecimals (5.2 : Float).toString` yields {anchorTerm dropDecimalExample2}`5.2`.
+この定義により、{anchorTerm dropDecimalExample}`dropDecimals (5 : Float).toString`は{anchorTerm dropDecimalExample}`5`に、{anchorTerm dropDecimalExample2}`dropDecimals (5.2 : Float).toString`は{anchorTerm dropDecimalExample2}`5.2`になる。
 
-The next step is to define a helper function to append a list of strings with a separator in between them:
+次に、文字列のリストを区切り文字を挟んで連結する補助関数を定義する。
 
 ```anchor Stringseparate
 def String.separate (sep : String) (strings : List String) : String :=
@@ -473,17 +473,17 @@ def String.separate (sep : String) (strings : List String) : String :=
   | [] => ""
   | x :: xs => String.join (x :: xs.map (sep ++ ·))
 ```
-This function is useful to account for comma-separated elements in JSON arrays and objects.
-{anchorTerm sep2ex}`", ".separate ["1", "2"]` yields {anchorInfo sep2ex}`"1, 2"`, {anchorTerm sep1ex}`", ".separate ["1"]` yields {anchorInfo sep1ex}`"1"`, and {anchorTerm sep0ex}`", ".separate []` yields {anchorInfo sep0ex}`""`.
-In the Lean standard library, this function is called {anchorName chapterIntro}`String.intercalate`.
+この関数は、JSONの配列やオブジェクトで要素をコンマで区切るのに役に立つ。
+{anchorTerm sep2ex}`", ".separate ["1", "2"]`は{anchorInfo sep2ex}`"1, 2"`に、{anchorTerm sep1ex}`", ".separate ["1"]`は{anchorInfo sep1ex}`"1"`に、{anchorTerm sep0ex}`", ".separate []`は{anchorInfo sep0ex}`""`になる。
+Leanの標準ライブラリでは、この関数は{anchorName chapterIntro}`String.intercalate`という名前である。
 
-Finally, a string escaping procedure is needed for JSON strings, so that the Lean string containing {anchorTerm chapterIntro}`"Hello!"` can be output as {anchorTerm escapeQuotes}`"\"Hello!\""`.
-Fortunately, the Lean compiler contains an internal function for escaping JSON strings already, called {anchorName escapeQuotes}`Lean.Json.escape`.
-To access this function, add {lit}`import Lean` to the beginning of your file.
+最後に、JSONの文字列のためのエスケープ処理が要る。{anchorTerm chapterIntro}`"Hello!"`を含むLeanの文字列を{anchorTerm escapeQuotes}`"\"Hello!\""`として出力できるようにするためである。
+幸い、LeanコンパイラにはJSON文字列をエスケープする内部関数がすでにあり、{anchorName escapeQuotes}`Lean.Json.escape`という。
+この関数を使うには、ファイルの先頭に{lit}`import Lean`を加える。
 
-The function that emits a string from a {anchorName JSONasString}`JSON` value is declared {kw}`partial` because Lean cannot see that it terminates.
-This is because recursive calls to {anchorName JSONasString}`asString` occur in functions that are being applied by {anchorName chapterIntro}`List.map`, and this pattern of recursion is complicated enough that Lean cannot see that the recursive calls are actually being performed on smaller values.
-In an application that just needs to produce JSON strings and doesn't need to mathematically reason about the process, having the function be {kw}`partial` is not likely to cause problems.
+{anchorName JSONasString}`JSON`の値から文字列を作る関数は{kw}`partial`として宣言されている。Leanがその停止性を見抜けないためである。
+{anchorName JSONasString}`asString`への再帰呼び出しが、{anchorName chapterIntro}`List.map`で適用される関数の中で起きており、この形の再帰はLeanがより小さい値に対して行われていると見抜けないほど複雑なのである。
+JSONの文字列を作るだけで、その処理について数学的に推論する必要がないアプリケーションでは、関数が{kw}`partial`でも問題は起きにくい。
 
 ```anchor JSONasString
 partial def JSON.asString (val : JSON) : String :=
@@ -500,7 +500,7 @@ partial def JSON.asString (val : JSON) : String :=
   | array elements =>
     "[" ++ ", ".separate (elements.map asString) ++ "]"
 ```
-With this definition, the output of serialization is easier to read:
+この定義により、シリアライズの出力が読みやすくなる。
 ```anchor buildResponseStr
 #eval (buildResponse "Functional Programming in Lean" Str "Programming is fun!").asString
 ```
@@ -514,8 +514,8 @@ With this definition, the output of serialization is easier to read:
 tag := "coercion-messages"
 %%%
 
-Natural number literals are overloaded with the {anchorName OfNat}`OfNat` type class.
-Because coercions fire in cases where types don't match, rather than in cases of missing instances, a missing {anchorName OfNat}`OfNat` instance for a type does not cause a coercion from {moduleName}`Nat` to be applied:
+自然数のリテラルは{anchorName OfNat}`OfNat`型クラスでオーバーロードされている。
+型強制が働くのは型が一致しない場合であり、インスタンスが欠けている場合ではないので、ある型に{anchorName OfNat}`OfNat`のインスタンスがなくても、{moduleName}`Nat`からの型強制は適用されない。
 ```anchor ofNatBeforeCoe
 def perhapsPerhapsPerhapsNat : Option (Option (Option Nat)) :=
   392
@@ -530,30 +530,30 @@ due to the absence of the instance above
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 ```
 
-# Design Considerations
+# 設計上の考慮
 %%%
 tag := "coercion-design-considerations"
 %%%
 
-Coercions are a powerful tool that should be used responsibly.
-On the one hand, they can allow an API to naturally follow the everyday rules of the domain being modeled.
-This can be the difference between a bureaucratic mess of manual conversion functions and a clear program.
-As Abelson and Sussman wrote in the preface to _Structure and Interpretation of Computer Programs_ (MIT Press, 1996),
+型強制は強力な道具であり、責任をもって使うべきである。
+一方では、型強制によって、APIが対象分野の日常的な規則に自然に従えるようになる。
+手動の変換関数が煩雑に散らばったプログラムと、明快なプログラムの違いになりうる。
+AbelsonとSussmanは_Structure and Interpretation of Computer Programs_（MIT Press、1996年）の序文で次のように書いている。
 
-> Programs must be written for people to read, and only incidentally for machines to execute.
+> プログラムは人が読むために書かれなければならず、機械が実行するのは副次的なことにすぎない。
 
-Coercions, used wisely, are a valuable means of achieving readable code that can serve as the basis for communication with domain experts.
-APIs that rely heavily on coercions have a number of important limitations, however.
-Think carefully about these limitations before using coercions in your own libraries.
+賢く使えば、型強制は読みやすいコードを実現し、分野の専門家とのやり取りの土台になる貴重な手段である。
+しかし、型強制に大きく頼るAPIには、いくつか重要な制限がある。
+自分のライブラリで型強制を使う前に、これらの制限をよく考えるとよい。
 
-First off, coercions are only applied in contexts where enough type information is available for Lean to know all of the types involved, because there are no output parameters in the coercion type classes. This means that a return type annotation on a function can be the difference between a type error and a successfully applied coercion.
-For example, the coercion from non-empty lists to lists makes the following program work:
+第一に、型強制の型クラスには出力パラメータがないので、型強制が適用されるのは、関わる型をすべてLeanが把握できるだけの型情報がある文脈だけである。つまり、関数の戻り値の型注釈があるかどうかが、型エラーになるか型強制がうまく働くかの違いになる。
+たとえば、空でないリストからリストへの型強制があるので、次のプログラムは動く。
 
 ```anchor lastSpiderA
 def lastSpider : Option String :=
   List.getLast? idahoSpiders
 ```
-On the other hand, if the type annotation is omitted, then the result type is unknown, so Lean is unable to find the coercion:
+一方、型注釈を省くと結果の型が分からず、Leanは型強制を見つけられない。
 ```anchor lastSpiderB
 def lastSpider :=
   List.getLast? idahoSpiders
@@ -568,7 +568,7 @@ but is expected to have type
 in the application
   List.getLast? idahoSpiders
 ```
-More generally, when a coercion is not applied for some reason, the user receives the original type error, which can make it difficult to debug chains of coercions.
+より一般に、何らかの理由で型強制が適用されないと、利用者には元の型エラーが返るので、型強制の連鎖を調べるのが難しくなる。
 
-Finally, coercions are not applied in the context of field accessor notation.
-This means that there is still an important difference between expressions that need to be coerced and those that don't, and this difference is visible to users of your API.
+最後に、型強制はフィールドアクセサの記法の文脈では適用されない。
+つまり、型強制が必要な式と不要な式の間には依然として重要な違いがあり、その違いはAPIの利用者に見えてしまう。
