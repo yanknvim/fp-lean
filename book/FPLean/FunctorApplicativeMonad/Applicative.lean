@@ -15,14 +15,14 @@ set_option verso.exampleModule "Examples.FunctorApplicativeMonad"
 tag := "applicative"
 %%%
 
-An _applicative functor_ is a functor that has two additional operations available: {anchorName ApplicativeOption}`pure` and {anchorName ApplicativeOption}`seq`.
-{anchorName ApplicativeOption}`pure` is the same operator used in {anchorName ApplicativeLaws}`Monad`, because {anchorName ApplicativeLaws}`Monad` in fact inherits from {anchorName ApplicativeOption}`Applicative`.
-{anchorName ApplicativeOption}`seq` is much like {anchorName FunctorNames}`map`: it allows a function to be used in order to transform the contents of a datatype.
-However, with {anchorName ApplicativeOption}`seq`, the function is itself contained in the datatype: {anchorTerm seqType}`f (α → β) → (Unit → f α) → f β`.
-Having the function under the type {anchorName seqType}`f` allows the {anchorName ApplicativeOption}`Applicative` instance to control how the function is applied, while {anchorName FunctorNames}`Functor.map` unconditionally applies a function.
-The second argument has a type that begins with {anchorTerm seqType}`Unit →` to allow the definition of {anchorName ApplicativeOption}`seq` to short-circuit in cases where the function will never be applied.
+*アプリカティブファンクタ*は、使える操作が二つ増えたファンクタである。{anchorName ApplicativeOption}`pure`と{anchorName ApplicativeOption}`seq`である。
+{anchorName ApplicativeOption}`pure`は{anchorName ApplicativeLaws}`Monad`で使うのと同じ演算子である。実際、{anchorName ApplicativeLaws}`Monad`は{anchorName ApplicativeOption}`Applicative`を継承しているためである。
+{anchorName ApplicativeOption}`seq`は{anchorName FunctorNames}`map`とよく似ており、データ型の中身を変換するのに関数を使える。
+しかし{anchorName ApplicativeOption}`seq`では、関数自体がデータ型の中に入っている。{anchorTerm seqType}`f (α → β) → (Unit → f α) → f β`である。
+関数が型{anchorName seqType}`f`の下にあることで、{anchorName ApplicativeOption}`Applicative`インスタンスが関数の適用のしかたを制御できる。一方{anchorName FunctorNames}`Functor.map`は無条件に関数を適用する。
+二つ目の引数の型が{anchorTerm seqType}`Unit →`で始まるのは、関数が決して適用されない場合に{anchorName ApplicativeOption}`seq`の定義が途中で打ち切れるようにするためである。
 
-The value of this short-circuiting behavior can be seen in the instance of {anchorTerm ApplicativeOption}`Applicative Option`:
+この途中で打ち切る振る舞いの価値は、{anchorTerm ApplicativeOption}`Applicative Option`のインスタンスに見られる。
 
 ```anchor ApplicativeOption
 instance : Applicative Option where
@@ -32,8 +32,8 @@ instance : Applicative Option where
     | none => none
     | some g => g <$> x ()
 ```
-In this case, if there is no function for {anchorName ApplicativeOption}`seq` to apply, then there is no need to compute its argument, so {anchorName ApplicativeOption}`x` is never called.
-The same consideration informs the instance of {anchorName ApplicativeExcept}`Applicative` for {anchorName ApplicativeExcept}`Except`:
+この場合、{anchorName ApplicativeOption}`seq`が適用すべき関数がなければ、その引数を計算する必要がないので、{anchorName ApplicativeOption}`x`は決して呼ばれない。
+同じ配慮が{anchorName ApplicativeExcept}`Except`の{anchorName ApplicativeExcept}`Applicative`インスタンスにも当てはまる。
 
 ```anchor ApplicativeExcept
 instance : Applicative (Except ε) where
@@ -43,50 +43,50 @@ instance : Applicative (Except ε) where
     | .error e => .error e
     | .ok g => g <$> x ()
 ```
-This short-circuiting behavior depends only on the {anchorName AlternativeOption}`Option` or {anchorName ApplicativeExcept}`Except` structures that _surround_ the function, rather than on the function itself.
+この途中で打ち切る振る舞いは、関数自体ではなく、関数を*包んでいる*{anchorName AlternativeOption}`Option`や{anchorName ApplicativeExcept}`Except`の構造だけに依存する。
 
-Monads can be seen as a way of capturing the notion of sequentially executing statements into a pure functional language.
-The result of one statement can affect which further statements run.
-This can be seen in the type of {anchorName bindType}`bind`: {anchorTerm bindType}`m α → (α → m β) → m β`.
-The first statement's resulting value is an input into a function that computes the next statement to execute.
-Successive uses of {anchorName bindType}`bind` are like a sequence of statements in an imperative programming language, and {anchorName bindType}`bind` is powerful enough to implement control structures like conditionals and loops.
+モナドは、文を順に実行するという考え方を純粋な関数型言語に取り込む手段と見なせる。
+ある文の結果が、次にどの文を実行するかに影響しうる。
+これは{anchorName bindType}`bind`の型{anchorTerm bindType}`m α → (α → m β) → m β`に見られる。
+一つ目の文の結果の値が、次に実行する文を計算する関数の入力になる。
+{anchorName bindType}`bind`を続けて使うのは命令型プログラミング言語の文の並びのようなもので、{anchorName bindType}`bind`は条件分岐やループのような制御構造を実装できるだけの力がある。
 
-Following this analogy, {anchorName ApplicativeId}`Applicative` captures function application in a language that has side effects.
-The arguments to a function in languages like Kotlin or C# are evaluated from left to right.
-Side effects performed by earlier arguments occur before those performed by later arguments.
-A function is not powerful enough to implement custom short-circuiting operators that depend on the specific _value_ of an argument, however.
+この類推に従えば、{anchorName ApplicativeId}`Applicative`は副作用のある言語での関数適用をとらえている。
+KotlinやC#のような言語では、関数の引数は左から右へ評価される。
+前の引数が行う副作用は、後の引数が行う副作用より先に起きる。
+しかし、引数の具体的な*値*に依存する独自の途中打ち切りの演算子を実装するには、関数では力が足りない。
 
-Typically, {anchorName ApplicativeExtendsFunctorOne}`seq` is not invoked directly.
-Instead, the operator {lit}`<*>` is used.
-This operator wraps its second argument in {lit}`fun () => ...`, simplifying the call site.
-In other words, {anchorTerm seqSugar}`E1 <*> E2` is syntactic sugar for {anchorTerm seqSugar}`Seq.seq E1 (fun () => E2)`.
+ふつう{anchorName ApplicativeExtendsFunctorOne}`seq`を直接呼び出すことはない。
+代わりに{lit}`<*>`演算子を使う。
+この演算子は二つ目の引数を{lit}`fun () => ...`で包み、呼び出し側を簡単にする。
+言い換えれば、{anchorTerm seqSugar}`E1 <*> E2`は{anchorTerm seqSugar}`Seq.seq E1 (fun () => E2)`の糖衣構文である。
 
 
-The key feature that allows {anchorName ApplicativeExtendsFunctorOne}`seq` to be used with multiple arguments is that a multiple-argument Lean function is really a single-argument function that returns another function that's waiting for the rest of the arguments.
-In other words, if the first argument to {anchorName ApplicativeExtendsFunctorOne}`seq` is awaiting multiple arguments, then the result of the {anchorName ApplicativeExtendsFunctorOne}`seq` will be awaiting the rest.
-For example, {anchorTerm somePlus}`some Plus.plus` can have the type {anchorTerm somePlus}`Option (Nat → Nat → Nat)`.
-Providing one argument, {anchorTerm somePlusFour}`some Plus.plus <*> some 4`, results in the type {anchorTerm somePlusFour}`Option (Nat → Nat)`.
-This can itself be used with {anchorName ApplicativeExtendsFunctorOne}`seq`, so {anchorTerm somePlusFourSeven}`some Plus.plus <*> some 4 <*> some 7` has the type {anchorTerm somePlusFourSeven}`Option Nat`.
+{anchorName ApplicativeExtendsFunctorOne}`seq`を複数の引数で使えるようにする鍵は、Leanの複数引数の関数が実際には一引数の関数で、残りの引数を待つ別の関数を返すことである。
+言い換えれば、{anchorName ApplicativeExtendsFunctorOne}`seq`の一つ目の引数が複数の引数を待っているなら、その{anchorName ApplicativeExtendsFunctorOne}`seq`の結果は残りを待つことになる。
+たとえば{anchorTerm somePlus}`some Plus.plus`は型{anchorTerm somePlus}`Option (Nat → Nat → Nat)`を持てる。
+引数を一つ与えた{anchorTerm somePlusFour}`some Plus.plus <*> some 4`は型{anchorTerm somePlusFour}`Option (Nat → Nat)`になる。
+これ自体も{anchorName ApplicativeExtendsFunctorOne}`seq`で使えるので、{anchorTerm somePlusFourSeven}`some Plus.plus <*> some 4 <*> some 7`は型{anchorTerm somePlusFourSeven}`Option Nat`を持つ。
 
-Not every functor is applicative.
-{anchorName Pair}`Pair` is like the built-in product type {anchorName names}`Prod`:
+すべてのファンクタがアプリカティブなわけではない。
+{anchorName Pair}`Pair`は組み込みの直積型{anchorName names}`Prod`のようなものである。
 
 ```anchor Pair
 structure Pair (α β : Type) : Type where
   first : α
   second : β
 ```
-Like {anchorName ApplicativeExcept}`Except`, {anchorTerm PairType}`Pair` has type {anchorTerm PairType}`Type → Type → Type`.
-This means that {anchorTerm FunctorPair}`Pair α` has type {anchorTerm PairType}`Type → Type`, and a {anchorName FunctorPair}`Functor` instance is possible:
+{anchorName ApplicativeExcept}`Except`と同じく、{anchorTerm PairType}`Pair`の型は{anchorTerm PairType}`Type → Type → Type`である。
+つまり{anchorTerm FunctorPair}`Pair α`の型は{anchorTerm PairType}`Type → Type`であり、{anchorName FunctorPair}`Functor`インスタンスが可能である。
 
 ```anchor FunctorPair
 instance : Functor (Pair α) where
   map f x := ⟨x.first, f x.second⟩
 ```
-This instance obeys the {anchorName FunctorPair}`Functor` contract.
+このインスタンスは{anchorName FunctorPair}`Functor`の契約を満たす。
 
-The two properties to check are that {anchorEvalStep checkPairMapId 0}`id <$> Pair.mk x y`{lit}` = `{anchorEvalStep checkPairMapId 2}`Pair.mk x y` and that {anchorEvalStep checkPairMapComp1 0}`f <$> g <$> Pair.mk x y`{lit}` = `{anchorEvalStep checkPairMapComp2 0}`(f ∘ g) <$> Pair.mk x y`.
-The first property can be checked by just stepping through the evaluation of the left side, and noticing that it evaluates to the right side:
+確かめるべき性質は二つある。{anchorEvalStep checkPairMapId 0}`id <$> Pair.mk x y`{lit}` = `{anchorEvalStep checkPairMapId 2}`Pair.mk x y`と、{anchorEvalStep checkPairMapComp1 0}`f <$> g <$> Pair.mk x y`{lit}` = `{anchorEvalStep checkPairMapComp2 0}`(f ∘ g) <$> Pair.mk x y`である。
+一つ目の性質は、左辺の評価を一段ずつたどり、右辺に評価されることに気づけば確かめられる。
 ```anchorEvalSteps checkPairMapId
 id <$> Pair.mk x y
 ===>
@@ -94,7 +94,7 @@ Pair.mk x (id y)
 ===>
 Pair.mk x y
 ```
-The second can be checked by stepping through both sides, and noting that they yield the same result:
+二つ目は、両辺を一段ずつたどり、同じ結果になることを見れば確かめられる。
 ```anchorEvalSteps checkPairMapComp1
 f <$> g <$> Pair.mk x y
 ===>
@@ -110,8 +110,8 @@ Pair.mk x ((f ∘ g) y)
 Pair.mk x (f (g y))
 ```
 
-Attempting to define an {anchorName ApplicativeExcept}`Applicative` instance, however, does not work so well.
-It will require a definition of {anchorName Pairpure (show := pure)}`Pair.pure`:
+しかし、{anchorName ApplicativeExcept}`Applicative`インスタンスを定義しようとすると、うまくいかない。
+{anchorName Pairpure (show := pure)}`Pair.pure`の定義が要る。
 ```anchor Pairpure
 def Pair.pure (x : β) : Pair α β := _
 ```
@@ -122,7 +122,7 @@ context:
 x : β
 ⊢ Pair α β
 ```
-There is a value with type {anchorName Pairpure2}`β` in scope (namely {anchorName Pairpure2}`x`), and the error message from the underscore suggests that the next step is to use the constructor {anchorName Pairpure2}`Pair.mk`:
+型{anchorName Pairpure2}`β`の値（つまり{anchorName Pairpure2}`x`）は使えるので、アンダースコアのエラーメッセージは、次の段階がコンストラクタ{anchorName Pairpure2}`Pair.mk`を使うことだと示唆している。
 ```anchor Pairpure2
 def Pair.pure (x : β) : Pair α β := Pair.mk _ x
 ```
@@ -133,104 +133,104 @@ context:
 x : β
 ⊢ α
 ```
-Unfortunately, there is no {anchorName Pairpure2}`α` available.
-Because {anchorName Pairpure2 (show := pure)}`Pair.pure` would need to work for _all possible types_ {anchorName Pairpure2}`α` to define an instance of {anchorTerm ApplicativePair}`Applicative (Pair α)`, this is impossible.
-After all, a caller could choose {anchorName Pairpure2}`α` to be {anchorName ApplicativePair}`Empty`, which has no values at all.
+残念ながら、使える{anchorName Pairpure2}`α`がない。
+{anchorTerm ApplicativePair}`Applicative (Pair α)`のインスタンスを定義するには、{anchorName Pairpure2 (show := pure)}`Pair.pure`が*考えられるすべての型*{anchorName Pairpure2}`α`で働く必要があるので、これは不可能である。
+何しろ、呼び出し側は{anchorName Pairpure2}`α`として、値がまったくない{anchorName ApplicativePair}`Empty`を選ぶこともできる。
 
-# A Non-Monadic Applicative
+# モナドでないアプリカティブ
 %%%
 tag := "validate"
 %%%
 
-When validating user input to a form, it's generally considered to be best to provide many errors at once, rather than one error at a time.
-This allows the user to have an overview of what is needed to please the computer, rather than feeling badgered as they correct the errors field by field.
+フォームへの利用者の入力を検査するときは、エラーを一度に一つずつ出すより、まとめて多数出すのがよいと一般に考えられている。
+そうすれば利用者は、エラーを欄ごとに直しながら責められている気になるより、コンピュータを満足させるのに何が必要かを全体として見渡せる。
 
-Ideally, validating user input will be visible in the type of the function that's doing the validating.
-It should return a datatype that is specific—checking that a text box contains a number should return an actual numeric type, for instance.
-A validation routine could throw an exception when the input does not pass validation.
-Exceptions have a major drawback, however: they terminate the program at the first error, making it impossible to accumulate a list of errors.
+理想的には、利用者の入力の検査は、その検査を行う関数の型に見えるべきである。
+返すデータ型は具体的であるべきである。たとえば、テキスト欄に数が入っているかを検査するなら、実際の数の型を返すべきである。
+検査の手続きは、入力が検査を通らないときに例外を投げることもできる。
+しかし例外には大きな欠点がある。最初のエラーでプログラムが終わってしまい、エラーの一覧を蓄積できない。
 
-On the other hand, the common design pattern of accumulating a list of errors and then failing when it is non-empty is also problematic.
-A long nested sequences of {kw}`if` statements that validate each sub-section of the input data is hard to maintain, and it's easy to lose track of an error message or two.
-Ideally, validation can be performed using an API that enables a new value to be returned yet automatically tracks and accumulates error messages.
+一方、エラーの一覧を蓄積し、それが空でないときに失敗するというよくある設計も問題がある。
+入力データの各部分を検査する{kw}`if`文が長く入れ子になると保守しにくく、エラーメッセージを一つ二つ見落とすのもたやすい。
+理想的には、新しい値を返せるようにしつつ、エラーメッセージを自動で追跡して蓄積するAPIを使って検査を行える。
 
-An applicative functor called {anchorName Validate}`Validate` provides one way to implement this style of API.
-Like the {anchorName ApplicativeExcept}`Except` monad, {anchorName Validate}`Validate` allows a new value to be constructed that characterizes the validated data accurately.
-Unlike {anchorName ApplicativeExcept}`Except`, it allows multiple errors to be accumulated, without a risk of forgetting to check whether the list is empty.
+{anchorName Validate}`Validate`というアプリカティブファンクタが、この形のAPIを実装する一つの方法を与える。
+{anchorName ApplicativeExcept}`Except`モナドと同じく、{anchorName Validate}`Validate`は、検査済みのデータを正確にとらえた新しい値を組み立てられるようにする。
+{anchorName ApplicativeExcept}`Except`と違い、複数のエラーを蓄積でき、一覧が空かどうかを調べ忘れる心配もない。
 
-## User Input
+## 利用者の入力
 %%%
 tag := "user-input"
 %%%
-As an example of user input, take the following structure:
+利用者の入力の例として、次の構造体を考えよう。
 
 ```anchor RawInput
 structure RawInput where
   name : String
   birthYear : String
 ```
-The business logic to be implemented is the following:
- 1. The name may not be empty
- 2. The birth year must be numeric and non-negative
- 3. The birth year must be greater than 1900, and less than or equal to the year in which the form is validated
+実装すべき業務の規則は次のとおりである。
+ 1. 名前は空であってはならない。
+ 2. 生年は数値で、負であってはならない。
+ 3. 生年は1900より大きく、そのフォームを検査する年以下でなければならない。
 
-Representing these as a datatype will require a new feature, called _subtypes_.
-With this tool in hand, a validation framework can be written that uses an applicative functor to track errors, and these rules can be implemented in the framework.
+これらをデータ型として表すには、*部分型*と呼ばれる新しい機能が要る。
+この道具があれば、アプリカティブファンクタでエラーを追跡する検査の枠組みを書けるようになり、これらの規則をその枠組みの中で実装できる。
 
-## Subtypes
+## 部分型
 %%%
 tag := "subtypes"
 %%%
 
-Representing these conditions is easiest with one additional Lean type, called {anchorName Subtype}`Subtype`:
+これらの条件を表すには、{anchorName Subtype}`Subtype`というLeanの型をもう一つ使うのが最も簡単である。
 
 ```anchor Subtype
 structure Subtype {α : Type} (p : α → Prop) where
   val : α
   property : p val
 ```
-This structure has two type parameters: an implicit parameter that is the type of data {anchorName Subtype}`α`, and an explicit parameter {anchorName Subtype}`p` that is a predicate over {anchorName Subtype}`α`.
-A _predicate_ is a logical statement with a variable in it that can be replaced with a value to yield an actual statement, like the {ref "overloading-indexing"}[parameter to {moduleName}`GetElem`] that describes what it means for an index to be in bounds for a lookup.
-In the case of {anchorName Subtype}`Subtype`, the predicate slices out some subset of the values of {anchorName Subtype}`α` for which the predicate holds.
-The structure's two fields are, respectively, a value from {anchorName Subtype}`α` and evidence that the value satisfies the predicate {anchorName Subtype}`p`.
-Lean has special syntax for {anchorName Subtype}`Subtype`.
-If {anchorName Subtype}`p` has type {anchorTerm Subtype}`α → Prop`, then the type {anchorTerm subtypeSugarIn}`Subtype p` can also be written {anchorTerm subtypeSugar}`{x : α // p x}`, or even {anchorTerm subtypeSugar2}`{x // p x}` when the type {anchorName Subtype}`α` can be inferred automatically.
+この構造体には型引数が二つある。データの型{anchorName Subtype}`α`である暗黙の引数と、{anchorName Subtype}`α`上の述語である明示的な引数{anchorName Subtype}`p`である。
+*述語*とは、変数を含む論理的な言明で、その変数を値に置き換えると実際の言明になるもののことである。参照で添字が範囲内にあるとはどういうことかを記述する{ref "overloading-indexing"}[{moduleName}`GetElem`の引数]のようなものである。
+{anchorName Subtype}`Subtype`の場合、その述語は{anchorName Subtype}`α`の値のうち述語が成り立つ部分集合を切り出す。
+この構造体の二つのフィールドは、それぞれ{anchorName Subtype}`α`の値と、その値が述語{anchorName Subtype}`p`を満たす証拠である。
+Leanには{anchorName Subtype}`Subtype`のための特別な構文がある。
+{anchorName Subtype}`p`の型が{anchorTerm Subtype}`α → Prop`なら、型{anchorTerm subtypeSugarIn}`Subtype p`は{anchorTerm subtypeSugar}`{x : α // p x}`とも書ける。型{anchorName Subtype}`α`が自動で推論できるときは{anchorTerm subtypeSugar2}`{x // p x}`とも書ける。
 
-{ref "positive-numbers"}[Representing positive numbers as inductive types] is clear and easy to program with.
-However, it has a key disadvantage.
-While {anchorName names}`Nat` and {anchorName names}`Int` have the structure of ordinary inductive types from the perspective of Lean programs, the compiler treats them specially and uses fast arbitrary-precision number libraries to implement them.
-This is not the case for additional user-defined types.
-However, a subtype of {anchorName names}`Nat` that restricts it to non-zero numbers allows the new type to use the efficient representation while still ruling out zero at compile time:
+{ref "positive-numbers"}[正の数を帰納型として表す]方法は明快で、プログラミングしやすい。
+しかし、大きな欠点がある。
+{anchorName names}`Nat`と{anchorName names}`Int`は、Leanのプログラムから見れば普通の帰納型の構造を持つが、コンパイラはこれらを特別に扱い、高速な任意精度数のライブラリで実装している。
+利用者が定義した型ではそうならない。
+しかし、{anchorName names}`Nat`の部分型として0でない数に制限すれば、新しい型が効率のよい表現を使いつつ、コンパイル時に0を排除できる。
 
 ```anchor FastPos
 def FastPos : Type := {x : Nat // x > 0}
 ```
 
-The smallest fast positive number is still one.
-Now, instead of being a constructor of an inductive type, it's an instance of a structure that's constructed with angle brackets.
-The first argument is the underlying {anchorName FastPos}`Nat`, and the second argument is the evidence that said {anchorName FastPos}`Nat` is greater than zero:
+最小の高速な正の数もやはり1である。
+今度は、帰納型のコンストラクタではなく、山括弧で組み立てる構造体の値である。
+一つ目の引数はその下にある{anchorName FastPos}`Nat`であり、二つ目の引数はその{anchorName FastPos}`Nat`が0より大きいという証拠である。
 
 ```anchor one
 def one : FastPos := ⟨1, by decide⟩
 ```
-The proposition {anchorTerm onep}`1 > 0` is decidable, so the {tactic}`decide` tactic produces the necessary evidence.
-The {anchorName OfNatFastPos}`OfNat` instance is very much like that for {anchorName Pos (module:=Examples.Classes)}`Pos`, except it uses a short tactic proof to provide evidence that {lit}`n + 1 > 0`:
+命題{anchorTerm onep}`1 > 0`は決定可能なので、{tactic}`decide`タクティクが必要な証拠を作る。
+{anchorName OfNatFastPos}`OfNat`インスタンスは{anchorName Pos (module:=Examples.Classes)}`Pos`のものとよく似ているが、{lit}`n + 1 > 0`の証拠を与えるのに短いタクティクの証明を使う点が異なる。
 
 ```anchor OfNatFastPos
 instance : OfNat FastPos (n + 1) where
   ofNat := ⟨n + 1, by simp⟩
 ```
-Here, {tactic}`simp` is needed because {tactic}`decide` requires concrete values, but the proposition in question is {anchorTerm OfNatFastPosp}`n + 1 > 0`.
+ここで{tactic}`simp`が要るのは、{tactic}`decide`が具体的な値を必要とするのに、問題の命題が{anchorTerm OfNatFastPosp}`n + 1 > 0`だからである。
 
-Subtypes are a two-edged sword.
-They allow efficient representation of validation rules, but they transfer the burden of maintaining these rules to the users of the library, who have to _prove_ that they are not violating important invariants.
-Generally, it's a good idea to use them internally to a library, providing an API to users that automatically ensures that all invariants are satisfied, with any necessary proofs being internal to the library.
+部分型はもろ刃の剣である。
+検査の規則を効率よく表せるが、それらの規則を保つ負担をライブラリの利用者に移すことになる。利用者は、重要な不変条件を破っていないことを*証明*せねばならない。
+一般には、ライブラリの内部で使うのがよく、利用者にはすべての不変条件が満たされることを自動で保証するAPIを提供し、必要な証明はライブラリの内部に収めるのがよい。
 
-Checking whether a value of type {anchorName NatFastPosRemarks}`α` is in the subtype {anchorTerm NatFastPosRemarks}`{x : α // p x}` usually requires that the proposition {anchorTerm NatFastPosRemarks}`p x` be decidable.
-The {ref "equality-and-ordering"}[section on equality and ordering classes] describes how decidable propositions can be used with {kw}`if`.
-When {kw}`if` is used with a decidable proposition, a name can be provided.
-In the {kw}`then` branch, the name is bound to evidence that the proposition is true, and in the {kw}`else` branch, it is bound to evidence that the proposition is false.
-This comes in handy when checking whether a given {anchorName NatFastPos}`Nat` is positive:
+型{anchorName NatFastPosRemarks}`α`の値が部分型{anchorTerm NatFastPosRemarks}`{x : α // p x}`に入っているかを調べるには、通常、命題{anchorTerm NatFastPosRemarks}`p x`が決定可能である必要がある。
+{ref "equality-and-ordering"}[等価性と順序のクラスの節]で、決定可能な命題を{kw}`if`でどう使えるかを述べた。
+決定可能な命題とともに{kw}`if`を使うときは、名前を付けられる。
+{kw}`then`の枝ではその名前に命題が真である証拠が束縛され、{kw}`else`の枝では偽である証拠が束縛される。
+これは、与えられた{anchorName NatFastPos}`Nat`が正かどうかを調べるときに役に立つ。
 
 ```anchor NatFastPos
 def Nat.asFastPos? (n : Nat) : Option FastPos :=
@@ -238,18 +238,18 @@ def Nat.asFastPos? (n : Nat) : Option FastPos :=
     some ⟨n, h⟩
   else none
 ```
-In the {kw}`then` branch, {anchorName NatFastPos}`h` is bound to evidence that {anchorTerm NatFastPos}`n > 0`, and this evidence can be used as the second argument to {anchorName Subtype}`Subtype`'s constructor.
+{kw}`then`の枝では{anchorName NatFastPos}`h`に{anchorTerm NatFastPos}`n > 0`の証拠が束縛され、この証拠を{anchorName Subtype}`Subtype`のコンストラクタの二つ目の引数として使える。
 
 
-## Validated Input
+## 検査済みの入力
 %%%
 tag := "validated-input"
 %%%
 
-The validated user input is a structure that expresses the business logic using multiple techniques:
- * The structure type itself encodes the year in which it was checked for validity, so that {anchorTerm CheckedInputEx}`CheckedInput 2019` is not the same type as {anchorTerm CheckedInputEx}`CheckedInput 2020`
- * The birth year is represented as a {anchorName CheckedInput}`Nat` rather than a {anchorName CheckedInput}`String`
- * Subtypes are used to constrain the allowed values in the name and birth year fields
+検査済みの利用者の入力は、複数の技法を使って業務の規則を表す構造体である。
+ * 構造体の型自体が、妥当性を検査した年を符号化しているので、{anchorTerm CheckedInputEx}`CheckedInput 2019`と{anchorTerm CheckedInputEx}`CheckedInput 2020`は同じ型ではない。
+ * 生年は{anchorName CheckedInput}`String`ではなく{anchorName CheckedInput}`Nat`で表す。
+ * 部分型を使って、名前と生年のフィールドで許される値を制限する。
 
 ```anchor CheckedInput
 structure CheckedInput (thisYear : Nat) : Type where
@@ -258,19 +258,19 @@ structure CheckedInput (thisYear : Nat) : Type where
 ```
 
 :::paragraph
-An input validator should take the current year and a {anchorName RawInput}`RawInput` as arguments, returning either a checked input or at least one validation failure.
-This is represented by the {anchorName Validate}`Validate` type:
+入力の検査器は、現在の年と{anchorName RawInput}`RawInput`を引数に取り、検査済みの入力か、少なくとも一つの検査の失敗を返すべきである。
+これは{anchorName Validate}`Validate`型で表す。
 ```anchor Validate
 inductive Validate (ε α : Type) : Type where
   | ok : α → Validate ε α
   | errors : NonEmptyList ε → Validate ε α
 ```
-It looks very much like {anchorName ApplicativeExcept}`Except`.
-The only difference is that the {anchorName Validate}`errors` constructor may contain more than one failure.
+{anchorName ApplicativeExcept}`Except`とよく似ている。
+唯一の違いは、{anchorName Validate}`errors`コンストラクタが複数の失敗を含みうることである。
 :::
 
-{anchorName Validate}`Validate` is a functor.
-Mapping a function over it transforms any successful value that might be present, just as in the {anchorName FunctorValidate}`Functor` instance for {anchorName ApplicativeExcept}`Except`:
+{anchorName Validate}`Validate`はファンクタである。
+関数をマップすると、あるかもしれない成功の値が変換される。{anchorName ApplicativeExcept}`Except`の{anchorName FunctorValidate}`Functor`インスタンスと同じである。
 
 ```anchor FunctorValidate
 instance : Functor (Validate ε) where
@@ -279,7 +279,7 @@ instance : Functor (Validate ε) where
    | .errors errs => .errors errs
 ```
 
-The {anchorName ApplicativeValidate}`Applicative` instance for {anchorName ApplicativeValidate}`Validate` has an important difference from the instance for {anchorName ApplicativeExcept}`Except`: while the instance for {anchorName ApplicativeExcept}`Except` terminates at the first error encountered, the instance for {anchorName ApplicativeValidate}`Validate` is careful to accumulate all errors from _both_ the function and the argument branches:
+{anchorName ApplicativeValidate}`Validate`の{anchorName ApplicativeValidate}`Applicative`インスタンスは{anchorName ApplicativeExcept}`Except`のインスタンスと重要な違いがある。{anchorName ApplicativeExcept}`Except`のインスタンスは最初に出会ったエラーで終わるが、{anchorName ApplicativeValidate}`Validate`のインスタンスは、関数と引数の*両方*の枝からエラーをすべて蓄積するようにしている。
 
 ```anchor ApplicativeValidate
 instance : Applicative (Validate ε) where
@@ -294,9 +294,9 @@ instance : Applicative (Validate ε) where
 ```
 
 :::paragraph
-Using {anchorName ApplicativeValidate}`.errors` together with the constructor for {anchorName Validate}`NonEmptyList` is a bit verbose.
-Helpers like {anchorName reportError}`reportError` make code more readable.
-In this application, error reports will consist of field names paired with messages:
+{anchorName ApplicativeValidate}`.errors`を{anchorName Validate}`NonEmptyList`のコンストラクタと一緒に使うのは少し冗長である。
+{anchorName reportError}`reportError`のような補助関数があるとコードが読みやすくなる。
+この用途では、エラーの報告はフィールド名とメッセージの組にする。
 
 ```anchor Field
 def Field := String
@@ -308,9 +308,9 @@ def reportError (f : Field) (msg : String) : Validate (Field × String) α :=
 ```
 :::
 
-The {anchorName ApplicativeValidate}`Applicative` instance for {anchorName ApplicativeValidate}`Validate` allows the checking procedures for each field to be written independently and then composed.
-Checking a name consists of ensuring that a string is non-empty, then returning evidence of this fact in the form of a {anchorName Subtype}`Subtype`.
-This uses the evidence-binding version of {kw}`if`:
+{anchorName ApplicativeValidate}`Validate`の{anchorName ApplicativeValidate}`Applicative`インスタンスを使うと、各フィールドの検査の手続きを独立に書いてから組み合わせられる。
+名前の検査は、文字列が空でないことを確かめ、その事実の証拠を{anchorName Subtype}`Subtype`の形で返すことから成る。
+ここでは証拠を束縛する版の{kw}`if`を使う。
 
 ```anchor checkName
 def checkName (name : String) :
@@ -319,12 +319,12 @@ def checkName (name : String) :
     reportError "name" "Required"
   else pure ⟨name, h⟩
 ```
-In the {kw}`then` branch, {anchorName checkName}`h` is bound to evidence that {anchorTerm checkName}`name = ""`, while it is bound to evidence that {lit}`¬name = ""` in the {kw}`else` branch.
+{kw}`then`の枝では{anchorName checkName}`h`に{anchorTerm checkName}`name = ""`の証拠が束縛され、{kw}`else`の枝では{lit}`¬name = ""`の証拠が束縛される。
 
-It's certainly the case that some validation errors make other checks impossible.
-For example, it makes no sense to check whether the birth year field is greater than 1900 if a confused user wrote the word {anchorTerm checkDavidSyzygy}`"syzygy"` instead of a number.
-Checking the allowed range of the number is only meaningful after ensuring that the field in fact contains a number.
-This can be expressed using the function {anchorName ValidateAndThen (show := andThen)}`Validate.andThen`:
+検査のエラーの中には、他の検査を不可能にするものもある。
+たとえば、戸惑った利用者が数の代わりに{anchorTerm checkDavidSyzygy}`"syzygy"`という語を書いたなら、生年のフィールドが1900より大きいかを調べても意味がない。
+数の許される範囲を調べるのは、そのフィールドが実際に数を含むことを確かめた後で初めて意味を持つ。
+これは{anchorName ValidateAndThen (show := andThen)}`Validate.andThen`関数で表せる。
 
 ```anchor ValidateAndThen
 def Validate.andThen (val : Validate ε α)
@@ -333,11 +333,11 @@ def Validate.andThen (val : Validate ε α)
   | .errors errs => .errors errs
   | .ok x => next x
 ```
-While this function's type signature makes it suitable to be used as {anchorName bindType}`bind` in a {anchorTerm bindType}`Monad` instance, there are good reasons not to do so.
-They are described {ref "additional-stipulations"}[in the section that describes the {anchorName ApplicativeExcept}`Applicative` contract].
+この関数の型シグネチャは{anchorTerm bindType}`Monad`インスタンスの{anchorName bindType}`bind`として使うのに適しているが、そうしないのには十分な理由がある。
+それらは{ref "additional-stipulations"}[{anchorName ApplicativeExcept}`Applicative`の契約を述べる節]で説明する。
 
-To check that the birth year is a number, a built-in function called {anchorTerm CheckedInputEx}`String.Slice.toNat? : String.Slice → Option Nat` is useful.
-It's most user-friendly to eliminate leading and trailing whitespace first using {anchorName CheckedInputEx}`String.trimAscii`:
+生年が数であるかを調べるには、{anchorTerm CheckedInputEx}`String.Slice.toNat? : String.Slice → Option Nat`という組み込みの関数が役に立つ。
+まず{anchorName CheckedInputEx}`String.trimAscii`で前後の空白を取り除くのが最も利用者に親切である。
 
 ```anchor checkYearIsNat
 def checkYearIsNat (year : String) : Validate (Field × String) Nat :=
@@ -347,7 +347,7 @@ def checkYearIsNat (year : String) : Validate (Field × String) Nat :=
 ```
 
 :::paragraph
-To check that the provided year is in the expected range, nested uses of the evidence-providing form of {kw}`if` are in order:
+与えられた年が期待される範囲にあるかを調べるには、証拠を与える形の{kw}`if`を入れ子にして使う。
 
 ```anchor checkBirthYear
 def checkBirthYear (thisYear year : Nat) :
@@ -361,7 +361,7 @@ def checkBirthYear (thisYear year : Nat) :
 :::
 
 :::paragraph
-Finally, these three components can be combined using {anchorTerm checkInput}`<*>`:
+最後に、この三つの部分を{anchorTerm checkInput}`<*>`で組み合わせられる。
 
 ```anchor checkInput
 def checkInput (year : Nat) (input : RawInput) :
@@ -374,7 +374,7 @@ def checkInput (year : Nat) (input : RawInput) :
 :::
 
 :::paragraph
-Testing {anchorName checkDavid1984}`checkInput` shows that it can indeed return multiple pieces of feedback:
+{anchorName checkDavid1984}`checkInput`を試すと、確かに複数の指摘を返せることが分かる。
 ```anchor checkDavid1984
 #eval checkInput 2023 {name := "David", birthYear := "1984"}
 ```
@@ -395,12 +395,12 @@ Validate.errors { head := ("birth year", "Must be digits"), tail := [] }
 ```
 :::
 
-Form validation with {anchorName checkInput}`checkInput` illustrates a key advantage of {anchorName ApplicativeNames}`Applicative` over {anchorName MonadExtends}`Monad`.
-Because {lit}`>>=` provides enough power to modify the rest of the program's execution based on the value from the first step, it _must_ receive a value from the first step to pass on.
-If no value is received (e.g. because an error has occurred), then {lit}`>>=` cannot execute the rest of the program.
-{anchorName Validate}`Validate` demonstrates why it can be useful to run the rest of the program anyway: in cases where the earlier data isn't needed, running the rest of the program can yield useful information (in this case, more validation errors).
-{anchorName ApplicativeNames}`Applicative`'s {lit}`<*>` may run both of its arguments before recombining the results.
-Similarly, {lit}`>>=` forces sequential execution.
-Each step must complete before the next may run.
-This is generally useful, but it makes it impossible to have parallel execution of different threads that naturally emerges from the program's actual data dependencies.
-A more powerful abstraction like {anchorName MonadExtends}`Monad` increases the flexibility that's available to the API consumer, but it decreases the flexibility that is available to the API implementor.
+{anchorName checkInput}`checkInput`によるフォームの検査は、{anchorName ApplicativeNames}`Applicative`が{anchorName MonadExtends}`Monad`より優れている要点を示している。
+{lit}`>>=`は一つ目の段階の値に基づいてプログラムの残りの実行を変えられるだけの力があるので、渡すべき値を一つ目の段階から*必ず*受け取らねばならない。
+値を受け取らなければ（たとえばエラーが起きたため）、{lit}`>>=`はプログラムの残りを実行できない。
+{anchorName Validate}`Validate`は、それでもプログラムの残りを実行すると役に立つ場合があることを示している。前のデータが要らない場合には、プログラムの残りを実行すると役に立つ情報（この場合はさらに多くの検査エラー）が得られるのである。
+{anchorName ApplicativeNames}`Applicative`の{lit}`<*>`は、結果を組み直す前に両方の引数を実行してよい。
+同様に、{lit}`>>=`は逐次的な実行を強いる。
+各段階は、次が走る前に完了していなければならない。
+これは一般に役に立つが、プログラムの実際のデータ依存関係から自然に現れる、異なるスレッドの並行実行はできなくなる。
+{anchorName MonadExtends}`Monad`のようなより強力な抽象は、APIの利用者に与えられる柔軟さを増やすが、APIの実装者に与えられる柔軟さは減らす。
