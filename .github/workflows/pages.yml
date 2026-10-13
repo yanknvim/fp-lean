@@ -1,11 +1,14 @@
 name: Pages
 
-# Publishes the book to GitHub Pages. The workflow names no branch: the
-# deployment branch rules of the `github-pages` environment, a repository
-# setting, are what decide which branches may publish. Every push is built,
-# and the most recent deployment is the one that stays.
+# Publishes the book to GitHub Pages. The workflow names no branch: it builds
+# the default branch, a repository setting, and the deployment branch rules of
+# the `github-pages` environment are what the Pages API checks before it takes
+# a deployment. Every other push, `master` included, leaves the workflow with
+# nothing to do.
 on:
-  # Tags are included, so `on: push` alone would also publish tagged commits.
+  # Bare, so that the branch filter is the default branch rather than a list
+  # that would have to be kept in step with the repository settings. Tag
+  # pushes arrive here too and the job condition below turns them away.
   push:
 
   # Allows you to run this workflow manually from the Actions tab
@@ -26,6 +29,11 @@ jobs:
   build:
     name: Build book
     runs-on: ubuntu-latest
+    # Publishing follows the default branch. A push anywhere else skips the
+    # build, and the deploy job follows it into being skipped, so the branches
+    # that are not published cost nothing and report nothing. The trigger
+    # cannot express this, because `on:` has no way to name the default branch.
+    if: github.ref_type == 'branch' && github.ref_name == github.event.repository.default_branch
     # The build repeats the steps of ci.yml on purpose. CI builds the branches
     # it lists and stops there, and publishing must not depend on that list.
     steps:

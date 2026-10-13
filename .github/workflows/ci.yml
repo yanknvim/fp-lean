@@ -16,8 +16,9 @@ on:
   workflow_dispatch:
 
 # This workflow builds pull request code, including code from forks, so it holds
-# no secrets and only reads. The book HTML leaves here as an artifact, and
-# deploy.yml picks it up and publishes it.
+# no secrets and only reads. The book HTML leaves here as an artifact, which is
+# how a build's output is read without checking the branch out. Publishing is
+# pages.yml's business, and it builds what it publishes itself.
 permissions:
   contents: read
 
