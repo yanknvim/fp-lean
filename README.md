@@ -22,3 +22,5 @@ Every other build gets a preview deploy instead: pushes to `master`, pull reques
 
 The build runs in [`ci.yml`](.github/workflows/ci.yml) and hands the HTML to [`deploy.yml`](.github/workflows/deploy.yml) as an artifact. The credentials live in the deploy workflow, which is what lets a pull request from a fork build and preview.
 
+This fork also publishes the book to GitHub Pages at <https://yanknvim.github.io/fp-lean/>. [`pages.yml`](.github/workflows/pages.yml) builds and deploys every push, and the book is served from the site's root whatever branch it came from, so the most recent deployment is the one that stays. Which branches may publish is not in the workflow: it comes from the deployment branch rules of the `github-pages` environment, a repository setting.
+

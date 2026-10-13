@@ -1,0 +1,119 @@
+name: Pages
+
+# Publishes the book to GitHub Pages. The workflow names no branch: the
+# deployment branch rules of the `github-pages` environment, a repository
+# setting, are what decide which branches may publish. Every push is built,
+# and the most recent deployment is the one that stays.
+on:
+  # Tags are included, so `on: push` alone would also publish tagged commits.
+  push:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# The build only reads the repository; the deploy job asks for more.
+permissions:
+  contents: read
+
+# Deployments replace one another, so they run one at a time. A run that
+# arrives while another is deploying waits its turn rather than cancelling it,
+# because a cancelled deployment can leave the Pages API holding a lock.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build book
+    runs-on: ubuntu-latest
+    # The build repeats the steps of ci.yml on purpose. CI builds the branches
+    # it lists and stops there, and publishing must not depend on that list.
+    steps:
+      - name: Install a C compiler
+        run: sudo apt-get install -y build-essential
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The book runs a Python interpreter during the build and shows its
+      # output, so the version is pinned to keep that output stable.
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: 3.10.4
+
+      - name: Setup elan toolchain on this build
+        run: |
+          curl -O --location https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh
+          chmod u+x elan-init.sh
+          ./elan-init.sh -y --default-toolchain none
+
+      - name: Set elan paths
+        run: |
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Install lean toolchain for examples
+        run: |
+          cd examples
+          lean --version
+
+      - name: Install lean toolchain for text
+        run: |
+          cd book
+          lean --version
+
+      # The keys carry a `-pages` suffix: ci.yml saves a cache under the same
+      # commit, and two runs cannot save the same key. The restore keys leave
+      # the suffix off, so either workflow warms the other's caches.
+      - name: Cache examples/.lake
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: examples/.lake
+          key: ${{ runner.os }}-${{ hashFiles('examples/lake-manifest.json') }}-${{ hashFiles('examples/lean-toolchain') }}-${{ github.sha }}-pages
+          restore-keys: |
+            ${{ runner.os }}-${{ hashFiles('examples/lake-manifest.json') }}-${{ hashFiles('examples/lean-toolchain') }}-
+
+      - name: Cache book/.lake
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: book/.lake
+          key: ${{ runner.os }}-${{ hashFiles('book/lake-manifest.json') }}-${{ hashFiles('book/lean-toolchain') }}-${{ github.sha }}-pages
+          restore-keys: |
+            ${{ runner.os }}-${{ hashFiles('book/lake-manifest.json') }}-${{ hashFiles('book/lean-toolchain') }}-
+
+      - name: Build example code
+        run: |
+          pushd examples
+          lake build
+          lake build subverso-extract-mod
+          popd
+
+      - name: Build book
+        run: |
+          pushd book
+          lake exe fp-lean --depth 2 --without-html-single --verbose
+          popd
+
+      - name: Upload book HTML
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: book/_out/html-multi
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    # The environment is where the branch rules and the site URL live, and
+    # asking for it is what records the deployment against the commit.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write # create the deployment
+      id-token: write # prove to the Pages API that this run may deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
