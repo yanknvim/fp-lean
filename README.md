@@ -18,13 +18,9 @@ lake exe verso-serve
 
 ## Publishing
 
-The book is published by pushing a tag whose name starts with `release-`. CI builds the tagged commit and deploys it to the production site. Publication happens on `release-` tags alone.
+This fork publishes the book to GitHub Pages at <https://yanknvim.github.io/fp-lean/>. [`pages.yml`](.github/workflows/pages.yml) builds the default branch and deploys the result, so publishing a change means pushing it to that branch. The workflow names no branch: the default branch is a repository setting, and the deployment branch rules of the `github-pages` environment are what the Pages API checks before it accepts a deployment. Pushes anywhere else skip the build and report nothing.
 
-Every other build gets a preview deploy instead: pushes to `master`, pull requests (including those from forks), and manual runs. The preview URL appears as a `netlify/deploy` status on the commit that was built.
-
-The build runs in [`ci.yml`](.github/workflows/ci.yml) and hands the HTML to [`deploy.yml`](.github/workflows/deploy.yml) as an artifact. The credentials live in the deploy workflow, which is what lets a pull request from a fork build and preview.
-
-This fork also publishes the book to GitHub Pages at <https://yanknvim.github.io/fp-lean/>. [`pages.yml`](.github/workflows/pages.yml) builds and deploys every push, and the book is served from the site's root whatever branch it came from, so the most recent deployment is the one that stays. Which branches may publish is not in the workflow: it comes from the deployment branch rules of the `github-pages` environment, a repository setting.
+[`ci.yml`](.github/workflows/ci.yml) builds pushes to `master`, release branches, and tags, along with pull requests, and attaches the book HTML to the run as an artifact. Nothing publishes that artifact: it is there to be downloaded and read.
 
 ## 日本語訳について
 
